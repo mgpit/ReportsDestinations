@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ======================================================================                   
+     Administrator                                                                
+     ====================================================================== -->
+<project name="Developer 2000 Reoorts" basedir=".">
+
+	<!-- set global properties for this build -->
+	<property name="src" location="src" />
+	<property name="build" location="target" />
+
+
+	<property name="dir.dev2k" location="O:/DevSuite10gR2" />
+	<property name="dir.dev2k.jlib" location="${dir.dev2k}/jlib" />
+
+	<property name="dir.reports" location="${dir.dev2k}/reports" />
+	<property name="dir.reports.jlib" location="${dir.reports}/jlib" />
+	<property name="deploy.jar" location="zipdestination_0.0.1.jar" />
+	
+	<property name="lib.rwrun"    location="${dir.reports.jlib}/rwrun.jar" />
+	<property name="lib.zrclient" location="${dir.dev2k.jlib}/zrclient.jar" />
+	<property name="lib.log4j"    location="${dir.reports.jlib}/log4j-1.2.4.jar"/>
+	
+	<path id="project.class.path">
+	    <pathelement path="${lib.rwrun}"/>
+	    <pathelement path="${lib.zrclient}/"/>
+	    <pathelement path="${lib.log4j}"/>
+	</path>
+
+
+	<target name="clean">
+		<delete dir="${build}" failonerror="false"/>
+		<mkdir dir="${build}"/>
+	</target>
+	<target name="compile" depends="clean">
+		<echo message="About to compile ..." />
+		<javac includeantruntime="false" defaultexcludes="true" srcdir="${src}" destdir="${build}" source="1.4" target="1.4">
+			<classpath refid="project.class.path"/>
+			<include name="**/*.java" />
+			<exclude name="oracle/**" />
+		</javac>
+	</target>
+	<target name="copyresources">
+	      <copy verbose="true" file="log4j.properties" todir="${build}" />
+	</target>
+	<target name="makearchive" depends="compile,copyresources">
+		<echo message="About to make JAR archive ..."/>
+		<jar destfile="${deploy.jar}" basedir="${build}" />
+	</target>
+	
+	<target name="Deploy" description="Create and Deploy Destinations" depends="compile,makearchive">
+		<echo message="About to deploy Oracle Reports destinations ..." />
+		<copy verbose="true" file="${deploy.jar}" todir="${dir.reports.jlib}" />
+	</target>
+</project>
