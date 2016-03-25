@@ -6,7 +6,7 @@
 
 	<!-- set global properties for this build -->
 	<property name="src" location="src" />
-	<property name="build" location="target" />
+	<property name="build" location="bin" />
 
 
 	<property name="dir.dev2k" location="O:/DevSuite10gR2" />
