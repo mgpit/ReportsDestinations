@@ -16,8 +16,8 @@ package de.mgpit.oracle.reports.plugin.commons;
 public final class U {
 
     /**
-     * 
-     * @param s
+     * Wraps a string in square brackets.
+     * @param s String to be wrapped
      * @return the String wrapped in square brackets
      */
     public static String w( String s ) {
