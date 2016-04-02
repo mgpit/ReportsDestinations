@@ -5,5 +5,6 @@
 	<classpathentry kind="lib" path="O:/DevSuite10gR2/jlib/zrclient.jar"/>
 	<classpathentry kind="lib" path="O:/DevSuite10gR2/reports/jlib/rwrun.jar"/>
 	<classpathentry kind="lib" path="O:/DevSuite10gR2/reports/jlib/log4j-1.2.4.jar"/>
+	<classpathentry kind="lib" path="O:/DevSuite10gR2/LIB/xml.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

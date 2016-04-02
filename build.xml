@@ -6,20 +6,51 @@
 
 	<!-- set global properties for this build -->
 	<property name="dir.src" location="src" />
-	<property name="dir.build" location="bin" />
+	<property name="dir.build" location="tmp" />
 	<property name="dir.res" location="res" />
 
 
-	<property name="dir.dev2k" location="O:/DevSuite10gR2" />
-	<property name="dir.dev2k.jlib" location="${dir.dev2k}/jlib" />
+	<property name="oracle.home" location="O:/DevSuite10gR2" />
+	<property name="oracle.home.jlib" location="${oracle.home}/jlib" />
+	<property name="oracle.home.lib" location="${oracle.home}/lib" />
+	<property name="orajaxb" location="${oracle.home}\bin\orajaxb.bat" />
 
-	<property name="dir.reports" location="${dir.dev2k}/reports" />
+	<property name="dir.reports" location="${oracle.home}/reports" />
 	<property name="dir.reports.jlib" location="${dir.reports}/jlib" />
-	<property name="deploy.jar" location="zipdestination_0.0.1.jar" />
+
+	<property name="deploy.jar.zipdestination" location="zipdestination_0.0.1.jar" />
+	<property name="deploy.jar.cdmdestination" location="cdmdestination_0.0.1.jar" />
 
 	<property name="lib.rwrun" location="${dir.reports.jlib}/rwrun.jar" />
-	<property name="lib.zrclient" location="${dir.dev2k.jlib}/zrclient.jar" />
+	<property name="lib.zrclient" location="${oracle.home.jlib}/zrclient.jar" />
 	<property name="lib.log4j" location="${dir.reports.jlib}/log4j-1.2.4.jar" />
+
+	<property name="lib.xmlparser2" location="${oracle.home.lib}/xmlparserv2.jar" />
+	<property name="lib.xsu12" location="${oracle.home.lib}/xsu12.jar" />
+	<property name="lib.xml" location="${oracle.home.lib}/xml.jar" />
+
+	<scriptdef name="propertyreplace" language="javascript">
+		<attribute name="name" />
+		<attribute name="value" />
+		<attribute name="token" />
+		<attribute name="replace" />
+		<![CDATA[
+		    propertyName=attributes.get("name");
+		    currentValue=project.getProperty(propertyName);
+	        value=attributes.get("value");
+	        if ( value == null ) {
+		        value=currentValue;
+		    }
+		    newValue=value;
+		
+		    token=attributes.get("token");
+		    replace=attributes.get("replace");
+		    if ( token != null ) {
+		        newValue = value.replace( token, replace );
+		    }
+	        project.setProperty(attributes.get("name"), newValue );
+		]]>
+	</scriptdef>
 
 	<path id="project.class.path">
 		<pathelement path="${lib.rwrun}" />
@@ -27,32 +58,89 @@
 		<pathelement path="${lib.log4j}" />
 	</path>
 
-    <target name="splashit">
-    	<splash imageurl="file:///${dir.res}/animated.gif"/>
-	</target>
+	<path id="orajaxb.class.path">
+		<pathelement path="${lib.xmlparser2}" />
+		<pathelement path="${lib.xsu12}" />
+		<pathelement path="${lib.xml}" />
+	</path>
 	
-	<target name="clean" depends="splashit">
+	<path id="zipdest.class.path">
+		<path refid="project.class.path"/>
+	</path>
+	
+	<path id="cdmdest.class.path">
+		<path refid="project.class.path"/>
+		<path refid="orajaxb.class.path"/>
+	</path>
+
+	<target name="splashit">
+		<splash imageurl="file:///${dir.res}/animated.gif" showduration="1" />
+	</target>
+
+	<property name="jaxb.cdmdoc.packagename" value="de.mgpit.oracle.reports.plugin.destination.cdm.schema" />
+	<propertyreplace name="jaxb.cdmdoc.dir.schema" value="${dir.src}${file.separator}${jaxb.cdmdoc.packagename}" token="." replace="${file.separator}" />
+	<target name="JAXB on cdmdoc" depends="splashit" description="Create JAXB classes for cdmdoc.xsd">
+		<echo level="info" message="CDMDOC Schema Dir.....: ${jaxb.cdmdoc.dir.schema}" />
+		<echo level="info" message="CDMDOC Package Name...: ${jaxb.cdmdoc.packagename}" />
+		<delete failonerror="false" verbose="true">
+			<fileset dir="${jaxb.cdmdoc.dir.schema}">
+				<include name="**/*.java" />
+				<include name="**/jaxb.properties" />
+			</fileset>
+		</delete>
+		<exec executable="cmd.exe" dir="${dir.src}" vmlauncher="false">
+			<env key="CLASSPATH" value="${lib.xmlparser2};${lib.xsu12};${lib.xml}" />
+			<arg value="/c" />
+			<arg value="${orajaxb} -schema ${jaxb.cdmdoc.dir.schema}/cdmdoc.xsd -targetPkg ${jaxb.cdmdoc.packagename}" />
+		</exec>
+	</target>
+
+
+	<target name="cleanbuild" depends="splashit">
 		<delete dir="${dir.build}" failonerror="false" />
 		<mkdir dir="${dir.build}" />
 	</target>
-	<target name="compile" depends="clean">
-		<echo message="About to compile ..." />
+
+	<target name="compilezipdest" depends="cleanbuild">
+		<echo message="About to compile ZIP Destination ..." />
 		<javac includeantruntime="false" defaultexcludes="true" srcdir="${dir.src}" destdir="${dir.build}" source="1.4" target="1.4">
-			<classpath refid="project.class.path" />
-			<include name="**/*.java" />
+			<classpath refid="zipdest.class.path" />
+			<include name="**/commons/*.java" />
+			<include name="**/destination/zip/*.java" />
 			<exclude name="oracle/**" />
 		</javac>
 	</target>
 	<target name="copyresources">
 		<copy verbose="true" file="log4j.properties" todir="${dir.build}" />
 	</target>
-	<target name="makearchive" depends="compile,copyresources">
+	<target name="packagezipdest" depends="compilezipdest,copyresources">
 		<echo message="About to make JAR archive ..." />
-		<jar destfile="${deploy.jar}" basedir="${dir.build}" />
+		<jar destfile="${deploy.jar.zipdestination}" basedir="${dir.build}" />
 	</target>
 
-	<target name="Deploy" description="Create and Deploy Destinations" depends="compile,makearchive">
+	<target name="compilecdmdest" depends="cleanbuild">
+		<echo message="About to compile CDM Destination ..." />
+		<javac includeantruntime="false" defaultexcludes="false" srcdir="${dir.src}" destdir="${dir.build}" source="1.4" target="1.4">
+			<classpath refid="cdmdest.class.path" />
+			<include name="**/commons/*.java" />
+			<include name="**/destination/cdm/*.java" />
+			<exclude name="oracle/**" />
+		</javac>
+	</target>
+	<target name="packagecdmdest" depends="compilecdmdest">
+		<echo message="About to make JAR archive ..." />
+		<jar destfile="${deploy.jar.cdmdestination}" basedir="${dir.build}" />
+	</target>
+
+	<target name="Deploy Zip Destination" depends="packagezipdest" description="Deploy ZIP Destination">
+		<copy verbose="true" file="${deploy.jar.zipdestination}" todir="${dir.reports.jlib}" />
+	</target>
+
+	<target name="Deploy CDM Destination" depends="packagecdmdest" description="Deploy CDM Destination">
+	</target>
+
+	<target name="Deploy Destinations" description="Create and Deploy Destinations" depends="Deploy Zip Destination">
 		<echo message="About to deploy Oracle Reports destinations ..." />
-		<copy verbose="true" file="${deploy.jar}" todir="${dir.reports.jlib}" />
+
 	</target>
 </project>

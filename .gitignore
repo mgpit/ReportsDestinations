@@ -1,5 +1,6 @@
 /bin/
 /target/
-/zipdestination_*.jar
+/*_*.jar
 /.settings/
 /README.md
+/tmp/
