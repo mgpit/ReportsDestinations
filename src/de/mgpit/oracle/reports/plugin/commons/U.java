@@ -51,4 +51,11 @@ public final class U {
     public static boolean isEmpty( String s ) {
         return (s == null) || "".equals( s );
     }
+    
+    public static boolean eq( String s1, String s2 ) {
+        if ( s1 == null ) {
+            return s2 == null;
+        }
+        return s1.equals( s2 );
+    }
 }
