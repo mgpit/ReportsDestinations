@@ -5,7 +5,7 @@
 <project name="Developer 2000 Reports" basedir=".">
 
 	<!-- set global properties for this build -->
-	<property name="dir.src" location="src" />
+	<property name="dir.src" location="src/main" />
 	<property name="dir.build" location="tmp" />
 	<property name="dir.res" location="res" />
 
@@ -63,14 +63,14 @@
 		<pathelement path="${lib.xsu12}" />
 		<pathelement path="${lib.xml}" />
 	</path>
-	
+
 	<path id="zipdest.class.path">
-		<path refid="project.class.path"/>
+		<path refid="project.class.path" />
 	</path>
-	
+
 	<path id="cdmdest.class.path">
-		<path refid="project.class.path"/>
-		<path refid="orajaxb.class.path"/>
+		<path refid="project.class.path" />
+		<path refid="orajaxb.class.path" />
 	</path>
 
 	<target name="splashit">
@@ -105,9 +105,7 @@
 		<echo message="About to compile ZIP Destination ..." />
 		<javac includeantruntime="false" defaultexcludes="true" srcdir="${dir.src}" destdir="${dir.build}" source="1.4" target="1.4">
 			<classpath refid="zipdest.class.path" />
-			<include name="**/commons/*.java" />
-			<include name="**/destination/zip/*.java" />
-			<exclude name="oracle/**" />
+			<exclude name="**/cdm/**" />
 		</javac>
 	</target>
 	<target name="copyresources">
@@ -115,32 +113,38 @@
 	</target>
 	<target name="packagezipdest" depends="compilezipdest,copyresources">
 		<echo message="About to make JAR archive ..." />
-		<jar destfile="${deploy.jar.zipdestination}" basedir="${dir.build}" />
+		<jar destfile="${deploy.jar.zipdestination}" basedir="${dir.build}" update="false" />
 	</target>
 
 	<target name="compilecdmdest" depends="cleanbuild">
 		<echo message="About to compile CDM Destination ..." />
-		<javac includeantruntime="false" defaultexcludes="false" srcdir="${dir.src}" destdir="${dir.build}" source="1.4" target="1.4">
+		<javac includeantruntime="false" defaultexcludes="true" srcdir="${dir.src}" destdir="${dir.build}" source="1.4" target="1.4">
 			<classpath refid="cdmdest.class.path" />
-			<include name="**/commons/*.java" />
-			<include name="**/destination/cdm/*.java" />
-			<exclude name="oracle/**" />
+			<exclude name="**/zip/**" />
 		</javac>
 	</target>
-	<target name="packagecdmdest" depends="compilecdmdest">
+
+	<target name="copycdmresources">
+		<propertyreplace name="dir.build.schema" value="${dir.build}${file.separator}${jaxb.cdmdoc.packagename}" token="." replace="${file.separator}" />
+		<copy verbose="true" file="${jaxb.cdmdoc.dir.schema}/cdmdoc.xsd" todir="${dir.build.schema}" />
+		<copy verbose="true" file="${jaxb.cdmdoc.dir.schema}/jaxb.properties" todir="${dir.build.schema}" />
+	</target>
+	<target name="packagecdmdest" depends="compilecdmdest,copycdmresources">
 		<echo message="About to make JAR archive ..." />
-		<jar destfile="${deploy.jar.cdmdestination}" basedir="${dir.build}" />
+		<jar destfile="${deploy.jar.cdmdestination}" basedir="${dir.build}" update="false" />
 	</target>
 
 	<target name="Deploy Zip Destination" depends="packagezipdest" description="Deploy ZIP Destination">
 		<copy verbose="true" file="${deploy.jar.zipdestination}" todir="${dir.reports.jlib}" />
+		<echo message="Zip Destination: Deployment finished" />
 	</target>
 
 	<target name="Deploy CDM Destination" depends="packagecdmdest" description="Deploy CDM Destination">
+		<copy verbose="true" file="${deploy.jar.cdmdestination}" todir="${dir.reports.jlib}" />
+		<echo message="CDM Destination: Deployment finished" />
 	</target>
 
-	<target name="Deploy Destinations" description="Create and Deploy Destinations" depends="Deploy Zip Destination">
-		<echo message="About to deploy Oracle Reports destinations ..." />
-
+	<target name="Deploy Destinations" description="Create and Deploy Destinations" depends="Deploy Zip Destination,Deploy CDM Destination">
+		<echo message="Deployment finished" />
 	</target>
 </project>
