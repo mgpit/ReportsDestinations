@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+	<xs:element name="cdmdoc" type="CdmDocType" />
+	<xs:element name="content" type="ContentType" />
+
+	<xs:complexType name="CdmDocType">
+		<xs:sequence>
+			<xs:element ref="content" minOccurs="1" maxOccurs="1"/>
+		</xs:sequence>
+	</xs:complexType>
+
+
+	<xs:complexType name="ContentType">
+		<xs:sequence>
+			<xs:element name="length" type="xs:int"  minOccurs="1"  maxOccurs="1"/>
+			<xs:element name="payload" type="xs:string"  minOccurs="1" maxOccurs="1"/>
+		</xs:sequence>
+	</xs:complexType>
+</xs:schema>
