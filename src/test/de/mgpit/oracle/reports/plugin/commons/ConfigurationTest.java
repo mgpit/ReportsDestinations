@@ -80,7 +80,8 @@ public class ConfigurationTest extends TestCase {
         Configuration testConfiguration = Configuration.fromURI( creationUri );
         URI configurationsUri = testConfiguration.toURI();
 
-        assertEquals( expectedUriString, configurationsUri.toString() );
+        String actualUriString = configurationsUri.toString();
+        assertEquals( expectedUriString, actualUriString );
     }
 
     public void testJavadocExampleCode() throws URISyntaxException {
