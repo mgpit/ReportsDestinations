@@ -3,10 +3,10 @@
 	<classpathentry kind="src" path="src/main"/>
 	<classpathentry kind="src" path="src/test"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.7"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/3"/>
 	<classpathentry kind="lib" path="O:/DevSuite10gR2/jlib/zrclient.jar"/>
 	<classpathentry kind="lib" path="O:/DevSuite10gR2/reports/jlib/rwrun.jar"/>
 	<classpathentry kind="lib" path="O:/DevSuite10gR2/reports/jlib/log4j-1.2.4.jar"/>
 	<classpathentry kind="lib" path="O:/DevSuite10gR2/LIB/xml.jar"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/3"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
