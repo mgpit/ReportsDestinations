@@ -21,7 +21,7 @@ public final class U {
      * @return the String wrapped in square brackets
      */
     public static String w( String s ) {
-        StringBuffer wrapped = new StringBuffer( s.length() + 2 );
+        StringBuffer wrapped = new StringBuffer( ((s==null)?0:s.length()) + 2 );
         wrapped.append( "[" ).append( s ).append( "]" );
         return wrapped.toString();
     }
