@@ -94,9 +94,9 @@ public class ConfigurationTest extends TestCase {
                 "connectQueueManager=QMGR&channelName=CHANNEL_1", null );
         Configuration c3 = Configuration.fromURI( third );
         
-        System.out.println( "C1 and C2 are " + (c1.equals( c2 ) ? "equal" : "different") );
-        System.out.println( "C2 and C3 are " + (c2.equals( c3 ) ? "equal" : "different") );
-        System.out.println( "C1 and C3 are " + (c1.equals( c3 ) ? "equal" : "different") );
+        //System.out.println( "C1 and C2 are " + (c1.equals( c2 ) ? "equal" : "different") );
+        //System.out.println( "C2 and C3 are " + (c2.equals( c3 ) ? "equal" : "different") );
+        //System.out.println( "C1 and C3 are " + (c1.equals( c3 ) ? "equal" : "different") );
 
     }
 
