@@ -46,7 +46,7 @@ public class MarshallTest extends TestCase {
         assertTrue( noExceptionOccured );
         assertNotNull( jaxbMarshaller );
 
-        StringWriter xmlStream = new StringWriter( Units.ONE_KILOBYTE );
+        StringWriter xmlStream = new StringWriter( Units.ONE_KILOBYTE/4 );
         try {
             jaxbMarshaller.marshal( cdmdoc, xmlStream );
         } catch ( JAXBException e ) {
