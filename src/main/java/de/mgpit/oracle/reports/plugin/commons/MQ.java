@@ -15,14 +15,14 @@ public class MQ {
      * 
      * @author mgp
      * 
-     * Class representig a configuration for a Websphere MQ client connection.
-     * <p>
-     * This is still a very simple implementation as
-     * <ol>
-     * <li>only a few parameters are supported by now</li>
-     * <li>none of the business rules as specified in <a href="ftp://public.dhe.ibm.com/software/integration/support/supportpacs/individual/ma93_wmqsvcdef1.0.pdf">Websphere MQ Service Defintion</a> 
-     *     are implemented</li>
-     * </ol>
+     *         Class representig a configuration for a Websphere MQ client connection.
+     *         <p>
+     *         This is still a very simple implementation as
+     *         <ol>
+     *         <li>only a few parameters are supported by now</li>
+     *         <li>none of the business rules as specified in <a href="ftp://public.dhe.ibm.com/software/integration/support/supportpacs/individual/ma93_wmqsvcdef1.0.pdf">Websphere MQ Service Defintion</a>
+     *         are implemented</li>
+     *         </ol>
      *
      */
     public static class Configuration {
@@ -37,15 +37,20 @@ public class MQ {
         /**
          * Creates a new Configuration instance
          * 
-         * @param hostName host name where the queue manager is running
-         * @param port TCP port where the queue manager is listening. Any value <= 0 will be replaced by default @code MQ_DEFAULT_PORT}
-         * @param queueManagerName name of the queue manager
-         * @param channelName channel for the connection
-         * @param queueName name of the queue
+         * @param hostName
+         *            host name where the queue manager is running
+         * @param port
+         *            TCP port where the queue manager is listening. Any value <= 0 will be replaced by default @code MQ_DEFAULT_PORT}
+         * @param queueManagerName
+         *            name of the queue manager
+         * @param channelName
+         *            channel for the connection
+         * @param queueName
+         *            name of the queue
          */
         public Configuration( String hostName, int port, String queueManagerName, String channelName, String queueName ) {
             this.hostName = hostName;
-            this.port = (port<=0)?MQ_DEFAULT_PORT:port;
+            this.port = (port <= 0) ? MQ_DEFAULT_PORT : port;
             this.queueManagerName = queueManagerName;
             this.channelName = channelName;
             this.queueName = queueName;
@@ -53,17 +58,19 @@ public class MQ {
 
         /**
          * Returns a Configuration built from a Websphere MQ compliant URI / IRI.
-         * <p>Only a few of parameters from the spec will be used, though. <strong>Note</strong>: Ommitting the port will result in using
+         * <p>
+         * Only a few of parameters from the spec will be used, though. <strong>Note</strong>: Ommitting the port will result in using
          * the default port 1414.
          * <ul>
-         *  <li>Class support client connections, only, so the {@code [connection-name]} MUST be provided and MUST be
-         *      as {@code [tcp-connection-name]}</li>
-         *  <li>The queue manager to contact can be specified as {@code [wmq-qmr]} of {@code [queue-dest]}
-         *      or as {@code [parm]} named {@code connectQueueManager}. Parameter {@code connectQueueManager} takes precedence
-         *      before {@code [wmq-qmr]}</li>
-         *  <li>Parameter {@code channelName} will be recognized for declaring the channel name.</li> 
+         * <li>Class support client connections, only, so the {@code [connection-name]} MUST be provided and MUST be
+         * as {@code [tcp-connection-name]}</li>
+         * <li>The queue manager to contact can be specified as {@code [wmq-qmr]} of {@code [queue-dest]}
+         * or as {@code [parm]} named {@code connectQueueManager}. Parameter {@code connectQueueManager} takes precedence
+         * before {@code [wmq-qmr]}</li>
+         * <li>Parameter {@code channelName} will be recognized for declaring the channel name.</li>
          * </ul>
-         * <p><strong>Sample usage</strong>
+         * <p>
+         * <strong>Sample usage</strong>
          * <code><pre>
          * URI uri = new URI( "wmq://localhost:1414/dest/queue/QUEUE.IN@QMGR?channelName=CHANNEL_1" );
          * Configuration c1 = Configuration.fromURI( uri );
@@ -85,14 +92,18 @@ public class MQ {
          * Source for this information is http://www.redbooks.ibm.com/redpapers/pdfs/redp4350.pdf
          * <p>
          * The basic syntax of the wmq IRI scheme is:
-         * <ul><li>wmq:/wmq-dest</li></ul>
+         * <ul>
+         * <li>wmq:/wmq-dest</li>
+         * </ul>
          * where wmq-dest is one of the following options:
          * <ul>
          * <li>msg/queue/queue_name</li>
          * <li>msg/topic/topic_name</li>
          * </ul>
          * The full syntax specification for a WMQ URI/IRI is as follows:
-         * <p><pre>
+         * <p>
+         * 
+         * <pre>
          * wmq-iri = "wmq:" [ "//" connection-name ] "/" wmq-dest ["?" parm *("&" parm)]
          *   connection-name = tcp-connection-name / other-connection-name
          *     tcp-connection-name = ihost [ ":" port ]
@@ -119,7 +130,8 @@ public class MQ {
          * </pre>
          * 
          * 
-         * @param uri a Websphere MQ compliant URI / IRI. See notes on syntax and elements used above.
+         * @param uri
+         *            a Websphere MQ compliant URI / IRI. See notes on syntax and elements used above.
          * @return a new Configuration built from the URI
          * @throws IllegalArgumentException
          * 
@@ -168,8 +180,11 @@ public class MQ {
             String[] splitted = path.split( "@" );
             /* Ensure that the caller gets (at least) 2 elements */
             if ( splitted.length == 1 ) {
-                splitted = Arrays.copyOf(splitted, 2 );
-                splitted[1] = null;
+                // No Arrays.copyOf in Java 1.4
+                String[] temporary = new String[2];
+                temporary[0] = splitted[0];
+                temporary[1] = null;
+                splitted = temporary;
             }
             return splitted;
         }
