@@ -84,7 +84,7 @@ import oracle.reports.utility.Utility;
  * @see MgpDestination
  * 
  */
-public class ZipDestination extends MgpDestination {
+public final class ZipDestination extends MgpDestination {
 
     private static Logger LOG = Logger.getLogger( ZipDestination.class );
 
@@ -289,7 +289,7 @@ public class ZipDestination extends MgpDestination {
     }
 
     public static void shutdown() {
-        Destination.shutdown();
+        MgpDestination.shutdown();
         LOG.info( "Destination " + U.w( ZipDestination.class.getName() ) + " shut down." );
     }
 

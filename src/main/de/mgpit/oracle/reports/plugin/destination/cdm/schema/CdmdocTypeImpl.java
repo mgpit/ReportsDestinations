@@ -6,19 +6,19 @@
 package de.mgpit.oracle.reports.plugin.destination.cdm.schema;
 
 
-public class CdmDocTypeImpl extends oracle.xml.jaxb.JaxbNode implements de.mgpit.oracle.reports.plugin.destination.cdm.schema.CdmDocType
+public class CdmdocTypeImpl extends oracle.xml.jaxb.JaxbNode implements de.mgpit.oracle.reports.plugin.destination.cdm.schema.CdmdocType
 {
-   public CdmDocTypeImpl(oracle.xml.parser.v2.XMLDocument ownerDoc)
+   public CdmdocTypeImpl(oracle.xml.parser.v2.XMLDocument ownerDoc)
    {
-      super("CdmDocType", "", ownerDoc); 
+      super("cdmdoc", "", ownerDoc); 
    }
 
-   public CdmDocTypeImpl(java.lang.String name, java.lang.String namespace, oracle.xml.parser.v2.XMLDocument ownerDoc)
+   public CdmdocTypeImpl(java.lang.String name, java.lang.String namespace, oracle.xml.parser.v2.XMLDocument ownerDoc)
    {
       super(name, namespace, ownerDoc);
    }
 
-   public CdmDocTypeImpl(oracle.xml.parser.v2.XMLElement node)
+   public CdmdocTypeImpl(oracle.xml.parser.v2.XMLElement node)
    {
       super(node);
    }
@@ -68,12 +68,12 @@ public class CdmDocTypeImpl extends oracle.xml.jaxb.JaxbNode implements de.mgpit
       super.populateNodeArray(node);
    }
 
-   static final Object[] _CdmDocType = 
+   static final Object[] _CdmdocType = 
    {"content"};
 
    protected Object[] getSchemaObject()
    {
-      return _CdmDocType;
+      return _CdmdocType;
    }
 
 }

@@ -6,7 +6,7 @@
 package de.mgpit.oracle.reports.plugin.destination.cdm.schema;
 
 
-public class CdmdocImpl extends de.mgpit.oracle.reports.plugin.destination.cdm.schema.CdmDocTypeImpl implements de.mgpit.oracle.reports.plugin.destination.cdm.schema.Cdmdoc
+public class CdmdocImpl extends de.mgpit.oracle.reports.plugin.destination.cdm.schema.CdmdocTypeImpl implements de.mgpit.oracle.reports.plugin.destination.cdm.schema.Cdmdoc
 {
    public CdmdocImpl(oracle.xml.parser.v2.XMLDocument ownerDoc)
    {

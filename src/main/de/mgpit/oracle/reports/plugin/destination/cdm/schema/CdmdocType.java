@@ -6,7 +6,7 @@
 package de.mgpit.oracle.reports.plugin.destination.cdm.schema;
 
 
-public interface CdmDocType
+public interface CdmdocType
 {
    public void setContent(de.mgpit.oracle.reports.plugin.destination.cdm.schema.ContentType value);
 

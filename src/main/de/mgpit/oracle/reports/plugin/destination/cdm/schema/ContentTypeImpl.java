@@ -10,7 +10,7 @@ public class ContentTypeImpl extends oracle.xml.jaxb.JaxbNode implements de.mgpi
 {
    public ContentTypeImpl(oracle.xml.parser.v2.XMLDocument ownerDoc)
    {
-      super("ContentType", "", ownerDoc); 
+      super("content", "", ownerDoc); 
    }
 
    public ContentTypeImpl(java.lang.String name, java.lang.String namespace, oracle.xml.parser.v2.XMLDocument ownerDoc)

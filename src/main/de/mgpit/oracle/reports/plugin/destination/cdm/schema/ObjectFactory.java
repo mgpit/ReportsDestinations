@@ -8,21 +8,21 @@ package de.mgpit.oracle.reports.plugin.destination.cdm.schema;
 
 public class ObjectFactory 
 {
-   public de.mgpit.oracle.reports.plugin.destination.cdm.schema.Cdmdoc createCdmdoc()
+   public de.mgpit.oracle.reports.plugin.destination.cdm.schema.CdmdocType createCdmdocType()
    {
-      de.mgpit.oracle.reports.plugin.destination.cdm.schema.Cdmdoc elem = new de.mgpit.oracle.reports.plugin.destination.cdm.schema.CdmdocImpl(ownerDocument);
-      return elem;
-   }
-
-   public de.mgpit.oracle.reports.plugin.destination.cdm.schema.CdmDocType createCdmDocType()
-   {
-      de.mgpit.oracle.reports.plugin.destination.cdm.schema.CdmDocType elem = new de.mgpit.oracle.reports.plugin.destination.cdm.schema.CdmDocTypeImpl(ownerDocument);
+      de.mgpit.oracle.reports.plugin.destination.cdm.schema.CdmdocType elem = new de.mgpit.oracle.reports.plugin.destination.cdm.schema.CdmdocTypeImpl(ownerDocument);
       return elem;
    }
 
    public de.mgpit.oracle.reports.plugin.destination.cdm.schema.ContentType createContentType()
    {
       de.mgpit.oracle.reports.plugin.destination.cdm.schema.ContentType elem = new de.mgpit.oracle.reports.plugin.destination.cdm.schema.ContentTypeImpl(ownerDocument);
+      return elem;
+   }
+
+   public de.mgpit.oracle.reports.plugin.destination.cdm.schema.Cdmdoc createCdmdoc()
+   {
+      de.mgpit.oracle.reports.plugin.destination.cdm.schema.Cdmdoc elem = new de.mgpit.oracle.reports.plugin.destination.cdm.schema.CdmdocImpl(ownerDocument);
       return elem;
    }
 
@@ -92,7 +92,7 @@ public class ObjectFactory
 
    public Object getSchemaLocation() throws Exception
    {
-      return new java.io.File("H:/workspace/ReportsDestinations/src/de/mgpit/oracle/reports/plugin/destination/cdm/schema/cdmdoc.xsd").toURL();
+      return new java.io.File("H:/workspace/ReportsDestinations/src/main/de/mgpit/oracle/reports/plugin/destination/cdm/schema/cdmdoc.xsd").toURL();
    }
 
    private oracle.xml.parser.v2.XMLDocument ownerDocument = 

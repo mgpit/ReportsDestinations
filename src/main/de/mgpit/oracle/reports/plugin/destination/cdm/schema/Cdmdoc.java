@@ -6,7 +6,7 @@
 package de.mgpit.oracle.reports.plugin.destination.cdm.schema;
 
 
-public interface Cdmdoc extends de.mgpit.oracle.reports.plugin.destination.cdm.schema.CdmDocType, javax.xml.bind.Element
+public interface Cdmdoc extends de.mgpit.oracle.reports.plugin.destination.cdm.schema.CdmdocType, javax.xml.bind.Element
 {
 }
 
