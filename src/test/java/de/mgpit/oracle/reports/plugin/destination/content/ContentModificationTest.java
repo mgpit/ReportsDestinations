@@ -9,22 +9,22 @@ import oracle.reports.RWException;
 
 public class ContentModificationTest extends TestCase {
     
-    public void testContentModification() {
+    public static void main( String[] args ) { // void testContentModification() {
         
         ContentModifier cdm = new CdmDecorator();
         ContentModifier base64 = new Base64Transformer();
         base64.followedBy( cdm );
         
-        
         ByteArrayInputStream stringInput = new ByteArrayInputStream( "FooBar1".getBytes() ); 
         
+        boolean noExceptionOccured = true;
         try {
             base64.modify( stringInput, System.out );
         } catch ( RWException e ) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            noExceptionOccured = false;
         }
         
+        assertTrue( noExceptionOccured );
     }
 
 }

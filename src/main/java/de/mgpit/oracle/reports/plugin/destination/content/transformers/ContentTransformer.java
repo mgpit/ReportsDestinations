@@ -2,13 +2,20 @@ package de.mgpit.oracle.reports.plugin.destination.content.transformers;
 
 import java.io.InputStream;
 
-import de.mgpit.oracle.reports.plugin.destination.content.decorators.ContentDecorator;
+import de.mgpit.oracle.reports.plugin.destination.content.ContentModifier;
 import oracle.reports.RWException;
 
-public abstract class ContentTransformer extends ContentDecorator {
+/**
+ * Abstract superclass for {@link ContentModifier}s which will transform the InputStream. 
+ *  
+ * @author mgpit
+ *
+ */
+public abstract class ContentTransformer extends ContentModifier {
 
-    protected InputStream decorate( InputStream content ) throws RWException {
-        return this.transform( content );
+    final protected InputStream applyModification( InputStream in ) throws RWException {
+        InputStream transformed = this.transform( in );
+        return transformed;
     }
     
     protected abstract InputStream transform( InputStream content ) throws RWException;

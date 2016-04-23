@@ -18,8 +18,7 @@ public class CdmDecorator extends ContentDecorator {
 
     protected InputStream decorate( InputStream in ) throws RWException {
         InputStream decorated = in;
-        CircularByteBuffer cbb = new CircularByteBuffer(CircularByteBuffer.INFINITE_SIZE);
-        OutputStream out = cbb.getOutputStream();
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
 
         String prolog = "<?xml?><cdm><info>Foo</info><data>";
         String epilog = "</data>";
@@ -28,12 +27,16 @@ public class CdmDecorator extends ContentDecorator {
             out.write( prolog.getBytes() );
             IOUtility.copyFromTo( in, out );
             out.write( epilog.getBytes() );
-            
-            decorated = cbb.getInputStream();
+            decorated = new ByteArrayInputStream( out.toByteArray() );
         } catch ( IOException ioex ) {
             throw Utility.newRWException( ioex );
+        } finally {
+            try {
+                out.close();
+            } catch ( Exception e ) {
+                // NOOP
+            }
         }
-
         return decorated;
     }
 

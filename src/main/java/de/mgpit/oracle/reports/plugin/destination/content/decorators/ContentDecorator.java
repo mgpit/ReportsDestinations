@@ -6,11 +6,17 @@ import java.io.InputStream;
 import de.mgpit.oracle.reports.plugin.destination.content.ContentModifier;
 import oracle.reports.RWException;
 
+/**
+ * Abstract superclass for {@link ContentModifier}s which will decorate the InputStream.
+ * 
+ * @author mgpit
+ *
+ */
 public abstract class ContentDecorator extends ContentModifier {
 
-    protected InputStream applyModification( InputStream in ) throws RWException{
-        return this.decorate( in );
-
+    final protected InputStream applyModification( InputStream in ) throws RWException {
+        InputStream decorated =  this.decorate( in );
+        return decorated;
     }
 
     protected abstract InputStream decorate( InputStream in ) throws RWException;
