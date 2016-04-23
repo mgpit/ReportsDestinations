@@ -8,6 +8,10 @@ package de.mgpit.oracle.reports.plugin.destination.cdm.schema;
 
 public interface CdmdocType
 {
+   public void setUnifier(java.lang.String value);
+
+   public java.lang.String getUnifier();
+
    public void setContent(de.mgpit.oracle.reports.plugin.destination.cdm.schema.ContentType value);
 
    public de.mgpit.oracle.reports.plugin.destination.cdm.schema.ContentType getContent();

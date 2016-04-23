@@ -23,6 +23,18 @@ public class CdmdocTypeImpl extends oracle.xml.jaxb.JaxbNode implements de.mgpit
       super(node);
    }
 
+   public void setUnifier(java.lang.String value)
+   {
+      java.lang.String lexval = oracle.xml.jaxb.JaxbDatatypeConverter.printAnySimpleType(value);
+      super.setJaxbAttr("unifier", "", lexval);
+   }
+
+   public java.lang.String getUnifier()
+   {
+      java.lang.String lexval = super.getJaxbAttr("unifier", "");
+      return oracle.xml.jaxb.JaxbDatatypeConverter.parseAnySimpleType(lexval);
+   }
+
    public void setContent(de.mgpit.oracle.reports.plugin.destination.cdm.schema.ContentType value)
    {
       super.setElement("content", "", (oracle.xml.jaxb.JaxbNode)value, 0);

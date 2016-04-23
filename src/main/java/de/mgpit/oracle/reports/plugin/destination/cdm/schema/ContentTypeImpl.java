@@ -35,15 +35,15 @@ public class ContentTypeImpl extends oracle.xml.jaxb.JaxbNode implements de.mgpi
       return oracle.xml.jaxb.JaxbDatatypeConverter.parseInt(lexval);
    }
 
-   public void setPayload(java.lang.String value)
+   public void setData(java.lang.String value)
    {
       java.lang.String lexval = oracle.xml.jaxb.JaxbDatatypeConverter.printString(value);
-      super.setJaxbElement("payload", "", lexval, 1);
+      super.setJaxbElement("data", "", lexval, 1);
    }
 
-   public java.lang.String getPayload()
+   public java.lang.String getData()
    {
-      java.lang.String lexval = super.getJaxbElement("payload", "", 1);
+      java.lang.String lexval = super.getJaxbElement("data", "", 1);
       return oracle.xml.jaxb.JaxbDatatypeConverter.parseString(lexval);
    }
 
@@ -78,7 +78,7 @@ public class ContentTypeImpl extends oracle.xml.jaxb.JaxbNode implements de.mgpi
          }
          if (name != null)
          {
-            if (name.equals("payload") && namespace.equals(""))
+            if (name.equals("data") && namespace.equals(""))
             {
                super.setNodeArrayValue(1, n);
             }
@@ -92,7 +92,7 @@ public class ContentTypeImpl extends oracle.xml.jaxb.JaxbNode implements de.mgpi
    }
 
    static final Object[] _ContentType = 
-   {"length", "payload"};
+   {"length", "data"};
 
    protected Object[] getSchemaObject()
    {

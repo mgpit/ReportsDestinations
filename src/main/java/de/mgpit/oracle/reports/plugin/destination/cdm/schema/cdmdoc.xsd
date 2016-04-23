@@ -8,13 +8,14 @@
 		<xs:sequence>
 			<xs:element ref="content" minOccurs="1" maxOccurs="1"/>
 		</xs:sequence>
+		<xs:attribute name="unifier"/>
 	</xs:complexType>
 
 
 	<xs:complexType name="content">
 		<xs:sequence>
 			<xs:element name="length" type="xs:int"  minOccurs="1"  maxOccurs="1"/>
-			<xs:element name="payload" type="xs:string"  minOccurs="1" maxOccurs="1"/>
+			<xs:element name="data" type="xs:string"  minOccurs="1" maxOccurs="1"/>
 		</xs:sequence>
 	</xs:complexType>
 </xs:schema>

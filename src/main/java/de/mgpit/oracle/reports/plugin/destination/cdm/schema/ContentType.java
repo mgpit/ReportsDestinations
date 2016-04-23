@@ -12,9 +12,9 @@ public interface ContentType
 
    public int getLength();
 
-   public void setPayload(java.lang.String value);
+   public void setData(java.lang.String value);
 
-   public java.lang.String getPayload();
+   public java.lang.String getData();
 
 }
 
