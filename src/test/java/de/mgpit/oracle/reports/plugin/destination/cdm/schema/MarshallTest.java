@@ -23,7 +23,7 @@ public class MarshallTest extends TestCase {
         Cdmdoc cdmdoc = of.createCdmdoc();
         Content content = of.createContent();
         content.setLength( 1000 );
-        content.setPayload( "Lorem Ipsum Dolor si Amet" );
+        content.setData( "Lorem Ipsum Dolor si Amet" );
         cdmdoc.setContent( content );
 
         JAXBContext jaxbContext = null;
