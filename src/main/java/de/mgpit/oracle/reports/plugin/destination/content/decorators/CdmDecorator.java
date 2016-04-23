@@ -14,7 +14,7 @@ import de.mgpit.oracle.reports.plugin.commons.Units;
 import oracle.reports.RWException;
 import oracle.reports.utility.Utility;
 
-public class CdmDecorator extends ContentDecorator {
+public class CdmDecorator extends AbstractContentDecorator {
 
     protected InputStream decorate( InputStream in ) throws RWException {
         InputStream decorated = in;

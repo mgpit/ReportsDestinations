@@ -12,7 +12,7 @@ import oracle.reports.RWException;
  * @author mgpit
  *
  */
-public abstract class ContentDecorator extends ContentModifier {
+public abstract class AbstractContentDecorator extends ContentModifier {
 
     final protected InputStream applyModification( InputStream in ) throws RWException {
         InputStream decorated =  this.decorate( in );
