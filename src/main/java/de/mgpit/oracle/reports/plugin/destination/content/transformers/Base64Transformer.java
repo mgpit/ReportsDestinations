@@ -17,7 +17,7 @@ public class Base64Transformer extends AbstractContentTransformer {
     protected InputStream transform( InputStream content ) throws RWException{
         try {
             byte[] binaryData = IOUtility.asByteArray( content );
-            byte[] base64EncodedData = Base64.encodeBase64Chunked( binaryData );
+            byte[] base64EncodedData = Base64.encodeBase64( binaryData );
             
             return new ByteArrayInputStream( base64EncodedData );
         } catch ( IOException ioex ) {
