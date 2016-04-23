@@ -62,7 +62,7 @@ public class ZipArchive {
      *            full file name of the ZIP archive to be created
      * @return a ZipFile instance
      * 
-     * @throws AssertionError
+     * @throws Error
      *             if fileName is provided as null or empty String
      */
     public static ZipArchive newNamed( final String fileName ) {
@@ -80,7 +80,7 @@ public class ZipArchive {
      * @param fileName
      * @return a ZipFile instance
      * 
-     * @throws AssertionError
+     * @throws Error
      *             if fileName is provided as null or empty String
      */
     public static ZipArchive newOrExistingNamed( final String fileName ) {
@@ -188,7 +188,7 @@ public class ZipArchive {
      * 
      * @throws ArchivingException
      *             if an error occurs during adding.
-     * @throws AssertionError
+     * @throws Error
      *             if one of the parameters is provided as null or empty String.
      */
     public ZipArchive addFile( String sourceFileName, String entryName ) throws ArchivingException {
