@@ -12,7 +12,7 @@ import de.mgpit.oracle.reports.plugin.commons.IOUtility;
 import oracle.reports.RWException;
 import oracle.reports.utility.Utility;
 
-public class Base64Transformer extends ContentTransformer {
+public class Base64Transformer extends AbstractContentTransformer {
 
     protected InputStream transform( InputStream content ) throws RWException{
         try {

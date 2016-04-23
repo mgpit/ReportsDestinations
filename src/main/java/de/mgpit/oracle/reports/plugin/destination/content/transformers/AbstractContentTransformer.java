@@ -11,7 +11,7 @@ import oracle.reports.RWException;
  * @author mgpit
  *
  */
-public abstract class ContentTransformer extends ContentModifier {
+public abstract class AbstractContentTransformer extends ContentModifier {
 
     final protected InputStream applyModification( InputStream in ) throws RWException {
         InputStream transformed = this.transform( in );
