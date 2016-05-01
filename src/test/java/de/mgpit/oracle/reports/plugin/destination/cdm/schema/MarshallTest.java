@@ -3,6 +3,7 @@ package de.mgpit.oracle.reports.plugin.destination.cdm.schema;
 
 import java.io.StringWriter;
 
+import javax.swing.text.MaskFormatter;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
@@ -40,22 +41,24 @@ public class MarshallTest extends TestCase {
         try {
             jaxbMarshaller = jaxbContext.createMarshaller();
             jaxbMarshaller.setProperty( Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.FALSE );
+            // jaxbMarshaller.setProperty( Marshaller.JAXB_FRAGMENT, Boolean.FALSE );
         } catch ( JAXBException some ) {
+            some.printStackTrace();
             noExceptionOccured = false;
         }
         assertTrue( noExceptionOccured );
         assertNotNull( jaxbMarshaller );
 
-        StringWriter xmlStream = new StringWriter( Units.ONE_KILOBYTE/4 );
+        StringWriter xmlStream = new StringWriter( Units.ONE_KILOBYTE / 4 );
         try {
             jaxbMarshaller.marshal( cdmdoc, xmlStream );
         } catch ( JAXBException e ) {
             noExceptionOccured = false;
         }
         assertTrue( noExceptionOccured );
-        
-        String expected = "<?xml version = '1.0' encoding = 'UTF-8'?><cdmdoc><content><length>1000</length><payload>Lorem Ipsum Dolor si Amet</payload></content></cdmdoc>";
+        String expected = "<?xml version = '1.0' encoding = 'UTF-8'?><cdmdoc><content><length>1000</length><data>Lorem Ipsum Dolor si Amet</data></content></cdmdoc>";
         String actual = xmlStream.toString();
+        // System.out.println( actual );
         assertEquals( expected, actual );
 
     }

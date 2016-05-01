@@ -58,7 +58,7 @@ public class IOUtility {
      * @throws IOException
      */
     public static void copyFromTo( InputStream source, OutputStream destination ) throws IOException {
-        byte[] buffer = new byte[Units.FOUR_KILOBYTE];
+        byte[] buffer = new byte[Units.SIXTYFOUR_KILOBYTE];
         int bytesRead;
         while ( (bytesRead = source.read( buffer )) >= 0 ) {
             destination.write( buffer, 0, bytesRead );
@@ -75,6 +75,12 @@ public class IOUtility {
         ByteArrayOutputStream temporary = new ByteArrayOutputStream();
         copyFromTo( new BufferedInputStream( in ), temporary );
         return temporary.toString( "UTF-8" );
+    }
+
+    public static String asPlatformString( InputStream in ) throws IOException {
+        ByteArrayOutputStream temporary = new ByteArrayOutputStream();
+        copyFromTo( new BufferedInputStream( in ), temporary );
+        return temporary.toString();
     }
 
 }
