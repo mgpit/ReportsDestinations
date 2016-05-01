@@ -26,40 +26,45 @@ public class CdmDecorator extends AbstractContentDecorator {
     protected InputStream decorate( InputStream in ) throws RWException {
         InputStream decorated = in;
 
-        ObjectFactory of = new ObjectFactory();
-        Cdmdoc cdmdoc = of.createCdmdoc();
-
-        SimpleDateFormat df = new SimpleDateFormat( "yyyyMMddhhmmss" );
-        cdmdoc.setUnifier( df.format( new Date() ) );
-
-        Content content = of.createContent();
-        cdmdoc.setContent( content );
-        
-        String data = "";
         try {
-            data = IOUtility.asUTF8String( in );
-        } catch ( IOException ioException ) {
-            throw new Utility().newRWException( ioException );
-        }
-        content.setData( data );
-        content.setLength( data.length() );
 
-        JAXBContext jaxbContext = null;
-        Marshaller cdmdocMarshaller = null;
-        StringWriter xmlStream = new StringWriter( Units.ONE_KILOBYTE );
+            ObjectFactory of = new ObjectFactory();
+            Cdmdoc cdmdoc = of.createCdmdoc();
 
-        try {
-            jaxbContext = JAXBContext.newInstance( "de.mgpit.oracle.reports.plugin.destination.cdm.schema" );
-            cdmdocMarshaller = jaxbContext.createMarshaller();
-            cdmdocMarshaller.setProperty( Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE );
-            cdmdocMarshaller.setProperty(Marshaller.JAXB_ENCODING, "UTF-8");
+            SimpleDateFormat df = new SimpleDateFormat( "yyyyMMddhhmmss" );
+            cdmdoc.setUnifier( df.format( new Date() ) );
 
-            cdmdocMarshaller.marshal( cdmdoc, xmlStream );
-            decorated = new ByteArrayInputStream( xmlStream.toString().getBytes( "UTF-8" ) );
-        } catch ( JAXBException jaxbException ) {
-            throw Utility.newRWException( jaxbException );
-        } catch ( UnsupportedEncodingException unsupportedEncoding ) {
-            throw Utility.newRWException( unsupportedEncoding );
+            Content content = of.createContent();
+            cdmdoc.setContent( content );
+
+            String data = "";
+            try {
+                data = IOUtility.asUTF8String( in );
+            } catch ( IOException ioException ) {
+                throw new Utility().newRWException( ioException );
+            }
+            content.setData( data );
+            content.setLength( data.length() );
+
+            JAXBContext jaxbContext = null;
+            Marshaller cdmdocMarshaller = null;
+            StringWriter xmlStream = new StringWriter( Units.ONE_KILOBYTE );
+
+            try {
+                jaxbContext = JAXBContext.newInstance( "de.mgpit.oracle.reports.plugin.destination.cdm.schema" );
+                cdmdocMarshaller = jaxbContext.createMarshaller();
+                cdmdocMarshaller.setProperty( Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE );
+                cdmdocMarshaller.setProperty( Marshaller.JAXB_ENCODING, "UTF-8" );
+
+                cdmdocMarshaller.marshal( cdmdoc, xmlStream );
+                decorated = new ByteArrayInputStream( xmlStream.toString().getBytes( "UTF-8" ) );
+            } catch ( JAXBException jaxbException ) {
+                throw Utility.newRWException( jaxbException );
+            } catch ( UnsupportedEncodingException unsupportedEncoding ) {
+                throw Utility.newRWException( unsupportedEncoding );
+            }
+        } catch ( JAXBException jaxbex ) {
+            throw Utility.newRWException( jaxbex );
         }
 
         return decorated;

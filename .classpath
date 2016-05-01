@@ -11,11 +11,13 @@
 	<classpathentry kind="lib" path="O:/DevSuite10gR2/jlib/zrclient.jar"/>
 	<classpathentry kind="lib" path="O:/DevSuite10gR2/reports/jlib/rwrun.jar"/>
 	<classpathentry kind="lib" path="O:/DevSuite10gR2/reports/jlib/log4j-1.2.4.jar"/>
-	<classpathentry kind="lib" path="O:/DevSuite10gR2/LIB/xml.jar"/>
 	<classpathentry kind="lib" path="H:/workspace/ReportsDestinations/lib/commons-codec-1.5/commons-codec-1.5.jar" sourcepath="lib/commons-codec-1.5/commons-codec-1.5-sources.jar">
 		<attributes>
 			<attribute name="javadoc_location" value="jar:file:/H:/workspace/ReportsDestinations/lib/commons-codec-1.5/commons-codec-1.5-javadoc.jar!/"/>
 		</attributes>
 	</classpathentry>
+	<classpathentry kind="lib" path="O:/Oracle/jwsdp-1.1/jaxb-1.0/lib/jaxb-api.jar"/>
+	<classpathentry kind="lib" path="O:/Oracle/jwsdp-1.1/jaxb-1.0/lib/jaxb-libs.jar"/>
+	<classpathentry kind="lib" path="O:/Oracle/jwsdp-1.1/jaxb-1.0/lib/jaxb-ri.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

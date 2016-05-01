@@ -14,7 +14,6 @@
     <property name="oracle.home" location="O:/DevSuite10gR2" />
     <property name="oracle.home.jlib" location="${oracle.home}/jlib" />
     <property name="oracle.home.lib" location="${oracle.home}/lib" />
-    <property name="orajaxb" location="${oracle.home}\bin\orajaxb.bat" />
 
     <property name="dir.reports" location="${oracle.home}/reports" />
     <property name="dir.reports.jlib" location="${dir.reports}/jlib" />
@@ -25,10 +24,6 @@
     <property name="lib.rwrun" location="${dir.reports.jlib}/rwrun.jar" />
     <property name="lib.zrclient" location="${oracle.home.jlib}/zrclient.jar" />
     <property name="lib.log4j" location="${dir.reports.jlib}/log4j-1.2.4.jar" />
-
-    <property name="lib.xmlparser2" location="${oracle.home.lib}/xmlparserv2.jar" />
-    <property name="lib.xsu12" location="${oracle.home.lib}/xsu12.jar" />
-    <property name="lib.xml" location="${oracle.home.lib}/xml.jar" />
 
     <scriptdef name="propertyreplace" language="javascript">
         <attribute name="name" />
@@ -60,9 +55,9 @@
     </path>
 
     <path id="orajaxb.class.path">
-        <!--pathelement path="${lib.xmlparser2}" /-->
-        <!--pathelement path="${lib.xsu12}" /-->
-        <pathelement path="${lib.xml}" />
+        <!--pathelement path="${lib.ora.xmlparser2}" /-->
+        <!--pathelement path="${lib.ora.xsu12}" /-->
+        <pathelement path="${lib.ora.xml}" />
     </path>
 
     <path id="zipdest.class.path">
@@ -91,7 +86,13 @@
     <property name="schema.schema.name" location="${jaxb.cdmdoc.dir.schema}/${schema.name}.xsd" />
     <property name="schema.bindings.name" location="${jaxb.cdmdoc.dir.schema}/${schema.name}.xjb" />
 
-    <target name="JAXB on cdmdoc" depends="splashit" description="Create JAXB classes for cdmdoc.xsd">
+
+    <property name="orajaxb" location="${oracle.home}\bin\orajaxb.bat" />
+    <property name="lib.ora.xmlparser2" location="${oracle.home.lib}/xmlparserv2.jar" />
+    <property name="lib.ora.xsu12" location="${oracle.home.lib}/xsu12.jar" />
+    <property name="lib.ora.xml" location="${oracle.home.lib}/xml.jar" />
+
+    <target name="ORA JAXB on cdmdoc" depends="splashit" description="Create JAXB classes for cdmdoc.xsd">
         <echo level="info" message="CDMDOC Schema Dir.....: ${jaxb.cdmdoc.dir.schema}" />
         <echo level="info" message="CDMDOC Package Name...: ${jaxb.cdmdoc.packagename}" />
         <delete failonerror="false" verbose="true">
@@ -101,12 +102,34 @@
             </fileset>
         </delete>
         <exec executable="cmd.exe" dir="${dir.src}" vmlauncher="false">
-            <env key="CLASSPATH" value="${lib.xmlparser2};${lib.xsu12};${lib.xml}" />
+            <env key="CLASSPATH" value="${lib.ora.xmlparser2};${lib.ora.xsu12};${lib.ora.xml}" />
             <arg value="/c" />
             <arg value="${orajaxb} -bindingFile ${schema.bindings.name} -schema ${schema.schema.name} -targetPkg ${jaxb.cdmdoc.packagename} -extension" />
         </exec>
     </target>
 
+    <property name="jwsdp.home" location="O:/Oracle/jwsdp-1.1"/>
+    <property name="jwsdp.jaxb.home" location="${jwsdp.home}/jaxb-1.0"/>
+    <property name="jwsdp.jaxb.lib" location="${jwsdp.jaxb.home}/lib"/>
+    <property name="xjc" location="${jwsdp.jaxb.home}/bin/xjc.bat" />
+    <property name="lib.sun.jaxb-api" location="${jwsdp.jaxb.lib}/jaxb-api.jar" />
+    <property name="lib.sun.jaxb-xjc" location="${jwsdp.jaxb.lib}/jaxb-xjc.jar" />
+
+    <target name="SUN JAXB on cdmdoc" depends="splashit" description="Create JAXB classes for cdmdoc.xsd">
+        <echo level="info" message="CDMDOC Schema Dir.....: ${jaxb.cdmdoc.dir.schema}" />
+        <echo level="info" message="CDMDOC Package Name...: ${jaxb.cdmdoc.packagename}" />
+        <delete failonerror="false" verbose="true">
+            <fileset dir="${jaxb.cdmdoc.dir.schema}">
+                <include name="**/*.java" />
+                <include name="**/jaxb.properties" />
+            </fileset>
+        </delete>
+        <exec executable="cmd.exe" dir="${dir.src}" vmlauncher="false">
+            <env key="CLASSPATH" value="${lib.sun.jaxb-api};${lib.sun.jaxb-xjc}" />
+            <arg value="/c" />
+            <arg value="${xjc} -b ${schema.bindings.name} -p ${jaxb.cdmdoc.packagename} ${schema.schema.name} " />
+        </exec>
+    </target>
 
     <target name="cleanbuild" depends="splashit">
         <delete dir="${dir.build}" failonerror="false" />
