@@ -8,6 +8,7 @@ import java.io.OutputStream;
 import org.apache.log4j.Logger;
 
 import de.mgpit.oracle.reports.plugin.commons.IOUtility;
+import de.mgpit.oracle.reports.plugin.commons.U;
 import oracle.reports.RWException;
 import oracle.reports.utility.Utility;
 
@@ -48,16 +49,13 @@ public abstract class ContentModifier {
      *            InputStream to be modified. MUST NOT be null.
      * @param out
      *            OutputStream to write the results. MUST NOT be null.
-     * @throws RWException if one of the arguments is null or any nested error occurs.
+     * @throws RWException
+     *             if one of the arguments is null or any nested error occurs.
      */
-    public void modify( InputStream in, OutputStream out ) throws RWException {
-        if ( in == null ) {
-            throw Utility.newRWException( new NullPointerException( "InputStream provided MUST NOT be null!" ) );
-        }
-        if ( out == null ) {
-            throw Utility.newRWException( new NullPointerException( "InputStream provided MUST NOT be null!" ) );
-        }
-        
+    public final void modify( final InputStream in, final OutputStream out ) throws RWException {
+        U.Rw.assertNotNull( in, "InputStream provided MUST NOT be null!" );
+        U.Rw.assertNotNull( out, "OutputStream provided MUST NOT be null!" );
+
         LOG.debug( "Receiving " + in.getClass().getName() + " for modification " );
         InputStream modified = this.applyModification( in );
         if ( this.hasNext() ) {

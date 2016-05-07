@@ -19,7 +19,7 @@ public class MarshallTest extends TestCase {
         ObjectFactory of = new ObjectFactory();
 
         Cdmdoc cdmdoc = null;
-        Content content;
+        Content content = null;
         try {
             cdmdoc = of.createCdmdoc();
             content = of.createContent();
@@ -31,32 +31,32 @@ public class MarshallTest extends TestCase {
         }
         assertTrue( noExceptionOccured );
 
-        JAXBContext jaxbContext = null;
-        Marshaller jaxbMarshaller = null;
+        JAXBContext cdmdocContext = null;
+        Marshaller cdmdoc2xml = null;
 
         try {
-            jaxbContext = JAXBContext.newInstance( "de.mgpit.oracle.reports.plugin.destination.cdm.schema" );
+            cdmdocContext = JAXBContext.newInstance( "de.mgpit.oracle.reports.plugin.destination.cdm.schema" );
         } catch ( JAXBException e ) {
             noExceptionOccured = false;
         }
         assertTrue( noExceptionOccured );
-        assertNotNull( jaxbContext );
+        assertNotNull( cdmdocContext );
 
         try {
-            jaxbMarshaller = jaxbContext.createMarshaller();
-            jaxbMarshaller.setProperty( Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.FALSE );
-            jaxbMarshaller.setProperty( Marshaller.JAXB_FRAGMENT, Boolean.TRUE );
+            cdmdoc2xml = cdmdocContext.createMarshaller();
+            cdmdoc2xml.setProperty( Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.FALSE );
+            cdmdoc2xml.setProperty( Marshaller.JAXB_FRAGMENT, new Boolean( true ) );
         } catch ( JAXBException some ) {
             some.printStackTrace();
             noExceptionOccured = false;
         }
         assertTrue( noExceptionOccured );
-        assertNotNull( jaxbMarshaller );
+        assertNotNull( cdmdoc2xml );
         assertNotNull( cdmdoc );
 
         StringWriter xmlStream = new StringWriter( Units.ONE_KILOBYTE / 4 );
         try {
-            jaxbMarshaller.marshal( cdmdoc, xmlStream );
+            cdmdoc2xml.marshal( cdmdoc, xmlStream );
         } catch ( JAXBException e ) {
             noExceptionOccured = false;
         }

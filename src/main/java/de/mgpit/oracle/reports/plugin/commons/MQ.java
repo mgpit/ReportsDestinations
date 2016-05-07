@@ -26,7 +26,13 @@ public class MQ {
      *
      */
     public static class Configuration {
+        /**
+         * Scheme for wmq URIs (IRIs) is "wmq"
+         */
         private static String SCHEME = "wmq";
+        /**
+         * path prefix for queue destinations.
+         */
         private static String WMQ_DEST = "/dest/queue/";
         private static String NO_USER = null;
         public static int MQ_DEFAULT_PORT = 1414;
@@ -133,16 +139,16 @@ public class MQ {
          * @param uri
          *            a Websphere MQ compliant URI / IRI. See notes on syntax and elements used above.
          * @return a new Configuration built from the URI
-         * @throws IllegalArgumentException
+         * @throws AssertionError
+         *             if the URI is null or does not have the wmq scheme
          * 
          */
         public static final Configuration fromURI( URI uri ) {
-            if ( uri == null ) {
-                throw new IllegalArgumentException( "You must provide a non null URI" );
-            }
+            U.assertNotNull( uri, "You must provide a non null URI" );
             String scheme = uri.getScheme();
-            if ( SCHEME.equalsIgnoreCase( scheme ) ) {
+            U.assertTrue( SCHEME.equalsIgnoreCase( scheme ), uri.toString() + " is NOT a valid MQ URI" );
 
+            {
                 String host = uri.getHost();
                 int port = uri.getPort();
 
@@ -158,21 +164,13 @@ public class MQ {
                 String channelName = queryParameters.getProperty( "channelName" );
 
                 return new MQ.Configuration( host, port, queueManagerName, channelName, queueName );
-            } else {
-                throw new IllegalArgumentException( uri.toString() + " is NOT a valid MQ URI" );
             }
         }
 
         private static String getRelevantPath( String path ) {
             String relevantPath = null;
-            if ( U.isEmpty( path ) ) {
-                throw new IllegalArgumentException( "You must not provide an empty URI path" );
-            }
-            if ( path.startsWith( Configuration.WMQ_DEST ) ) {
-                relevantPath = path.substring( Configuration.WMQ_DEST.length() );
-            } else {
-                throw new IllegalArgumentException( "URI path must start with " + Configuration.WMQ_DEST );
-            }
+            U.assertNotEmpty( path, "You must not provide an empty URI path" );
+            U.assertTrue( path.startsWith( Configuration.WMQ_DEST ), "URI path must start with " + Configuration.WMQ_DEST );
             return relevantPath;
         }
 

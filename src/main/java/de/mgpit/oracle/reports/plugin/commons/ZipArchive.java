@@ -66,9 +66,7 @@ public class ZipArchive {
      *             if fileName is provided as null or empty String
      */
     public static ZipArchive newNamed( final String fileName ) {
-        if ( U.isEmpty( fileName ) ) {
-            throw new Error( new NullPointerException( "fileName must not be null or empty string!" ));
-        }
+        U.assertNotEmpty( fileName, "fileName must not be null or empty string!" );
         ZipArchive archive = new ZipArchive( fileName );
         return archive;
     }
@@ -84,9 +82,7 @@ public class ZipArchive {
      *             if fileName is provided as null or empty String
      */
     public static ZipArchive newOrExistingNamed( final String fileName ) {
-        if ( U.isEmpty( fileName ) ) {
-            throw new Error( new NullPointerException( "fileName must not be null or empty string!" ));
-        }
+        U.assertNotEmpty( fileName, "fileName must not be null or empty string!" );
         ZipArchive archive = new ZipArchive( fileName ).forAppending();
         return archive;
     }
@@ -192,12 +188,9 @@ public class ZipArchive {
      *             if one of the parameters is provided as null or empty String.
      */
     public ZipArchive addFile( String sourceFileName, String entryName ) throws ArchivingException {
-        if ( U.isEmpty( sourceFileName ) ) {
-            throw new Error( new NullPointerException( "sourceFileName must not be null or empty string!" ));
-        }
-        if ( U.isEmpty( entryName ) ) {
-            throw new Error( new NullPointerException( "entryName must not be null or empty string!" ));
-        }
+        U.assertNotEmpty( sourceFileName, "sourceFileName must not be null or empty string!" );
+        U.assertNotEmpty( entryName, "entryName must not be null or empty string!" );
+        
         if ( !isOpen() ) {
             openTemporaryZipArchive();
         }
