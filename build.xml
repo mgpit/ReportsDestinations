@@ -81,6 +81,7 @@
     </target>
 
     <property name="jaxb.cdmdoc.packagename" value="de.mgpit.oracle.reports.plugin.destination.cdm.schema" />
+    <!-- vielleicht mal den packagemapper und unpackagemapper prüfen ... !!!!!!!!!! -->
     <propertyreplace name="jaxb.cdmdoc.dir.schema" value="${dir.src}${file.separator}${jaxb.cdmdoc.packagename}" token="." replace="${file.separator}" />
     <property name="schema.name" value="cdmdoc" />
     <property name="schema.schema.name" location="${jaxb.cdmdoc.dir.schema}/${schema.name}.xsd" />
@@ -108,9 +109,9 @@
         </exec>
     </target>
 
-    <property name="jwsdp.home" location="O:/Oracle/jwsdp-1.1"/>
-    <property name="jwsdp.jaxb.home" location="${jwsdp.home}/jaxb-1.0"/>
-    <property name="jwsdp.jaxb.lib" location="${jwsdp.jaxb.home}/lib"/>
+    <property name="jwsdp.home" location="O:/Oracle/jwsdp-1.1" />
+    <property name="jwsdp.jaxb.home" location="${jwsdp.home}/jaxb-1.0" />
+    <property name="jwsdp.jaxb.lib" location="${jwsdp.jaxb.home}/lib" />
     <property name="xjc" location="${jwsdp.jaxb.home}/bin/xjc.bat" />
     <property name="lib.sun.jaxb-api" location="${jwsdp.jaxb.lib}/jaxb-api.jar" />
     <property name="lib.sun.jaxb-xjc" location="${jwsdp.jaxb.lib}/jaxb-xjc.jar" />
@@ -189,5 +190,39 @@
 
     <target name="Deploy Destinations" description="Create and Deploy Destinations" depends="Deploy Zip Destination,Deploy CDM Destination">
         <echo message="Deployment finished" />
+    </target>
+
+    <target name="Make HTML Documentation" description="Prepare for documentation">
+        <delete dir="res/html" failonerror="false" />
+        <copy overwrite="true" todir="res/html">
+            <fileset dir="${dir.src}">
+                <include name="**/*.java" />
+                <exclude name="**/com/**" />
+                <exclude name="**/cdm/schema/**" />
+                <exclude name="**/spielwiese/**" />
+            </fileset>
+            <mapper>
+                <chainedmapper>
+                    <flattenmapper />
+                    <globmapper from="*.java" to="*.html" />
+                </chainedmapper>
+            </mapper>
+            <filterchain>
+                <tokenfilter>
+                    <scriptfilter language="javascript">
+                        <![CDATA[
+                        newToken=self.getToken();
+                        /* Watch out! & must be replaced FIRST !!! */
+                        newToken = newToken.replace('&', '&amp;' );
+                        newToken = newToken.replace('<', '&lt;' );
+                        newToken = newToken.replace('>', '&gt;' );
+                        self.setToken(newToken);
+                        ]]>
+                    </scriptfilter>
+                </tokenfilter>
+                <concatfilter prepend="res/doc-header.html.fragment" />
+                <concatfilter append="res/doc-trailer.html.fragment" />
+            </filterchain>
+        </copy>
     </target>
 </project>
