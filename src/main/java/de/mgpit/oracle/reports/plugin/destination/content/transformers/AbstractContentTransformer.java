@@ -14,7 +14,7 @@ import oracle.reports.RWException;
  */
 public abstract class AbstractContentTransformer extends ContentModifier {
 
-    final protected InputStream applyModification( InputStream in ) throws RWException {
+    final protected InputStream applyModification( final InputStream in ) throws RWException {
         U.Rw.assertNotNull( in );
         InputStream transformed = this.transform( in );
         return transformed;

@@ -14,7 +14,7 @@ import oracle.reports.utility.Utility;
 
 /**
  * 
- * @author mgpit
+ * @author mgp
  * 
  *         Abstract superclass for content modifiers.
  *         Will modify the content of an InputStream given ...
@@ -28,7 +28,7 @@ import oracle.reports.utility.Utility;
  */
 public abstract class ContentModifier {
 
-    private static Logger LOG = Logger.getLogger( ContentModifier.class );
+    private static final Logger LOG = Logger.getLogger( ContentModifier.class );
 
     private ContentModifier next;
 
@@ -36,7 +36,7 @@ public abstract class ContentModifier {
         return next != null;
     }
 
-    public ContentModifier followedBy( ContentModifier modifier ) {
+    public ContentModifier followedBy( final ContentModifier modifier ) {
         this.next = modifier;
         return modifier;
     }
@@ -79,6 +79,6 @@ public abstract class ContentModifier {
      *            InputStream to be modified
      * @return
      */
-    protected abstract InputStream applyModification( InputStream in ) throws RWException;
+    protected abstract InputStream applyModification( final InputStream in ) throws RWException;
 
 }

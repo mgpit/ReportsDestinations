@@ -25,25 +25,25 @@ public final class U {
      *            String to be wrapped
      * @return the String wrapped in square brackets
      */
-    public static String w( String s ) {
-        StringBuffer wrapped = new StringBuffer( ((s == null) ? 0 : s.length()) + 2 );
+    public static String w( final String s ) {
+        final StringBuffer wrapped = new StringBuffer( ((s == null) ? 0 : s.length()) + 2 );
         wrapped.append( "[" ).append( s ).append( "]" );
         return wrapped.toString();
     }
 
-    public static String w( Object o ) {
+    public static String w( final Object o ) {
         return w( o.toString() );
     }
 
-    public static String w( short sh ) {
+    public static String w( final short sh ) {
         return w( "" + sh );
     }
 
-    public static String w( int i ) {
+    public static String w( final int i ) {
         return w( "" + i );
     }
 
-    public static String w( long lng ) {
+    public static String w( final long lng ) {
         return w( "" + lng );
     }
 
@@ -53,11 +53,11 @@ public final class U {
      *            a String
      * @return {@code true} if the String s is null or them empty String "".
      */
-    public static boolean isEmpty( String s ) {
+    public static boolean isEmpty( final String s ) {
         return (s == null) || "".equals( s );
     }
 
-    public static boolean eq( String s1, String s2 ) {
+    public static boolean eq( final String s1, final String s2 ) {
         if ( s1 == null ) {
             return s2 == null;
         }
@@ -66,31 +66,31 @@ public final class U {
 
     /* Some assertion stuff ... :-) */
 
-    public static void assertNotNull( Object o ) throws AssertionError {
+    public static void assertNotNull( final Object o ) throws AssertionError {
         assertNotNull( o, o.getClass().getName() + " MUST NOT be null!" );
     }
 
-    public static void assertNotNull( Object o, String message ) throws AssertionError {
+    public static void assertNotNull( final Object o, final String message ) throws AssertionError {
         if ( o == null ) {
             throw new AssertionError( new NullPointerException( message ) );
         }
     }
 
-    public static void assertNotEmpty( String s ) throws AssertionError {
+    public static void assertNotEmpty( final String s ) throws AssertionError {
         assertNotEmpty( s, "String MUST NOT be null oder empty!" );
     }
 
-    public static void assertNotEmpty( String s, String message ) throws AssertionError {
+    public static void assertNotEmpty( final String s, final String message ) throws AssertionError {
         if ( isEmpty( s ) ) {
             throw new AssertionError( new IllegalArgumentException( message ) );
         }
     }
 
-    public static void assertTrue( boolean b ) throws AssertionError {
+    public static void assertTrue( final boolean b ) throws AssertionError {
         assertTrue( b, "Condition NOT met!" );
     }
 
-    public static void assertTrue( boolean b, String message ) throws AssertionError {
+    public static void assertTrue( final boolean b, final String message ) throws AssertionError {
         if ( !b ) {
             throw new AssertionError( message, new Exception( "Expression or variable does not evaluate to true!" ) );
         }

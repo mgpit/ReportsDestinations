@@ -13,7 +13,7 @@ import java.util.Map;
  *
  */
 public class StringCodedBoolean {
-    private static Map stringsMeaningTrue;
+    private static final Map stringsMeaningTrue;
     /**
      * Returns a Boolean with a value represented by the specified String. The Boolean returned represents the value true 
      * if the string argument is not null and is equal, ignoring case, to one of the strings "true", "yes", "on", "1".
@@ -32,9 +32,8 @@ public class StringCodedBoolean {
      * @return the Boolean value represented by the String
      */
     
-    public static boolean valueOf( String stringWithBooleanMeaning ){
-        Boolean b = (Boolean)stringsMeaningTrue.get( stringWithBooleanMeaning.toLowerCase() );
-        
+    public static boolean valueOf( final String stringWithBooleanMeaning ){
+        final Boolean b = (Boolean)stringsMeaningTrue.get( stringWithBooleanMeaning.toLowerCase() );
         return (b==null?false:b.booleanValue());
     }
     private StringCodedBoolean(){

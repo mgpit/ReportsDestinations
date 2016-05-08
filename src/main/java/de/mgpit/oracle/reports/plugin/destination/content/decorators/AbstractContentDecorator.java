@@ -10,7 +10,7 @@ import oracle.reports.RWException;
 /**
  * Abstract superclass for {@link ContentModifier}s which will decorate the InputStream.
  * 
- * @author mgpit
+ * @author mgp
  *
  */
 public abstract class AbstractContentDecorator extends ContentModifier {

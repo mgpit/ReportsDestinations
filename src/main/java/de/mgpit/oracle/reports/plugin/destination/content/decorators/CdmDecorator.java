@@ -24,18 +24,18 @@ import oracle.reports.utility.Utility;
 
 public class CdmDecorator extends AbstractContentDecorator {
 
-    protected InputStream decorate( InputStream in ) throws RWException {
+    protected InputStream decorate( final InputStream in ) throws RWException {
         InputStream decorated = in;
 
         try {
 
-            ObjectFactory of = new ObjectFactory();
-            Cdmdoc cdmdoc = of.createCdmdoc();
+            final ObjectFactory of = new ObjectFactory();
+            final Cdmdoc cdmdoc = of.createCdmdoc();
 
-            SimpleDateFormat df = new SimpleDateFormat( "yyyyMMddhhmmss" );
+            final SimpleDateFormat df = new SimpleDateFormat( "yyyyMMddhhmmss" );
             cdmdoc.setUnifier( df.format( new Date() ) );
 
-            Content content = of.createContent();
+            final Content content = of.createContent();
             cdmdoc.setContent( content );
 
             String data = "";
@@ -49,7 +49,7 @@ public class CdmDecorator extends AbstractContentDecorator {
 
             JAXBContext jaxbContext = null;
             Marshaller cdmdocMarshaller = null;
-            StringWriter xmlStream = new StringWriter( Units.ONE_KILOBYTE );
+            final StringWriter xmlStream = new StringWriter( Units.ONE_KILOBYTE );
 
             try {
                 jaxbContext = JAXBContext.newInstance( "de.mgpit.oracle.reports.plugin.destination.cdm.schema" );

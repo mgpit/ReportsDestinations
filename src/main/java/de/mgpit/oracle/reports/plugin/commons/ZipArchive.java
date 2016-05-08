@@ -44,7 +44,7 @@ import oracle.reports.utility.Utility;
  */
 public class ZipArchive {
 
-    private static Logger LOG = Logger.getLogger( ZipArchive.class );
+    private static final Logger LOG = Logger.getLogger( ZipArchive.class );
 
     private String fileName;
     private boolean appending = false;
@@ -96,12 +96,12 @@ public class ZipArchive {
         // NOP
     }
 
-    private ZipArchive( String fileName ) {
+    private ZipArchive( final String fileName ) {
         this.fileName = fileName;
         createTemporaryFileFromName( fileName );
     }
 
-    private ZipArchive createTemporaryFileFromName( String fileName ) {
+    private ZipArchive createTemporaryFileFromName( final String fileName ) {
         temporaryFile = new File( fileName + ".part" );
         return this;
     }
@@ -123,7 +123,7 @@ public class ZipArchive {
 
         ZipOutputStream zipper = getZipper();
         try {
-            File destinationFile = new File( getFileName() );
+            final File destinationFile = new File( getFileName() );
             if ( destinationFile.exists() ) {
                 if ( isAppending() ) {
                     copyExistingEntries( destinationFile, zipper );
@@ -132,7 +132,7 @@ public class ZipArchive {
             }
             zipper.close();
             markClosed();
-            boolean successful = temporaryFile.renameTo( destinationFile );
+            final boolean successful = temporaryFile.renameTo( destinationFile );
             LOG.info( "Creation of " + getFileName() + " was" + (successful ? " " : " not") + "successful." );
         } catch ( IOException ioException ) {
             final String message = "Error when closing Zip archive " + getFileName();
@@ -152,12 +152,12 @@ public class ZipArchive {
      *            the temporary ZIP file used during creation
      * @throws IOException
      */
-    private void copyExistingEntries( File existingZipFile, ZipOutputStream zipper ) throws IOException {
+    private void copyExistingEntries( final File existingZipFile, final ZipOutputStream zipper ) throws IOException {
         LOG.info( "About to copy entries from existing ZIP archive ..." );
-        ZipFile zipFile = new ZipFile( existingZipFile );
-        Enumeration entries = zipFile.entries();
+        final ZipFile zipFile = new ZipFile( existingZipFile );
+        final Enumeration entries = zipFile.entries();
         while ( entries.hasMoreElements() ) {
-            ZipEntry anEntry = (ZipEntry) entries.nextElement();
+            final ZipEntry anEntry = (ZipEntry) entries.nextElement();
             if ( !hasEntry( anEntry ) ) {
                 LOG.debug( " *** Copying entry " + anEntry + " from existing archive ..." );
                 if ( !anEntry.isDirectory() ) {
@@ -187,7 +187,7 @@ public class ZipArchive {
      * @throws Error
      *             if one of the parameters is provided as null or empty String.
      */
-    public ZipArchive addFile( String sourceFileName, String entryName ) throws ArchivingException {
+    public ZipArchive addFile( final String sourceFileName, final String entryName ) throws ArchivingException {
         U.assertNotEmpty( sourceFileName, "sourceFileName must not be null or empty string!" );
         U.assertNotEmpty( entryName, "entryName must not be null or empty string!" );
         
@@ -199,18 +199,18 @@ public class ZipArchive {
         return this;
     }
 
-    private void registerEntry( String sourceFileName, String entryName ) {
+    private void registerEntry( final String sourceFileName, final String entryName ) {
         if ( entriesCreated == null ) {
             entriesCreated = new HashMap();
         }
         entriesCreated.put( entryName, sourceFileName );
     }
 
-    private boolean hasEntry( ZipEntry entry ) {
+    private boolean hasEntry( final ZipEntry entry ) {
         return hasEntry( entry.getName() );
     }
 
-    private boolean hasEntry( String entryName ) {
+    private boolean hasEntry( final String entryName ) {
         return (entriesCreated == null) ? false : entriesCreated.containsKey( entryName );
     }
 
@@ -235,14 +235,14 @@ public class ZipArchive {
      * @throws ArchivingException
      */
     private void createEntryFromFile( final String sourceFilename, final String entryName ) throws ArchivingException {
-        ZipEntry zipEntry = new ZipEntry( entryName );
-        ZipOutputStream zipper = getZipper();
+        final ZipEntry zipEntry = new ZipEntry( entryName );
+        final ZipOutputStream zipper = getZipper();
 
         try {
-            File sourceFile = new File( sourceFilename );
+            final File sourceFile = new File( sourceFilename );
             zipEntry.setTime( sourceFile.lastModified() );
             zipEntry.setComment( "Created by ZipArchive" );
-            FileInputStream fileInput = new FileInputStream( sourceFile );
+            final FileInputStream fileInput = new FileInputStream( sourceFile );
             createEntry( zipper, zipEntry, fileInput );
         } catch ( IOException ioException ) {
             final String message = "Error when creating a new Entry from file!";
@@ -292,11 +292,11 @@ public class ZipArchive {
     public class ArchivingException extends Exception {
         private static final long serialVersionUID = -1831777826155115964L;
 
-        protected ArchivingException( Throwable cause ) {
+        protected ArchivingException( final Throwable cause ) {
             super( cause );
         }
 
-        protected ArchivingException( String message, Throwable cause ) {
+        protected ArchivingException( final String message, final Throwable cause ) {
             super( message, cause );
         }
     }

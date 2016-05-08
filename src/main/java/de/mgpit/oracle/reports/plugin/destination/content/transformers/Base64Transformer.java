@@ -14,10 +14,10 @@ import oracle.reports.utility.Utility;
 
 public class Base64Transformer extends AbstractContentTransformer {
 
-    protected InputStream transform( InputStream content ) throws RWException{
+    protected InputStream transform( final InputStream content ) throws RWException{
         try {
-            byte[] binaryData = IOUtility.asByteArray( content );
-            byte[] base64EncodedData = Base64.encodeBase64( binaryData );
+            final byte[] binaryData = IOUtility.asByteArray( content );
+            final byte[] base64EncodedData = Base64.encodeBase64( binaryData );
             
             return new ByteArrayInputStream( base64EncodedData );
         } catch ( IOException ioex ) {
