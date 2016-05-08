@@ -15,7 +15,7 @@ public class MQ {
      * 
      * @author mgp
      * 
-     *         Class representig a configuration for a Websphere MQ client connection.
+     *         Class representing a configuration for a Websphere MQ client connection.
      *         <p>
      *         This is still a very simple implementation as
      *         <ol>
@@ -54,7 +54,8 @@ public class MQ {
          * @param queueName
          *            name of the queue
          */
-        public Configuration( String hostName, int port, String queueManagerName, String channelName, String queueName ) {
+        public Configuration( final String hostName, final int port, final String queueManagerName, final String channelName,
+                final String queueName ) {
             this.hostName = hostName;
             this.port = (port <= 0) ? MQ_DEFAULT_PORT : port;
             this.queueManagerName = queueManagerName;
@@ -143,38 +144,53 @@ public class MQ {
          *             if the URI is null or does not have the wmq scheme
          * 
          */
-        public static final Configuration fromURI( URI uri ) {
+        public static final Configuration fromURI( final URI uri ) {
             U.assertNotNull( uri, "You must provide a non null URI" );
-            String scheme = uri.getScheme();
+            final String scheme = uri.getScheme();
             U.assertTrue( SCHEME.equalsIgnoreCase( scheme ), uri.toString() + " is NOT a valid MQ URI" );
 
             {
-                String host = uri.getHost();
-                int port = uri.getPort();
+                final String host = uri.getHost();
+                final int port = uri.getPort();
 
-                String path = getRelevantPath( uri.getPath() );
-                String[] pathElements = splitPath( path );
-                String queueName = pathElements[0];
+                final String path = getRelevantPath( uri.getPath() );
+                final String[] pathElements = splitPath( path );
+                final String queueName = pathElements[0];
                 String queueManagerName = pathElements[1];
 
-                String query = uri.getQuery();
-                Properties queryParameters = queryStringToProperties( query );
+                final String query = uri.getQuery();
+                final Properties queryParameters = queryStringToProperties( query );
                 /* This implementation lets query parameter override queue manager specified via path */
                 queueManagerName = queryParameters.getProperty( "connectQueueManager", queueManagerName );
-                String channelName = queryParameters.getProperty( "channelName" );
+                final String channelName = queryParameters.getProperty( "channelName" );
 
                 return new MQ.Configuration( host, port, queueManagerName, channelName, queueName );
             }
         }
 
-        private static String getRelevantPath( String path ) {
-            String relevantPath = null;
+        /**
+         * Returns the relevant path for determining the connection parameters.
+         * This is the <code>wmq-queue ["@" wmq-qmgr}</code> part of <code>"msg/queue/" wmq-queue ["@" wmq-qmgr]</code>
+         * 
+         * @param path
+         *            path given in the URI
+         * @return <code>wmq-queue ["@" wmq-qmgr}</code> part of <code>"msg/queue/" wmq-queue ["@" wmq-qmgr]</code>
+         */
+        private static String getRelevantPath( final String path ) {
             U.assertNotEmpty( path, "You must not provide an empty URI path" );
             U.assertTrue( path.startsWith( Configuration.WMQ_DEST ), "URI path must start with " + Configuration.WMQ_DEST );
+            final String relevantPath = path.substring( WMQ_DEST.length() );
             return relevantPath;
         }
 
-        private static String[] splitPath( String path ) {
+        /**
+         * Splits the relevant path into its <code>wmq-queue</code> and <code>"@" wmq-qmgr</code> parts
+         * 
+         * @param path
+         *            relevant path part of the URI
+         * @return a 2 element array with <code>wmq-queue</code> and <code>"@" wmq-qmgr</code> parts. If there is no<code>"@" wmq-qmgr</code> part the second element will be null.
+         */
+        private static String[] splitPath( final String path ) {
             String[] splitted = path.split( "@" );
             /* Ensure that the caller gets (at least) 2 elements */
             if ( splitted.length == 1 ) {
@@ -187,7 +203,12 @@ public class MQ {
             return splitted;
         }
 
-        private static Properties queryStringToProperties( String query ) {
+        /**
+         * Converts the query part of an URI into {@link Properties}.
+         * @param query the query part of the URI
+         * @return {@link Properties} containing the query parameters
+         */
+        private static Properties queryStringToProperties( final String query ) {
             Properties queryParameters = new Properties();
             if ( query != null ) {
                 String[] parameters = query.split( "&" );
@@ -210,6 +231,10 @@ public class MQ {
             return sb.toString();
         }
 
+        /**
+         * 
+         * @return the {@link URI} representation of the Configuration
+         */
         public URI toURI() {
             String path = WMQ_DEST + this.queueName + (U.isEmpty( this.queueManagerName ) ? null : "@" + this.queueManagerName);
             String query = U.isEmpty( this.channelName ) ? null : "channelName=" + this.channelName;

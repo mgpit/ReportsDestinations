@@ -86,7 +86,7 @@ import oracle.reports.utility.Utility;
  */
 public final class ZipDestination extends MgpDestination {
 
-    private static Logger LOG = Logger.getLogger( ZipDestination.class );
+    private static final Logger LOG = Logger.getLogger( ZipDestination.class );
 
     private ZipArchive zipArchive;
     private String zipEntryName;
@@ -121,7 +121,7 @@ public final class ZipDestination extends MgpDestination {
      *            file size of the file to be distributed
      * 
      */
-    protected void sendFile( boolean isMainFile, String cacheFileName, short fileFormat, long fileSize ) throws RWException {
+    protected void sendFile( final boolean isMainFile, final String cacheFileName, final short fileFormat, final long fileSize ) throws RWException {
         try {
             if ( isMainFile ) {
                 sendMainFile( cacheFileName, fileFormat );
@@ -145,7 +145,7 @@ public final class ZipDestination extends MgpDestination {
      *            file format code
      * @throws ArchivingException
      */
-    private void sendMainFile( String cacheFileName, short fileFormat ) throws ArchivingException {
+    private void sendMainFile( final String cacheFileName, final short fileFormat ) throws ArchivingException {
         LOG.info( "Sending Main file named " + U.w( cacheFileName ) + " to " + U.w( getZipArchiveFileName() ) );
         LOG.info( "ZIP Entry will be of format " + humanReadable( fileFormat ) + " named " + U.w( getZipEntryName() ) );
         addFileToArchive( cacheFileName, getZipEntryName() );
@@ -160,7 +160,7 @@ public final class ZipDestination extends MgpDestination {
      *            file format code
      * @throws ArchivingException
      */
-    private void sendOtherFile( String cacheFileName, short fileFormat ) throws ArchivingException {
+    private void sendOtherFile( final String cacheFileName, final short fileFormat ) throws ArchivingException {
         String otherFileZipEntryName = Utility.fileNameOnly( cacheFileName );
         LOG.info( "Sending Other file named " + U.w( cacheFileName ) + " to " + U.w( getZipArchiveFileName() ) );
         LOG.info( "ZIP Entry will be of format " + humanReadable( fileFormat ) + " named " + U.w( otherFileZipEntryName ) );
@@ -177,7 +177,7 @@ public final class ZipDestination extends MgpDestination {
      *            name for the source in the ZIP file
      * @throws ArchivingException
      */
-    protected void addFileToArchive( String sourceFileName, String entryName ) throws ArchivingException {
+    protected void addFileToArchive( final String sourceFileName, final String entryName ) throws ArchivingException {
         ZipArchive zipArchive = getZipArchive();
         zipArchive.addFile( sourceFileName, entryName );
     }
@@ -199,7 +199,7 @@ public final class ZipDestination extends MgpDestination {
      * @param mainFormat
      *            the output format of the main file.
      */
-    protected boolean start( Properties allProperties, String targetName, int totalNumberOfFiles, long totalFileSize,
+    protected boolean start( final Properties allProperties, final String targetName, final int totalNumberOfFiles, final long totalFileSize,
             short mainFormat ) throws RWException {
 
         boolean continueToSend = super.start( allProperties, targetName, totalNumberOfFiles, totalFileSize, mainFormat );
@@ -226,7 +226,7 @@ public final class ZipDestination extends MgpDestination {
      * @param zipArchiveFileName
      *            full file name of the ZIP file to be created / updated.
      */
-    private void createZipArchive( String zipArchiveFileName, boolean inAppendingMode ) {
+    private void createZipArchive( final String zipArchiveFileName, final boolean inAppendingMode ) {
         if ( inAppendingMode ) {
             this.zipArchive = ZipArchive.newOrExistingNamed( zipArchiveFileName );
         } else {
@@ -252,7 +252,7 @@ public final class ZipDestination extends MgpDestination {
      *            allProperties
      * @return
      */
-    private String getZipArchiveNameFromCallParameters( Properties allProperties, String targetName ) {
+    private String getZipArchiveNameFromCallParameters( final Properties allProperties, final String targetName ) {
         String zipArchiveNameProvided = allProperties.getProperty( "ZIPFILENAME",
                 allProperties.getProperty( "zipfilename", targetName ) );
         String calculatedZipArchiveName = IOUtility.withZipExtension( zipArchiveNameProvided );
@@ -267,7 +267,7 @@ public final class ZipDestination extends MgpDestination {
      *            report
      * @return
      */
-    private boolean getAppendFlagFromCallParameters( Properties allProperties ) {
+    private boolean getAppendFlagFromCallParameters( final Properties allProperties ) {
         String appendParameterValue = allProperties.getProperty( "APPEND", allProperties.getProperty( "append", "FALSE" ) );
         return StringCodedBoolean.valueOf( appendParameterValue );
     }
@@ -283,7 +283,7 @@ public final class ZipDestination extends MgpDestination {
      * @param destinationsProperties
      * @throws RWException
      */
-    public static void init( Properties destinationsProperties ) throws RWException {
+    public static void init( final Properties destinationsProperties ) throws RWException {
         MgpDestination.init( destinationsProperties );
         LOG.info( "Destination " + U.w( ZipDestination.class.getName() ) + " started." );
     }
@@ -297,7 +297,7 @@ public final class ZipDestination extends MgpDestination {
         return this.zipArchive;
     }
 
-    private void setInAppendingMode( boolean inAppendingMode ) {
+    private void setInAppendingMode( final boolean inAppendingMode ) {
         this.inAppendingMode = inAppendingMode;
     }
 
@@ -305,7 +305,7 @@ public final class ZipDestination extends MgpDestination {
         return this.inAppendingMode;
     }
 
-    private void setZipEntryName( String zipEntryName ) {
+    private void setZipEntryName( final String zipEntryName ) {
         this.zipEntryName = zipEntryName;
     }
 

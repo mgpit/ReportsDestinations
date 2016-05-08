@@ -15,7 +15,7 @@ import oracle.reports.utility.Utility;
 
 public final class MQDestination extends MgpDestination {
 
-    private static Logger LOG = Logger.getLogger( MQDestination.class );
+    private static final Logger LOG = Logger.getLogger( MQDestination.class );
 
     private static boolean keepConnection = false;
     private MQ mq;
@@ -36,7 +36,7 @@ public final class MQDestination extends MgpDestination {
     }
 
     /**
-     * Send another file from the current distribution to the destination.
+     * Send a file from the current distribution to the destination.
      * 
      * @param isMainFile
      *            flag if the file to be distributed is the main file

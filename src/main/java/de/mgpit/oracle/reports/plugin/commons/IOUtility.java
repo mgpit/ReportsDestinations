@@ -25,7 +25,7 @@ public class IOUtility {
      *            to add the .zip extension to
      * @return fileName with extension .zip
      */
-    public static String withZipExtension( String fileName ) {
+    public static String withZipExtension( final String fileName ) {
         String fileNameWithZipExtension;
         int dotPosition = fileName.lastIndexOf( '.' );
         if ( dotPosition > 0 ) {
@@ -44,7 +44,7 @@ public class IOUtility {
      *            full file name
      * @return the file name part
      */
-    public static String filenameOnly( String fullFileName ) {
+    public static String filenameOnly( final String fullFileName ) {
         return Utility.fileNameOnly( fullFileName );
     }
 
@@ -57,28 +57,28 @@ public class IOUtility {
      *            OutputStream to copy to
      * @throws IOException
      */
-    public static void copyFromTo( InputStream source, OutputStream destination ) throws IOException {
-        byte[] buffer = new byte[Units.SIXTYFOUR_KILOBYTE];
+    public static void copyFromTo( final InputStream source, final OutputStream destination ) throws IOException {
+        final byte[] buffer = new byte[Units.SIXTYFOUR_KILOBYTE];
         int bytesRead;
         while ( (bytesRead = source.read( buffer )) >= 0 ) {
             destination.write( buffer, 0, bytesRead );
         }
     }
 
-    public static byte[] asByteArray( InputStream in ) throws IOException {
-        ByteArrayOutputStream temporary = new ByteArrayOutputStream();
+    public static byte[] asByteArray( final InputStream in ) throws IOException {
+        final ByteArrayOutputStream temporary = new ByteArrayOutputStream();
         copyFromTo( new BufferedInputStream( in ), temporary );
         return temporary.toByteArray();
     }
 
-    public static String asUTF8String( InputStream in ) throws IOException {
-        ByteArrayOutputStream temporary = new ByteArrayOutputStream();
+    public static String asUTF8String( final InputStream in ) throws IOException {
+        final ByteArrayOutputStream temporary = new ByteArrayOutputStream();
         copyFromTo( new BufferedInputStream( in ), temporary );
         return temporary.toString( "UTF-8" );
     }
 
-    public static String asPlatformString( InputStream in ) throws IOException {
-        ByteArrayOutputStream temporary = new ByteArrayOutputStream();
+    public static String asPlatformString( final InputStream in ) throws IOException {
+        final ByteArrayOutputStream temporary = new ByteArrayOutputStream();
         copyFromTo( new BufferedInputStream( in ), temporary );
         return temporary.toString();
     }

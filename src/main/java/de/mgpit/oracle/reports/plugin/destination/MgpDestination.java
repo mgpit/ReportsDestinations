@@ -13,6 +13,7 @@ import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 
 import de.mgpit.oracle.reports.plugin.commons.U;
+import de.mgpit.oracle.reports.plugin.destination.content.ContentModifier;
 import oracle.reports.RWException;
 import oracle.reports.server.Destination;
 import oracle.reports.utility.Utility;
@@ -33,7 +34,7 @@ import oracle.reports.utility.Utility;
  */
 public abstract class MgpDestination extends Destination {
 
-    private static Logger LOG = Logger.getLogger( MgpDestination.class );
+    private static final Logger LOG = Logger.getLogger( MgpDestination.class );
 
     /**
      * 
@@ -42,7 +43,7 @@ public abstract class MgpDestination extends Destination {
      * @return the numerically coded {@code format} in human readable format
      *         as "[<em>&lt;String&gt;</em>|<em>&lt;Mime String&gt;</em>]"
      */
-    public static String humanReadable( short format ) {
+    public static final String humanReadable( short format ) {
         return U.w( getFileFormatAsString( format ) + "|" + getFileFormatAsMimeType( format ) );
     }
 
@@ -53,7 +54,7 @@ public abstract class MgpDestination extends Destination {
      * @return the numerically coded {@code format} in human readable format
      *         as "&lt;String&gt;</em>"
      */
-    public static String getFileFormatAsString( short format ) {
+    public static final String getFileFormatAsString( final short format ) {
         return Utility.format2String( format );
     }
 
@@ -64,7 +65,7 @@ public abstract class MgpDestination extends Destination {
      * @return the numerically coded {@code format} in human readable format
      *         as "<em>&lt;Mime String&gt;</em>"
      */
-    public static String getFileFormatAsMimeType( short format ) {
+    public static final String getFileFormatAsMimeType( final short format ) {
         return Utility.format2Mime( format );
     }
 
@@ -74,7 +75,7 @@ public abstract class MgpDestination extends Destination {
      *            a String
      * @return {@code true} if the String s is null or them empty String "".
      */
-    public static boolean isEmpty( String s ) {
+    public static final boolean isEmpty( final String s ) {
         return U.isEmpty( s );
     }
 
@@ -86,7 +87,7 @@ public abstract class MgpDestination extends Destination {
      *            destination's configuration section ({@code //destination/property})
      * @throws RWException
      */
-    public static void init( Properties destinationsProperties ) throws RWException {
+    public static void init( final Properties destinationsProperties ) throws RWException {
         initLogging( destinationsProperties );
         LOG.info( "Destination logging successfully initialized with properties: " + destinationsProperties );
         try {
@@ -98,11 +99,23 @@ public abstract class MgpDestination extends Destination {
         }
     }
 
+    public boolean isDecorable() {
+        return false;
+    }
+
+    public boolean decorated() {
+        return false;
+    }
+
+    public void decorate( final ContentModifier decorator ) {
+        throw new UnsupportedOperationException();
+    }
+
     /**
      * 
      */
-    protected boolean start( Properties allProperties, String targetName, int totalNumberOfFiles, long totalFileSize,
-            short mainFormat ) throws RWException {
+    protected boolean start( final Properties allProperties, final String targetName, final int totalNumberOfFiles,
+            final long totalFileSize, final short mainFormat ) throws RWException {
         LOG.info( "Distributing to Destination " + getDestype() );
         LOG.info(
                 "Distribution target name is " + U.w( targetName ) + ". Main format is " + getFileFormatAsMimeType( mainFormat ) );
@@ -123,7 +136,7 @@ public abstract class MgpDestination extends Destination {
      *            the properties set in the report server's conf file within the
      *            destination's configuration section ({@code //destination/property})
      */
-    protected static void initLogging( Properties destinationsProperties ) {
+    protected static void initLogging( final Properties destinationsProperties ) {
         setLogFile( destinationsProperties );
         updateLogLevel( destinationsProperties );
     }
@@ -136,7 +149,7 @@ public abstract class MgpDestination extends Destination {
      *            the properties set in the report server's conf file within the
      *            destination's configuration section ({@code //destination/property})
      */
-    private static void updateLogLevel( Properties destinationsProperties ) {
+    private static void updateLogLevel( final Properties destinationsProperties ) {
         if ( destinationsProperties != null ) {
             String logLevel = destinationsProperties.getProperty( "loglevel" );
             if ( !isEmpty( logLevel ) ) {
@@ -152,9 +165,9 @@ public abstract class MgpDestination extends Destination {
      * @param destinationsProperties
      *            the properties set in the report server's conf file within the
      *            destination's configuration section ({@code //destination/property})
-     */    
-    private static void setLogFile( Properties destinationsProperties ) {
-        Properties log4jProperties = new Properties();
+     */
+    private static void setLogFile( final Properties destinationsProperties ) {
+        final Properties log4jProperties = new Properties();
         try {
             InputStream configStream = MgpDestination.class.getResourceAsStream( "/log4j.properties" );
 

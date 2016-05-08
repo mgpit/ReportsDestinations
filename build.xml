@@ -195,7 +195,7 @@
     <target name="Make HTML Documentation" description="Prepare for documentation">
         <delete dir="res/html" failonerror="false" />
         <copy overwrite="true" todir="res/html">
-            <fileset dir="${dir.src}">
+            <fileset dir="${dir.src}" id="sourcefiles">
                 <include name="**/*.java" />
                 <exclude name="**/com/**" />
                 <exclude name="**/cdm/schema/**" />
@@ -209,14 +209,16 @@
             </mapper>
             <filterchain>
                 <tokenfilter>
+                    <filetokenizer/>
                     <scriptfilter language="javascript">
                         <![CDATA[
-                        newToken=self.getToken();
+                        var newToken=self.getToken();
                         /* Watch out! & must be replaced FIRST !!! */
                         newToken = newToken.replace('&', '&amp;' );
                         newToken = newToken.replace('<', '&lt;' );
                         newToken = newToken.replace('>', '&gt;' );
                         self.setToken(newToken);
+                        self.log( self.getToken().getClass() + " verarbeitet" );
                         ]]>
                     </scriptfilter>
                 </tokenfilter>
