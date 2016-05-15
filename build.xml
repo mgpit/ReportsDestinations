@@ -54,11 +54,30 @@
         <pathelement path="${lib.log4j}" />
     </path>
 
+    <property name="orajaxb" location="${oracle.home}\bin\orajaxb.bat" />
+    <property name="lib.ora.xmlparser2" location="${oracle.home.lib}/xmlparserv2.jar" />
+    <property name="lib.ora.xsu12" location="${oracle.home.lib}/xsu12.jar" />
+    <property name="lib.ora.xml" location="${oracle.home.lib}/xml.jar" />
+    
     <path id="orajaxb.class.path">
-        <!--pathelement path="${lib.ora.xmlparser2}" /-->
-        <!--pathelement path="${lib.ora.xsu12}" /-->
         <pathelement path="${lib.ora.xml}" />
     </path>
+    
+
+    <property name="jwsdp.home" location="O:/Oracle/jwsdp-1.1" />
+    <property name="jwsdp.jaxb.home" location="${jwsdp.home}/jaxb-1.0" />
+    <property name="jwsdp.jaxb.lib" location="${jwsdp.jaxb.home}/lib" />
+    <property name="xjc" location="${jwsdp.jaxb.home}/bin/xjc.bat" />
+    <property name="lib.sun.jaxb-api" location="${jwsdp.jaxb.lib}/jaxb-api.jar" />
+    <property name="lib.sun.jaxb-xjc" location="${jwsdp.jaxb.lib}/jaxb-xjc.jar" />
+    <property name="lib.sun.jaxb-libs" location="${jwsdp.jaxb.lib}/jaxb-libs.jar" />
+    <property name="lib.sun.jaxb-ri" location="${jwsdp.jaxb.lib}/jaxb-ri.jar" />
+
+    <path id="sunjaxb.class.path">
+        <pathelement path="${lib.sun.jaxb-ri}" />
+        <pathelement path="${lib.sun.jaxb-libs}" />
+    </path>
+
 
     <path id="zipdest.class.path">
         <path refid="project.class.path" />
@@ -66,7 +85,8 @@
 
     <path id="cdmdest.class.path">
         <path refid="project.class.path" />
-        <path refid="orajaxb.class.path" />
+<!--        <path refid="orajaxb.class.path" /> -->
+        <path refid="sunjaxb.class.path" />
     </path>
 
     <property name="ora.jdk.14.lib" location="${oracle.home}\jre\1.4.2.\lib" />
@@ -81,18 +101,10 @@
     </target>
 
     <property name="jaxb.cdmdoc.packagename" value="de.mgpit.oracle.reports.plugin.destination.cdm.schema" />
-    <!-- vielleicht mal den packagemapper und unpackagemapper prüfen ... !!!!!!!!!! -->
     <propertyreplace name="jaxb.cdmdoc.dir.schema" value="${dir.src}${file.separator}${jaxb.cdmdoc.packagename}" token="." replace="${file.separator}" />
     <property name="schema.name" value="cdmdoc" />
     <property name="schema.schema.name" location="${jaxb.cdmdoc.dir.schema}/${schema.name}.xsd" />
     <property name="schema.bindings.name" location="${jaxb.cdmdoc.dir.schema}/${schema.name}.xjb" />
-
-
-    <property name="orajaxb" location="${oracle.home}\bin\orajaxb.bat" />
-    <property name="lib.ora.xmlparser2" location="${oracle.home.lib}/xmlparserv2.jar" />
-    <property name="lib.ora.xsu12" location="${oracle.home.lib}/xsu12.jar" />
-    <property name="lib.ora.xml" location="${oracle.home.lib}/xml.jar" />
-
     <target name="ORA JAXB on cdmdoc" depends="splashit" description="Create JAXB classes for cdmdoc.xsd">
         <echo level="info" message="CDMDOC Schema Dir.....: ${jaxb.cdmdoc.dir.schema}" />
         <echo level="info" message="CDMDOC Package Name...: ${jaxb.cdmdoc.packagename}" />
@@ -108,13 +120,6 @@
             <arg value="${orajaxb} -bindingFile ${schema.bindings.name} -schema ${schema.schema.name} -targetPkg ${jaxb.cdmdoc.packagename} -extension" />
         </exec>
     </target>
-
-    <property name="jwsdp.home" location="O:/Oracle/jwsdp-1.1" />
-    <property name="jwsdp.jaxb.home" location="${jwsdp.home}/jaxb-1.0" />
-    <property name="jwsdp.jaxb.lib" location="${jwsdp.jaxb.home}/lib" />
-    <property name="xjc" location="${jwsdp.jaxb.home}/bin/xjc.bat" />
-    <property name="lib.sun.jaxb-api" location="${jwsdp.jaxb.lib}/jaxb-api.jar" />
-    <property name="lib.sun.jaxb-xjc" location="${jwsdp.jaxb.lib}/jaxb-xjc.jar" />
 
     <target name="SUN JAXB on cdmdoc" depends="splashit" description="Create JAXB classes for cdmdoc.xsd">
         <echo level="info" message="CDMDOC Schema Dir.....: ${jaxb.cdmdoc.dir.schema}" />
