@@ -134,7 +134,7 @@ public final class U {
         }
     }
 
-    static abstract class RwExceptionWrappedAssertion {
+    private static abstract class RwExceptionWrappedAssertion {
         public final void evaluate() throws RWException {
             try {
                 test();
@@ -146,4 +146,18 @@ public final class U {
         protected abstract void test() throws Exception;
     }
 
+    /**
+     * We have to Modernize ... No AssertionError in Java 1.4
+     * @author mgp
+     *
+     */
+    private static class AssertionError extends Error {
+        public AssertionError( String message, Throwable cause ){
+            super( message, cause );
+        }
+        public AssertionError( Throwable cause ){
+            super( cause );
+        }
+        
+    }
 }
