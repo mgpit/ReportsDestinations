@@ -3,6 +3,10 @@ package de.mgpit.oracle.reports.plugin.destination.mq;
 
 import java.util.Properties;
 
+import javax.xml.stream.XMLOutputFactory;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamWriter;
+
 import org.apache.log4j.Logger;
 
 import de.mgpit.oracle.reports.plugin.commons.MQ;
@@ -19,7 +23,7 @@ public final class MQDestination extends MgpDestination {
 
     private static boolean keepConnection = false;
     private MQ mq;
-    
+
     /**
      * Stop the distribution cycle.
      */
@@ -80,7 +84,7 @@ public final class MQDestination extends MgpDestination {
         }
         return continueToSend;
     }
-    
+
     /**
      * Initialize the destination on Report Server startup. Will mainly
      * initialize log4j Logging.
@@ -96,5 +100,5 @@ public final class MQDestination extends MgpDestination {
     public static void shutdown() {
         MgpDestination.shutdown();
         LOG.info( "Destination shut down." );
-    }    
+    }
 }

@@ -24,6 +24,22 @@ import oracle.reports.utility.Utility;
 
 public class CdmDecorator extends AbstractContentDecorator {
 
+
+    private static class CdmDecoratedInputStream extends InputStream {
+        private static int END_OF_STREAM_MAGIC_NUMBER = -1;
+
+        private InputStream payload;
+
+        public CdmDecoratedInputStream( InputStream payload ) {
+            U.assertNotNull( payload );
+            this.payload = payload;
+        }
+
+        public int read() {
+            return END_OF_STREAM_MAGIC_NUMBER;
+        }
+    }
+
     protected InputStream decorate( final InputStream in ) throws RWException {
         InputStream decorated = in;
 
