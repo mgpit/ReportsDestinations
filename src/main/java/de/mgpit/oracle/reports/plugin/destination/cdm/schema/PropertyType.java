@@ -6,15 +6,15 @@
 package de.mgpit.oracle.reports.plugin.destination.cdm.schema;
 
 
-public interface CdmdocType
+public interface PropertyType
 {
-   public void setUnifier(java.lang.String value);
+   public void setKey(java.lang.String value);
 
-   public java.lang.String getUnifier();
+   public java.lang.String getKey();
 
-   public void setContent(de.mgpit.oracle.reports.plugin.destination.cdm.schema.ContentType value);
+   public void setValue(java.lang.String value);
 
-   public de.mgpit.oracle.reports.plugin.destination.cdm.schema.ContentType getContent();
+   public java.lang.String getValue();
 
 }
 
