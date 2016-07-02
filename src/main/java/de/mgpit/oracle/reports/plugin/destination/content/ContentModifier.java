@@ -32,8 +32,8 @@ public abstract class ContentModifier {
 
     private ContentModifier next;
 
-    private boolean hasNext() {
-        return next != null;
+    private boolean isLastInChain() {
+        return next == null;
     }
 
     public ContentModifier followedBy( final ContentModifier modifier ) {
@@ -58,10 +58,7 @@ public abstract class ContentModifier {
 
         LOG.debug( "Receiving " + in.getClass().getName() + " for modification " );
         InputStream modified = this.applyModification( in );
-        if ( this.hasNext() ) {
-            LOG.debug( "Passing to next ContentModifier ..." );
-            next.modify( modified, out );
-        } else {
+        if ( isLastInChain() ) {
             try {
                 LOG.debug( "End of chain. Pushing to " + out.getClass().getName() );
                 IOUtility.copyFromTo( modified, out );
@@ -69,6 +66,9 @@ public abstract class ContentModifier {
             } catch ( IOException ioex ) {
                 throw Utility.newRWException( ioex );
             }
+        } else {
+            LOG.debug( "Passing to next ContentModifier ..." );
+            next.modify( modified, out );
         }
     }
 

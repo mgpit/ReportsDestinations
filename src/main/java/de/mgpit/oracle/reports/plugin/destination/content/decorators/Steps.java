@@ -54,7 +54,7 @@ public final class Steps extends de.mgpit.modernizr.java.lang.Enum {
             return result;
         }
 
-        throw new IllegalArgumentException( "No constant " + Steps.class.getCanonicalName() + "." + name );
+        throw new IllegalArgumentException( "No constant " + Steps.class.getName() + "." + name );
     }
 
     /* This is some of the stuff the compiler generates when compiling an Enum ... */
