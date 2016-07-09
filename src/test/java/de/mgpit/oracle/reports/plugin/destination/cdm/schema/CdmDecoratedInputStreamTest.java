@@ -28,21 +28,29 @@ public class CdmDecoratedInputStreamTest extends TestCase {
             "</cdmdoc>";
             
 
-    public void testSomethingSimple() {
+    public void testPlainPayload() {
         ByteArrayInputStream payload = new ByteArrayInputStream( "Lorem Ipsum Dolor Si amet".getBytes() );
-        Base64InputStream transformedPayload = new Base64InputStream( payload, Magic.DO_ENCODE );
-        
-        
         CdmDecoratedInputStream cdmPlainPayloadStream = new CdmDecoratedInputStream( payload, TestHelper.getCdm1() );
+
+        boolean exceptionOccured = false;
+        try {
+            String actual1 = IOUtility.asUTF8String( cdmPlainPayloadStream );
+            assertEquals( expected1, actual1 );
+        } catch ( Exception any ) {
+            exceptionOccured = true;
+            any.printStackTrace();
+        }
+        assertFalse( exceptionOccured );
+
+    }
+    
+    public void testBase64Payload() {
+        ByteArrayInputStream payload = new ByteArrayInputStream( "Lorem Ipsum Dolor Si amet".getBytes() );        
+        Base64InputStream transformedPayload = new Base64InputStream( payload, Magic.DO_ENCODE );
         CdmDecoratedInputStream cdmBase64PayloadStream = new CdmDecoratedInputStream( transformedPayload, TestHelper.getCdm1() );
 
         boolean exceptionOccured = false;
         try {
-            payload.reset();
-            String actual1 = IOUtility.asUTF8String( cdmPlainPayloadStream );
-            assertEquals( expected1, actual1 );
-            
-            payload.reset();
             String actual2 = IOUtility.asUTF8String( cdmBase64PayloadStream );
             assertEquals( expected2, actual2 );
             
@@ -53,4 +61,6 @@ public class CdmDecoratedInputStreamTest extends TestCase {
         assertFalse( exceptionOccured );
 
     }
+    
+    
 }
