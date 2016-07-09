@@ -58,11 +58,11 @@
     <property name="lib.ora.xmlparser2" location="${oracle.home.lib}/xmlparserv2.jar" />
     <property name="lib.ora.xsu12" location="${oracle.home.lib}/xsu12.jar" />
     <property name="lib.ora.xml" location="${oracle.home.lib}/xml.jar" />
-    
+
     <path id="orajaxb.class.path">
         <pathelement path="${lib.ora.xml}" />
     </path>
-    
+
 
     <property name="jwsdp.home" location="O:/Oracle/jwsdp-1.1" />
     <property name="jwsdp.jaxb.home" location="${jwsdp.home}/jaxb-1.0" />
@@ -85,7 +85,7 @@
 
     <path id="cdmdest.class.path">
         <path refid="project.class.path" />
-<!--        <path refid="orajaxb.class.path" /> -->
+        <!--        <path refid="orajaxb.class.path" /> -->
         <path refid="sunjaxb.class.path" />
     </path>
 
@@ -100,40 +100,37 @@
         <splash imageurl="file:///${dir.project.res}/animated.gif" showduration="1" />
     </target>
 
+    <target name="Clean JAXB generated classes">
+        <echo level="info" message="About to delete previously generated classes ..."/>
+        <delete failonerror="false" verbose="true">
+            <fileset dir="${jaxb.cdmdoc.dir.schema}">
+                <include name="**/*.java" />
+                <include name="**/jaxb.properties" />
+            </fileset>
+        </delete>    </target>
+
     <property name="jaxb.cdmdoc.packagename" value="de.mgpit.oracle.reports.plugin.destination.cdm.schema" />
     <propertyreplace name="jaxb.cdmdoc.dir.schema" value="${dir.src}${file.separator}${jaxb.cdmdoc.packagename}" token="." replace="${file.separator}" />
     <property name="schema.name" value="cdmdoc" />
     <property name="schema.schema.name" location="${jaxb.cdmdoc.dir.schema}/${schema.name}.xsd" />
     <property name="schema.bindings.name" location="${jaxb.cdmdoc.dir.schema}/${schema.name}.xjb" />
-    <target name="ORA JAXB on cdmdoc" depends="splashit" description="Create JAXB classes for cdmdoc.xsd">
+    <target name="ORA JAXB on cdmdoc" depends="splashit, Clean JAXB generated classes" description="Create JAXB classes for cdmdoc.xsd">
         <echo level="info" message="CDMDOC Schema Dir.....: ${jaxb.cdmdoc.dir.schema}" />
         <echo level="info" message="CDMDOC Package Name...: ${jaxb.cdmdoc.packagename}" />
-        <delete failonerror="false" verbose="true">
-            <fileset dir="${jaxb.cdmdoc.dir.schema}">
-                <include name="**/*.java" />
-                <include name="**/jaxb.properties" />
-            </fileset>
-        </delete>
         <exec executable="cmd.exe" dir="${dir.src}" vmlauncher="false">
-            <env key="CLASSPATH" value="${lib.ora.xmlparser2};${lib.ora.xsu12};${lib.ora.xml}" />
+            <env key="CLASSPATH" value="${dir.src};${lib.ora.xmlparser2};${lib.ora.xsu12};${lib.ora.xml}" />
             <arg value="/c" />
-            <arg value="${orajaxb} -bindingFile ${schema.bindings.name} -schema ${schema.schema.name} -targetPkg ${jaxb.cdmdoc.packagename} -extension" />
+            <arg value="${orajaxb} -extension -bindingFile ${schema.bindings.name} -targetPkg ${jaxb.cdmdoc.packagename} -schema ${schema.schema.name}" />
         </exec>
     </target>
 
-    <target name="SUN JAXB on cdmdoc" depends="splashit" description="Create JAXB classes for cdmdoc.xsd">
+    <target name="SUN JAXB on cdmdoc" depends="splashit, Clean JAXB generated classes" description="Create JAXB classes for cdmdoc.xsd">
         <echo level="info" message="CDMDOC Schema Dir.....: ${jaxb.cdmdoc.dir.schema}" />
         <echo level="info" message="CDMDOC Package Name...: ${jaxb.cdmdoc.packagename}" />
-        <delete failonerror="false" verbose="true">
-            <fileset dir="${jaxb.cdmdoc.dir.schema}">
-                <include name="**/*.java" />
-                <include name="**/jaxb.properties" />
-            </fileset>
-        </delete>
         <exec executable="cmd.exe" dir="${dir.src}" vmlauncher="false">
-            <env key="CLASSPATH" value="${lib.sun.jaxb-api};${lib.sun.jaxb-xjc}" />
+            <env key="CLASSPATH" value="${dir.src};${lib.sun.jaxb-api};${lib.sun.jaxb-xjc}" />
             <arg value="/c" />
-            <arg value="${xjc} -b ${schema.bindings.name} -p ${jaxb.cdmdoc.packagename} ${schema.schema.name} " />
+            <arg value="${xjc} -extension -b ${schema.bindings.name} -p ${jaxb.cdmdoc.packagename} ${schema.schema.name} " />
         </exec>
     </target>
 
@@ -214,7 +211,7 @@
             </mapper>
             <filterchain>
                 <tokenfilter>
-                    <filetokenizer/>
+                    <filetokenizer />
                     <scriptfilter language="javascript">
                         <![CDATA[
                         var newToken=self.getToken();
