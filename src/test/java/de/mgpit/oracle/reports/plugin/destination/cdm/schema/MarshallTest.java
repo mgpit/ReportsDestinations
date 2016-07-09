@@ -40,26 +40,27 @@ public class MarshallTest extends TestCase {
             content.setLength( 1000 );
             content.setData( "Lorem Ipsum Dolor si Amet" );
             cdmdoc.setContent( content );
-        } catch ( JAXBException e1 ) {
+        } catch ( Exception any ) {
             noExceptionOccured = false;
         }
         assertTrue( noExceptionOccured );
 
-        JAXBContext cdmdocContext = null;
+        JAXBContext currentContext = null;
         Marshaller cdmdoc2xml = null;
 
         try {
-            cdmdocContext = JAXBContext.newInstance( "de.mgpit.oracle.reports.plugin.destination.cdm.schema" );
+            currentContext = JAXBContext.newInstance( "de.mgpit.oracle.reports.plugin.destination.cdm.schema" );
         } catch ( JAXBException e ) {
             noExceptionOccured = false;
+            e.printStackTrace();
         }
         assertTrue( noExceptionOccured );
-        assertNotNull( cdmdocContext );
+        assertNotNull( currentContext );
 
         try {
-            cdmdoc2xml = cdmdocContext.createMarshaller();
-            cdmdoc2xml.setProperty( Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.FALSE );
-            cdmdoc2xml.setProperty( Marshaller.JAXB_FRAGMENT, Boolean.TRUE );
+            cdmdoc2xml = currentContext.createMarshaller();
+            cdmdoc2xml.setProperty( Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE );
+            //cdmdoc2xml.setProperty( Marshaller.JAXB_FRAGMENT, Boolean.TRUE );
 
         } catch ( JAXBException some ) {
             some.printStackTrace();
@@ -68,9 +69,13 @@ public class MarshallTest extends TestCase {
         assertTrue( noExceptionOccured );
         assertNotNull( cdmdoc2xml );
         assertNotNull( cdmdoc );
+        assertNotNull( content );
 
         StringWriter xmlStream = new StringWriter( Units.ONE_KILOBYTE / 4 );
         try {
+
+            cdmdoc2xml.marshal( content, System.out );
+
             DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory.newInstance();
             DocumentBuilder docBuilder = docBuilderFactory.newDocumentBuilder();
 
@@ -102,8 +107,8 @@ public class MarshallTest extends TestCase {
             noExceptionOccured = false;
         }
         assertTrue( noExceptionOccured );
-        //String expected = "<?xml version = '1.0' encoding = 'UTF-8'?><cdmdoc><content><length>1000</length><data>Lorem Ipsum Dolor si Amet</data></content></cdmdoc>";
-        //String actual = xmlStream.toString();
+        // String expected = "<?xml version = '1.0' encoding = 'UTF-8'?><cdmdoc><content><length>1000</length><data>Lorem Ipsum Dolor si Amet</data></content></cdmdoc>";
+        // String actual = xmlStream.toString();
         // assertEquals( expected, actual );
     }
 

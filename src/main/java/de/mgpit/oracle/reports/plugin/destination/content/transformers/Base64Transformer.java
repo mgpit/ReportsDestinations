@@ -7,7 +7,8 @@ import java.io.InputStream;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.binary.Base64InputStream;
-import de.mgpit.oracle.reports.plugin.commons.IOUtility;
+
+import de.mgpit.oracle.reports.plugin.commons.io.IOUtility;
 import oracle.reports.RWException;
 import oracle.reports.utility.Utility;
 

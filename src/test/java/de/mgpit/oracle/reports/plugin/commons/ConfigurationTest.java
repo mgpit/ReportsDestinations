@@ -3,6 +3,13 @@ package de.mgpit.oracle.reports.plugin.commons;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.text.Format;
+import java.text.NumberFormat;
+import java.util.Properties;
+
+import com.sun.java.util.collections.Arrays;
+import com.sun.java.util.collections.Comparator;
+import com.sun.java.util.collections.Iterator;
 
 import de.mgpit.oracle.reports.plugin.commons.MQ.Configuration;
 import junit.framework.TestCase;
@@ -99,6 +106,30 @@ public class ConfigurationTest extends TestCase {
         //System.out.println( "C2 and C3 are " + (c2.equals( c3 ) ? "equal" : "different") );
         //System.out.println( "C1 and C3 are " + (c1.equals( c3 ) ? "equal" : "different") );
 
+    }
+    
+    public void testDumpSystemProperties2StandardOut() {
+        Properties systemProperties = System.getProperties();
+        
+        Object[] keySet = systemProperties.keySet().toArray();
+        Arrays.sort( keySet, new Comparator() {
+
+            public int compare( Object o1, Object o2 ) {
+                String s1 = (String) o1; String s2 = (String) o2;
+                return s1.compareTo( s2 );
+            }
+            
+        });
+        Iterator keys = Arrays.asList(keySet).iterator();
+        
+        int i = 0;
+        while ( keys.hasNext() ){
+            String key = (String)keys.next();
+            String value = systemProperties.getProperty( key );
+            
+            // System.out.printf( "%1$3d: [%2$-30s] is [%3$s]\n", i++, key, value );
+            System.out.println( U.rpad(i++,3)+": " + U.lpad( key,  30 ) + " is " + value );
+        }
     }
 
 }

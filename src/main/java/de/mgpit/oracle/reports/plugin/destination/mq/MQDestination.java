@@ -3,10 +3,6 @@ package de.mgpit.oracle.reports.plugin.destination.mq;
 
 import java.util.Properties;
 
-import javax.xml.stream.XMLOutputFactory;
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamWriter;
-
 import org.apache.log4j.Logger;
 
 import de.mgpit.oracle.reports.plugin.commons.MQ;
@@ -14,7 +10,6 @@ import de.mgpit.oracle.reports.plugin.commons.U;
 import de.mgpit.oracle.reports.plugin.destination.MgpDestination;
 import de.mgpit.oracle.reports.plugin.destination.zip.ZipDestination;
 import oracle.reports.RWException;
-import oracle.reports.server.Destination;
 import oracle.reports.utility.Utility;
 
 public final class MQDestination extends MgpDestination {

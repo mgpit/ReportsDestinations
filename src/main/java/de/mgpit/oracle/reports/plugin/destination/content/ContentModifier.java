@@ -7,8 +7,8 @@ import java.io.OutputStream;
 
 import org.apache.log4j.Logger;
 
-import de.mgpit.oracle.reports.plugin.commons.IOUtility;
 import de.mgpit.oracle.reports.plugin.commons.U;
+import de.mgpit.oracle.reports.plugin.commons.io.IOUtility;
 import oracle.reports.RWException;
 import oracle.reports.utility.Utility;
 

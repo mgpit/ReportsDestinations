@@ -25,9 +25,9 @@ public final class U {
      *            String to be wrapped
      * @return the String wrapped in square brackets
      */
-    public static String w( final String s ) {
-        final StringBuffer wrapped = new StringBuffer( ((s == null) ? 0 : s.length()) + 2 );
-        wrapped.append( "[" ).append( s ).append( "]" );
+    public static String w( final String str ) {
+        final StringBuffer wrapped = new StringBuffer( ((str == null) ? 0 : str.length()) + 2 );
+        wrapped.append( "[" ).append( str ).append( "]" );
         return wrapped.toString();
     }
 
@@ -47,21 +47,62 @@ public final class U {
         return w( "" + lng );
     }
 
+    public static String pad( final String str, final int len, final boolean append ) {
+        int currentLength = str.length();
+        int delta = len - currentLength;
+        boolean prepend = !append;
+
+        String padded;
+        if ( delta < 0 ) {
+            padded = str.substring( 0, len );
+        } else {
+            StringBuffer sb = new StringBuffer( len );
+            if ( prepend ) {
+                sb.append( str );
+            }
+            for ( int i = 0; i < delta; i++ ) {
+                sb.append( ' ' );
+            }
+            if ( append ) {
+                sb.append( str );
+            }
+            padded = sb.toString();
+        }
+        return padded;
+    }
+
+    public static String rpad( final String str, final int len ) {
+        return pad( str, len, true );
+    }
+
+    public static String rpad( final int i, final int len ) {
+        return rpad( String.valueOf( i ), len );
+    }
+    
+    public static String lpad( final String str, final int len ) {
+        return pad( str, len, false );
+    }
+
+    public static String lpad( final int i, final int len ) {
+        return lpad( String.valueOf( i ), len );
+    }
+
+
     /**
      * 
      * @param s
      *            a String
-     * @return {@code true} if the String s is null or them empty String "".
+     * @return {@code true} if the String str is null or them empty String "".
      */
-    public static boolean isEmpty( final String s ) {
-        return (s == null) || "".equals( s );
+    public static boolean isEmpty( final String str ) {
+        return (str == null) || "".equals( str );
     }
 
-    public static boolean eq( final String s1, final String s2 ) {
-        if ( s1 == null ) {
-            return s2 == null;
+    public static boolean eq( final String str1, final String str2 ) {
+        if ( str1 == null ) {
+            return str2 == null;
         }
-        return s1.equals( s2 );
+        return str1.equals( str2 );
     }
 
     /* Some assertion stuff ... :-) */
@@ -76,12 +117,12 @@ public final class U {
         }
     }
 
-    public static void assertNotEmpty( final String s ) throws AssertionError {
-        assertNotEmpty( s, "String MUST NOT be null oder empty!" );
+    public static void assertNotEmpty( final String str ) throws AssertionError {
+        assertNotEmpty( str, "String MUST NOT be null oder empty!" );
     }
 
-    public static void assertNotEmpty( final String s, final String message ) throws AssertionError {
-        if ( isEmpty( s ) ) {
+    public static void assertNotEmpty( final String str, final String message ) throws AssertionError {
+        if ( isEmpty( str ) ) {
             throw new AssertionError( new IllegalArgumentException( message ) );
         }
     }
@@ -97,36 +138,36 @@ public final class U {
     }
 
     public static final class Rw {
-        public static void assertNotEmpty( final String s ) throws RWException {
+        public static void assertNotEmpty( final String str ) throws RWException {
             new U.RwExceptionWrappedAssertion() {
 
                 public void test() throws Exception {
-                    U.assertNotEmpty( s );
+                    U.assertNotEmpty( str );
                 }
             }.evaluate();
         }
-        
-        public static void assertNotEmpty( final String s, final String message ) throws RWException {
+
+        public static void assertNotEmpty( final String str, final String message ) throws RWException {
             new U.RwExceptionWrappedAssertion() {
-                
+
                 protected void test() throws Exception {
-                   U.assertNotEmpty( s, message ); 
+                    U.assertNotEmpty( str, message );
                 }
             }.evaluate();
         }
-        
+
         public static void assertNotNull( final Object o ) throws RWException {
             new U.RwExceptionWrappedAssertion() {
-                
+
                 protected void test() throws Exception {
                     U.assertNotNull( o );
                 }
             }.evaluate();
         }
-        
+
         public static void assertNotNull( final Object o, final String message ) throws RWException {
             new U.RwExceptionWrappedAssertion() {
-                
+
                 protected void test() throws Exception {
                     U.assertNotNull( o, message );
                 }
@@ -148,16 +189,18 @@ public final class U {
 
     /**
      * We have to Modernize ... No AssertionError in Java 1.4
+     * 
      * @author mgp
      *
      */
     private static class AssertionError extends Error {
-        public AssertionError( String message, Throwable cause ){
+        public AssertionError( String message, Throwable cause ) {
             super( message, cause );
         }
-        public AssertionError( Throwable cause ){
+
+        public AssertionError( Throwable cause ) {
             super( cause );
         }
-        
+
     }
 }

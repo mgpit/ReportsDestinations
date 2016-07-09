@@ -1,4 +1,4 @@
-package de.mgpit.oracle.reports.plugin.commons;
+package de.mgpit.oracle.reports.plugin.commons.io;
 
 
 import java.io.BufferedInputStream;
@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import de.mgpit.oracle.reports.plugin.commons.Units;
 import oracle.reports.utility.Utility;
 
 /**
