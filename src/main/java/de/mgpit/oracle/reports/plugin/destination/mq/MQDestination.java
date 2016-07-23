@@ -11,6 +11,7 @@ import org.apache.log4j.Logger;
 import de.mgpit.oracle.reports.plugin.commons.MQ;
 import de.mgpit.oracle.reports.plugin.commons.U;
 import de.mgpit.oracle.reports.plugin.destination.MgpDestination;
+import de.mgpit.oracle.reports.plugin.destination.zip.ZipDestination;
 import oracle.reports.RWException;
 import oracle.reports.utility.Utility;
 
@@ -92,6 +93,7 @@ public final class MQDestination extends MgpDestination {
      */
     public static void init( Properties destinationsProperties ) throws RWException {
         MgpDestination.init( destinationsProperties );
+        initLogging( destinationsProperties, MQDestination.class );
         registerPlugins( destinationsProperties );
         LOG.info( "Destination " + U.w( MQDestination.class.getName() ) + " started." );
     }
@@ -113,8 +115,8 @@ public final class MQDestination extends MgpDestination {
         }
         if ( registrationErrorOccured ) {
             LOG.error( "Could not register all Contetn Plugins!" );
-            throw Utility.newRWException( new IllegalArgumentException(
-                    "At least one Plugin could not be found! See Destination's logfile for more information!" ) );
+            // throw Utility.newRWException( new Exception(
+            // "At least one Plugin could not be found! See Destination's logfile for more information!" ) );
         }
     }
 
@@ -150,6 +152,6 @@ public final class MQDestination extends MgpDestination {
 
     public static void shutdown() {
         MgpDestination.shutdown();
-        LOG.info( "Destination shut down." );
+        LOG.info( "Destination " + U.w( MQDestination.class.getName() ) + " shut down." );
     }
 }

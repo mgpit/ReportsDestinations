@@ -172,7 +172,7 @@
         <delete file="${deploy.jar.MgpCommons}" failonerror="false"/>
     </target>
 
-    <target name="commons" description="Deploy Commons" depends="compileCommons, package&amp;DeployCommons" />
+    <target name="9 Deploy Commons" description="Deploy Commons" depends="compileCommons, package&amp;DeployCommons" />
 
     <target name="compileZIPdest" depends="cleanbuild">
         <echo message="About to compile ZIP Destination ..." />
@@ -187,11 +187,10 @@
             <exclude name="**/mq/**" />
         </javac>
     </target>
-    <target name="copyresources">
-        <copy verbose="true" file="${dir.res}/log4j.properties" todir="${dir.build}" />
-    </target>
-    <target name="packageZIPdest" depends="compileZIPdest,copyresources">
+
+    <target name="packageZIPdest" depends="compileZIPdest">
         <echo message="About to make JAR archive ..." />
+        <copy file="${dir.res}/log4j.ZipDestination.properties" tofile="${dir.build}/log4j.properties"/>
         <jar destfile="${deploy.jar.ZIPdestination}" basedir="${dir.build}" update="false" />
     </target>
 
@@ -216,22 +215,23 @@
     </target>
     <target name="packageMQdest" depends="compileMQdest">
         <echo message="About to make JAR archive ..." />
+        <copy file="${dir.res}/log4j.MQDestination.properties" tofile="${dir.build}/log4j.properties"/>
         <jar destfile="${deploy.jar.MQdestination}" basedir="${dir.build}" update="false" />
     </target>
 
-    <target name="Deploy Zip Destination" depends="packageZIPdest" description="Deploy ZIP Destination">
+    <target name="2 Deploy Zip Destination" depends="packageZIPdest" description="Deploy ZIP Destination">
         <copy verbose="true" file="${deploy.jar.ZIPdestination}" todir="${dir.reports.jlib}" />
         <delete file="${deploy.jar.ZIPdestination}" failonerror="false"/>
         <echo message="Zip Destination: Deployment finished" />
     </target>
 
-    <target name="Deploy MQ Destination" depends="packageMQdest" description="Deploy CDM Destination">
+    <target name="3 Deploy MQ Destination" depends="packageMQdest" description="Deploy MQ Destination">
         <copy verbose="true" file="${deploy.jar.MQdestination}" todir="${dir.reports.jlib}" />
         <delete file="${deploy.jar.MQdestination}" failonerror="false"/>
         <echo message="MQ Destination: Deployment finished" />
     </target>
 
-    <target name="Deploy Destinations" description="Create and Deploy Destinations" depends="Deploy Zip Destination,Deploy MQ Destination">
+    <target name="1 Deploy Destinations" description="Create and Deploy Destinations" depends="9 Deploy Commons,2 Deploy Zip Destination,3 Deploy MQ Destination">
         <echo message="Deployment finished" />
     </target>
 

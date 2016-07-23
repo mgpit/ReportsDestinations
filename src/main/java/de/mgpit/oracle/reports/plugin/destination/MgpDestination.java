@@ -3,10 +3,11 @@ package de.mgpit.oracle.reports.plugin.destination;
 
 import java.io.File;
 import java.io.InputStream;
-import java.io.PrintWriter;
-import java.io.StringWriter;
+import java.util.Enumeration;
 import java.util.Properties;
 
+import org.apache.log4j.Appender;
+import org.apache.log4j.FileAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -79,26 +80,6 @@ public abstract class MgpDestination extends Destination {
     }
 
     /**
-     * Initialize the destination on Report Server startup.
-     *
-     * @param destinationsProperties
-     *            the properties set in the report server's conf file within the
-     *            destination's configuration section ({@code //destination/property})
-     * @throws RWException
-     */
-    public static void init( final Properties destinationsProperties ) throws RWException {
-        initLogging( destinationsProperties );
-        LOG.info( "Destination logging successfully initialized with properties: " + destinationsProperties );
-        try {
-            Destination.init( destinationsProperties );
-        } catch ( RWException rwException ) {
-            LOG.error( "Error during initializing Destination. See following message(s)!" );
-            LOG.error( rwException );
-            throw rwException;
-        }
-    }
-
-    /**
      * 
      */
     protected boolean start( final Properties allProperties, final String targetName, final int totalNumberOfFiles,
@@ -113,6 +94,26 @@ public abstract class MgpDestination extends Destination {
     }
 
     /**
+     * Initialize the destination on Report Server startup.
+     *
+     * @param destinationsProperties
+     *            the properties set in the report server's conf file within the
+     *            destination's configuration section ({@code //destination/property})
+     * @throws RWException
+     */
+    public static void init( final Properties destinationsProperties ) throws RWException {
+        initLogging( destinationsProperties, MgpDestination.class );
+        LOG.info( "Destination logging successfully initialized with properties: " + destinationsProperties );
+        try {
+            Destination.init( destinationsProperties );
+        } catch ( RWException rwException ) {
+            LOG.error( "Error during initializing Destination. See following message(s)!" );
+            LOG.error( rwException );
+            throw rwException;
+        }
+    }
+
+    /**
      * Initializes the logging of the destination based on the properties provided in the destination's
      * configuration within the report server's conf file.
      * Will override the corresponding settings of the {@code log4j.properties} distributed with the destination's JAR file.
@@ -123,66 +124,93 @@ public abstract class MgpDestination extends Destination {
      *            the properties set in the report server's conf file within the
      *            destination's configuration section ({@code //destination/property})
      */
-    protected static void initLogging( final Properties destinationsProperties ) {
-        setLogFile( destinationsProperties );
-        updateLogLevel( destinationsProperties );
-    }
-
-    /**
-     * Updates the log level based on the {@code //destination/property[name="loglevel"]} provided in the destination's
-     * configuration within the report server's conf file.
-     * 
-     * @param destinationsProperties
-     *            the properties set in the report server's conf file within the
-     *            destination's configuration section ({@code //destination/property})
-     */
-    private static void updateLogLevel( final Properties destinationsProperties ) {
+    protected static void initLogging( final Properties destinationsProperties, Class clazz ) {
+        cel( "Trying to init Logging for " + clazz.getName() );
         if ( destinationsProperties != null ) {
-            String logLevel = destinationsProperties.getProperty( "loglevel" );
-            if ( !isEmpty( logLevel ) ) {
-                LogManager.getRootLogger().setLevel( Level.toLevel( logLevel.toUpperCase() ) );
+            Properties log4jProperties = new Properties();
+            try {
+                InputStream in = clazz.getResourceAsStream( "/log4j.properties" );
+                log4jProperties.load( in );
+            } catch ( Exception any ) {
+                log4jProperties = null;
+                cel( "Error when reading log4j.properties: " + any.toString() );
+            }
+
+            if ( log4jProperties != null ) {
+                cel( "Re-Configuring log4j ..." );
+                PropertyConfigurator.configure( log4jProperties );
+
+                Logger logger = Logger.getLogger( clazz.getPackage().getName() );
+                setLogFile( destinationsProperties, logger );
+                setLogLevel( destinationsProperties, logger );
+
+                dumpLogger( logger );
+                Logger clazzLogger = Logger.getLogger( clazz );
+                dumpLogger( clazzLogger );
+                // dumpLogger( (Logger)Logger.getLogger( clazz ).getParent());
+
             }
         }
     }
 
-    /**
-     * Updates the target file for logging based on the {@code //destination/property[name="logfile"]} provided in the destination's
-     * configuration within the report server's conf file.
-     * 
-     * @param destinationsProperties
-     *            the properties set in the report server's conf file within the
-     *            destination's configuration section ({@code //destination/property})
-     */
-    private static void setLogFile( final Properties destinationsProperties ) {
-        final Properties log4jProperties = new Properties();
-        try {
-            InputStream configStream = MgpDestination.class.getResourceAsStream( "/log4j.properties" );
-
-            log4jProperties.load( configStream );
-            configStream.close();
-            String logFileName = (destinationsProperties != null) ? destinationsProperties.getProperty( "logfile" ) : "";
-            if ( isEmpty( logFileName ) ) {
-                String targetDir = Utility.getLogsDir();
-                if ( isEmpty( targetDir ) ) {
-                    targetDir = Utility.getTempDir();
+    protected static void dumpLogger( Logger logger ) {
+        if ( logger == null ) {
+            cel( "NULL Logger" );
+        } else {
+            cel( "Checking Logging setup ..." );
+            cel( "Logger name is " + logger.getName() + " :: " + logger.toString() );
+            cel( "Logging level is " + ((logger.getLevel()==null)?"":logger.getLevel().toString()) );
+            Enumeration appenders = logger.getAllAppenders();
+            if ( appenders != null ) {
+                while ( appenders.hasMoreElements() ) {
+                    Appender a = (Appender) appenders.nextElement();
+                    cel( "Appender named: " + a.getName() );
+                    if ( FileAppender.class.isAssignableFrom( a.getClass() ) ) {
+                        FileAppender fa = (FileAppender) a;
+                        cel( fa.getName() + " is a FileAppender" );
+                        cel( "FileAppender logs to File " + fa.getFile() );
+                    }
                 }
-                logFileName = (!isEmpty( targetDir )) ? targetDir + File.separator + "destination.log" : "";
             }
-            if ( !isEmpty( logFileName ) ) {
-                File logFile = new File( logFileName );
-                logFileName = logFile.getAbsolutePath();
-                log4jProperties.setProperty( "log4j.appender.fileout.File", logFileName );
-                LogManager.resetConfiguration();
-                PropertyConfigurator.configure( log4jProperties );
-            }
-            LOG.info( "Log file now is " + logFileName );
-        } catch ( Exception any ) {
-            LOG.fatal( "Error on initializing Logging!" );
-            StringWriter sw = new StringWriter();
-            PrintWriter pw = new PrintWriter( sw );
-            any.printStackTrace( pw );
-            LOG.fatal( sw.toString() );
         }
+    }
+
+    protected static void cel( final String message ) {
+        Utility.createErrorLog( message, "lorem.log" );
+    }
+
+    /**
+     * 
+     */
+    private static void setLogLevel( final Properties destinationsProperties, final Logger logger ) {
+        String logLevel = destinationsProperties.getProperty( "loglevel" );
+        if ( !isEmpty( logLevel ) ) {
+            logger.setLevel( Level.toLevel( logLevel ) );
+        }
+    }
+
+    private static void setLogFile( final Properties destinationsProperties, Logger logger ) {
+        String logFileName = destinationsProperties.getProperty( "logfile", null );
+        if ( isEmpty( logFileName ) ) {
+            String targetDir = Utility.getLogsDir();
+            if ( isEmpty( targetDir ) ) {
+                targetDir = Utility.getTempDir();
+            }
+            logFileName = (!isEmpty( targetDir )) ? targetDir + File.separator + "destination.log" : "";
+        }
+        if ( !isEmpty( logFileName ) ) {
+            Enumeration appenders = logger.getAllAppenders();
+            while ( appenders.hasMoreElements() ) {
+                Appender anAppender = (Appender) appenders.nextElement();
+                if ( FileAppender.class.isAssignableFrom( anAppender.getClass() ) ) {
+                    FileAppender aFileAppender = (FileAppender) anAppender;
+                    if ( isEmpty( aFileAppender.getFile() ) ) {
+                        aFileAppender.setFile( logFileName );
+                    }
+                }
+            }
+        }
+        LOG.info( "Log file now is " + logFileName );
 
     }
 }

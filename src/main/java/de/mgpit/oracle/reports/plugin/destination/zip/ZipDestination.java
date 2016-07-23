@@ -28,8 +28,9 @@ import oracle.reports.utility.Utility;
  *         <p>
  *         The {@code DESTYPE} for this destination is suggested to be {@code ZIP}.
  *         Full configuration example:
- *          
- *         <pre> &lt;destination destype="ZIP" class="de.mgpit.oracle.reports.plugin.destination.zip.ZipDestination"&gt;
+ * 
+ *         <pre>
+ *  &lt;destination destype="ZIP" class="de.mgpit.oracle.reports.plugin.destination.zip.ZipDestination"&gt;
  *     &lt;property name="loglevel" value="DEBUG"/&gt; &lt;!-- log4j message levels. Allow debug messages --&gt; 
  *     &lt;property name="logfile"  value="/tmp/log/zipdestination.log"/&gt; &lt;!-- file to send the messages to --&gt;
  * &lt;/destination&gt;
@@ -75,9 +76,10 @@ import oracle.reports.utility.Utility;
  *         and finishes with {@link #stop()}) must be unique - the receiving ZipArchive handles duplicates partially only.</li>
  *         <li>On re-distributing to the same ZIP archive ({@code APPEND=TRUE}) duplicates will be detected, i.e. previously added
  *         entries with the same name will be replaced by the content of the latest distribution.</li>
- *         <p>Depending on the {@code DESFORMAT} this will work only partially, though. For example re-running a distribution with
+ *         <p>
+ *         Depending on the {@code DESFORMAT} this will work only partially, though. For example re-running a distribution with
  *         {@code DESFORMAT=html} and a constant {@code DESNAME=}&lt;some name&gt; will include a new version for every non main
- *         file (e.g. image) as their name is constructed of &lt;some name&gt; and a generated numeric suffix. 
+ *         file (e.g. image) as their name is constructed of &lt;some name&gt; and a generated numeric suffix.
  *         </ul>
  * 
  * @see ZipArchive
@@ -121,7 +123,8 @@ public final class ZipDestination extends MgpDestination {
      *            file size of the file to be distributed
      * 
      */
-    protected void sendFile( final boolean isMainFile, final String cacheFileName, final short fileFormat, final long fileSize ) throws RWException {
+    protected void sendFile( final boolean isMainFile, final String cacheFileName, final short fileFormat, final long fileSize )
+            throws RWException {
         try {
             if ( isMainFile ) {
                 sendMainFile( cacheFileName, fileFormat );
@@ -199,8 +202,8 @@ public final class ZipDestination extends MgpDestination {
      * @param mainFormat
      *            the output format of the main file.
      */
-    protected boolean start( final Properties allProperties, final String targetName, final int totalNumberOfFiles, final long totalFileSize,
-            short mainFormat ) throws RWException {
+    protected boolean start( final Properties allProperties, final String targetName, final int totalNumberOfFiles,
+            final long totalFileSize, short mainFormat ) throws RWException {
 
         boolean continueToSend = super.start( allProperties, targetName, totalNumberOfFiles, totalFileSize, mainFormat );
 
@@ -285,6 +288,7 @@ public final class ZipDestination extends MgpDestination {
      */
     public static void init( final Properties destinationsProperties ) throws RWException {
         MgpDestination.init( destinationsProperties );
+        initLogging( destinationsProperties, ZipDestination.class );
         LOG.info( "Destination " + U.w( ZipDestination.class.getName() ) + " started." );
     }
 
