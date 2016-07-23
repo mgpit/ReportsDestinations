@@ -1,4 +1,4 @@
-package de.mgpit.oracle.reports.plugin.commons.io;
+package de.mgpit.oracle.reports.plugin.destination.cdm;
 
 
 import java.io.IOException;
@@ -6,7 +6,6 @@ import java.io.InputStream;
 
 import de.mgpit.oracle.reports.plugin.commons.Magic;
 import de.mgpit.oracle.reports.plugin.commons.U;
-import de.mgpit.oracle.reports.plugin.destination.cdm.Cdm;
 
 public class CdmDecoratedInputStream extends InputStream {
 

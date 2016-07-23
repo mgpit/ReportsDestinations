@@ -17,8 +17,6 @@ import java.util.zip.ZipOutputStream;
 import org.apache.log4j.Logger;
 
 import de.mgpit.oracle.reports.plugin.commons.io.IOUtility;
-import de.mgpit.oracle.reports.plugin.destination.zip.ZipDestination;
-import oracle.reports.utility.Utility;
 
 /**
  * 
@@ -41,7 +39,6 @@ import oracle.reports.utility.Utility;
  *         <p>
  *         Any errors during processing will be wrapped in a {@link ArchivingException}.
  * 
- * @see ZipDestination
  */
 public class ZipArchive {
 

@@ -13,7 +13,6 @@ import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 
 import de.mgpit.oracle.reports.plugin.commons.U;
-import de.mgpit.oracle.reports.plugin.destination.content.ContentModifier;
 import oracle.reports.RWException;
 import oracle.reports.server.Destination;
 import oracle.reports.utility.Utility;
@@ -97,18 +96,6 @@ public abstract class MgpDestination extends Destination {
             LOG.error( rwException );
             throw rwException;
         }
-    }
-
-    public boolean isDecorable() {
-        return false;
-    }
-
-    public boolean decorated() {
-        return false;
-    }
-
-    public void decorate( final ContentModifier decorator ) {
-        throw new UnsupportedOperationException();
     }
 
     /**

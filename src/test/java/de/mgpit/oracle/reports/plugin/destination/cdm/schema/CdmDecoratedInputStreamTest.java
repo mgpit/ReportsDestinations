@@ -6,8 +6,8 @@ import java.io.ByteArrayInputStream;
 import org.apache.commons.codec.binary.Base64InputStream;
 
 import de.mgpit.oracle.reports.plugin.commons.Magic;
-import de.mgpit.oracle.reports.plugin.commons.io.CdmDecoratedInputStream;
 import de.mgpit.oracle.reports.plugin.commons.io.IOUtility;
+import de.mgpit.oracle.reports.plugin.destination.cdm.CdmDecoratedInputStream;
 import junit.framework.TestCase;
 
 public class CdmDecoratedInputStreamTest extends TestCase {

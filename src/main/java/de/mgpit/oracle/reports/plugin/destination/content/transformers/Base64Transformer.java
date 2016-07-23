@@ -15,7 +15,7 @@ import oracle.reports.utility.Utility;
 public class Base64Transformer extends AbstractContentTransformer {
     private static final boolean AS_ENCODING_STREAM = true;
 
-    protected InputStream transform( final InputStream content ) throws RWException {
+    protected InputStream wrap( final InputStream content ) throws RWException {
         Base64InputStream base64Input = new org.apache.commons.codec.binary.Base64InputStream( content, AS_ENCODING_STREAM );
         return base64Input;
     }

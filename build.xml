@@ -6,6 +6,7 @@
 
     <!-- set global properties for this build -->
     <property name="dir.src" location="src/main/java" />
+    <property name="dir.test" location="src/test/java" />
     <property name="dir.res" location="src/main/resources" />
     <property name="dir.build" location="tmp" />
     <property name="dir.project.res" location="res" />
@@ -18,8 +19,11 @@
     <property name="dir.reports" location="${oracle.home}/reports" />
     <property name="dir.reports.jlib" location="${dir.reports}/jlib" />
 
-    <property name="deploy.jar.zipdestination" location="zipdestination_0.0.1.jar" />
-    <property name="deploy.jar.cdmdestination" location="cdmdestination_0.0.1.jar" />
+    <property name="deploy.jar.ZIPdestination" value="zipdestination_0.0.1.jar" />
+    <property name="deploy.jar.MQdestination" value="mqdestination_0.0.1.jar" />
+    <property name="deploy.jar.MgpCommons" value="mgpcommons_0.0.1.jar" />
+
+    <property name="lib.mgp.reports.commons" location="${dir.reports.jlib}/${deploy.jar.MgpCommons}" />
 
     <property name="lib.rwrun" location="${dir.reports.jlib}/rwrun.jar" />
     <property name="lib.zrclient" location="${oracle.home.jlib}/zrclient.jar" />
@@ -79,15 +83,19 @@
     </path>
 
 
-    <path id="zipdest.class.path">
+
+    <path id="ZIPdest.class.path">
         <path refid="project.class.path" />
+        <pathelement path="${lib.mgp.reports.commons}" />
     </path>
 
-    <path id="cdmdest.class.path">
+    <path id="MQdest.class.path">
         <path refid="project.class.path" />
-        <!--        <path refid="orajaxb.class.path" /> -->
-        <path refid="sunjaxb.class.path" />
+        <pathelement path="${lib.mgp.reports.commons}" />
     </path>
+
+    <!--        <path refid="orajaxb.class.path" /> -->
+    <!--        <path refid="sunjaxb.class.path" /> -->
 
     <property name="ora.jdk.14.lib" location="${oracle.home}\jre\1.4.2.\lib" />
     <path id="java14.bootstrap.class.path">
@@ -101,13 +109,14 @@
     </target>
 
     <target name="Clean JAXB generated classes">
-        <echo level="info" message="About to delete previously generated classes ..."/>
+        <echo level="info" message="About to delete previously generated classes ..." />
         <delete failonerror="false" verbose="true">
             <fileset dir="${jaxb.cdmdoc.dir.schema}">
                 <include name="**/*.java" />
                 <include name="**/jaxb.properties" />
             </fileset>
-        </delete>    </target>
+        </delete>
+    </target>
 
     <property name="jaxb.cdmdoc.packagename" value="de.mgpit.oracle.reports.plugin.destination.cdm.schema" />
     <propertyreplace name="jaxb.cdmdoc.dir.schema" value="${dir.src}${file.separator}${jaxb.cdmdoc.packagename}" token="." replace="${file.separator}" />
@@ -134,39 +143,69 @@
         </exec>
     </target>
 
-    <target name="cleanbuild" depends="splashit">
-        <delete dir="${dir.build}" failonerror="false" />
+    <target name="cleanbuildcommons" depends="splashit">
+        <delete dir="${dir.build}" includeemptydirs="true" verbose="true" failonerror="false" />
         <mkdir dir="${dir.build}" />
     </target>
 
-    <target name="compilezipdest" depends="cleanbuild">
-        <echo message="About to compile ZIP Destination ..." />
-        <javac includeantruntime="false" defaultexcludes="true" srcdir="${dir.src}" destdir="${dir.build}" source="1.4" target="1.4">
+    <target name="cleanbuild" depends="splashit">
+        <delete dir="${dir.build}" includeemptydirs="true" verbose="true" failonerror="false" />
+        <mkdir dir="${dir.build}" />
+    </target>
+
+    <target name="compileCommons" depends="cleanbuildcommons">
+        <javac includeantruntime="false" defaultexcludes="true" srcdir="${dir.src}" sourcepath="" destdir="${dir.build}" source="1.4" target="1.4">
             <compilerarg value="-Xbootclasspath/p:${toString:java14.bootstrap.class.path}" />
-            <classpath refid="zipdest.class.path" />
+            <classpath refid="project.class.path" />
+            <include name="**/commons/**" />
+            <include name="**/plugin/destination/MgpDestination.java" />
             <exclude name="**/cdm/**" />
             <exclude name="**/spielwiese/**" />
-            <include name="**/commons/**" />
+            <exclude name="**/zip/**" />
+            <exclude name="**/mq/**" />
+        </javac>
+    </target>
+
+    <target name="package&amp;DeployCommons">
+        <jar destfile="${deploy.jar.MgpCommons}" basedir="${dir.build}" update="false" />
+        <copy verbose="true" file="${deploy.jar.MgpCommons}" todir="${dir.reports.jlib}" />
+        <delete file="${deploy.jar.MgpCommons}" failonerror="false"/>
+    </target>
+
+    <target name="commons" description="Deploy Commons" depends="compileCommons, package&amp;DeployCommons" />
+
+    <target name="compileZIPdest" depends="cleanbuild">
+        <echo message="About to compile ZIP Destination ..." />
+        <echo level="info" message="Using classpath ${toString:ZIPdest.class.path}"/>
+        <javac includeantruntime="false" defaultexcludes="true" srcdir="${dir.src}" destdir="${dir.build}" source="1.4" target="1.4">
+            <compilerarg value="-Xbootclasspath/p:${toString:java14.bootstrap.class.path}" />
+            <classpath refid="ZIPdest.class.path" />
             <include name="**/zip/**" />
+            <exclude name="**/cdm/**" />
+            <exclude name="**/spielwiese/**" />
+            <exclude name="**/commons/**" />
+            <exclude name="**/mq/**" />
         </javac>
     </target>
     <target name="copyresources">
         <copy verbose="true" file="${dir.res}/log4j.properties" todir="${dir.build}" />
     </target>
-    <target name="packagezipdest" depends="compilezipdest,copyresources">
+    <target name="packageZIPdest" depends="compileZIPdest,copyresources">
         <echo message="About to make JAR archive ..." />
-        <jar destfile="${deploy.jar.zipdestination}" basedir="${dir.build}" update="false" />
+        <jar destfile="${deploy.jar.ZIPdestination}" basedir="${dir.build}" update="false" />
     </target>
 
-    <target name="compilecdmdest" depends="cleanbuild">
-        <echo message="About to compile CDM Destination ..." />
+    <target name="compileMQdest" depends="cleanbuild">
+        <echo message="About to compile MQ Destination ..." />
+        <echo level="info" message="Using classpath ${toString:MQdest.class.path}"/>
         <javac includeantruntime="false" defaultexcludes="true" srcdir="${dir.src}" destdir="${dir.build}" source="1.4" target="1.4">
             <compilerarg value="-Xbootclasspath/p:${toString:java14.bootstrap.class.path}" />
-            <classpath refid="cdmdest.class.path" />
-            <exclude name="**/zip/**" />
+            <classpath refid="MQdest.class.path" />
+            <include name="**/mq/**" />
+            <exclude name="**/cdm/**" />
             <exclude name="**/spielwiese/**" />
-            <include name="**/commons/**" />
-            <include name="**/cdm/**" />
+            <exclude name="**/commons/**" />
+            <exclude name="**/zip/**" />
         </javac>
     </target>
 
@@ -175,22 +214,24 @@
         <copy verbose="true" file="${jaxb.cdmdoc.dir.schema}/cdmdoc.xsd" todir="${dir.build.schema}" />
         <copy verbose="true" file="${jaxb.cdmdoc.dir.schema}/jaxb.properties" todir="${dir.build.schema}" />
     </target>
-    <target name="packagecdmdest" depends="compilecdmdest,copycdmresources">
+    <target name="packageMQdest" depends="compileMQdest">
         <echo message="About to make JAR archive ..." />
-        <jar destfile="${deploy.jar.cdmdestination}" basedir="${dir.build}" update="false" />
+        <jar destfile="${deploy.jar.MQdestination}" basedir="${dir.build}" update="false" />
     </target>
 
-    <target name="Deploy Zip Destination" depends="packagezipdest" description="Deploy ZIP Destination">
-        <copy verbose="true" file="${deploy.jar.zipdestination}" todir="${dir.reports.jlib}" />
+    <target name="Deploy Zip Destination" depends="packageZIPdest" description="Deploy ZIP Destination">
+        <copy verbose="true" file="${deploy.jar.ZIPdestination}" todir="${dir.reports.jlib}" />
+        <delete file="${deploy.jar.ZIPdestination}" failonerror="false"/>
         <echo message="Zip Destination: Deployment finished" />
     </target>
 
-    <target name="Deploy CDM Destination" depends="packagecdmdest" description="Deploy CDM Destination">
-        <copy verbose="true" file="${deploy.jar.cdmdestination}" todir="${dir.reports.jlib}" />
-        <echo message="CDM Destination: Deployment finished" />
+    <target name="Deploy MQ Destination" depends="packageMQdest" description="Deploy CDM Destination">
+        <copy verbose="true" file="${deploy.jar.MQdestination}" todir="${dir.reports.jlib}" />
+        <delete file="${deploy.jar.MQdestination}" failonerror="false"/>
+        <echo message="MQ Destination: Deployment finished" />
     </target>
 
-    <target name="Deploy Destinations" description="Create and Deploy Destinations" depends="Deploy Zip Destination,Deploy CDM Destination">
+    <target name="Deploy Destinations" description="Create and Deploy Destinations" depends="Deploy Zip Destination,Deploy MQ Destination">
         <echo message="Deployment finished" />
     </target>
 
@@ -203,6 +244,12 @@
                 <exclude name="**/cdm/schema/**" />
                 <exclude name="**/spielwiese/**" />
             </fileset>
+            <fileset dir="${dir.test}" id="testfiles">
+                <include name="**/*.java" />
+                <exclude name="**/com/**" />
+                <exclude name="**/spielwiese/**" />
+            </fileset>
+
             <mapper>
                 <chainedmapper>
                     <flattenmapper />
@@ -215,7 +262,8 @@
                     <scriptfilter language="javascript">
                         <![CDATA[
                         var newToken=self.getToken();
-                        /* Watch out! & must be replaced FIRST !!! */
+                        /* Watch out! & must be replaced FIRST !!! 
+                           Order matters ... */
                         newToken = newToken.replace('&', '&amp;' );
                         newToken = newToken.replace('<', '&lt;' );
                         newToken = newToken.replace('>', '&gt;' );
