@@ -17,7 +17,20 @@ import oracle.reports.utility.Utility;
  *
  */
 public final class U {
-
+    
+    public static final String classnameOnly( Class clazz ) {
+        assertNotNull( clazz );
+        String packageName = clazz.getPackage().getName();
+        String fullName = clazz.getName();
+        return fullName.substring( packageName.length() );
+    }
+    
+    public static final String classNameOnly( String maybeFullName ) {
+        assertNotEmpty( maybeFullName );
+        String[] names = maybeFullName.split( "\\." );
+        return names[ names.length-1 ];
+    }
+    
     /**
      * Wraps a string in square brackets.
      * 

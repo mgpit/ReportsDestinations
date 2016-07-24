@@ -2,6 +2,7 @@ package de.mgpit.oracle.reports.plugin.destination;
 
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.Enumeration;
 import java.util.Properties;
@@ -9,7 +10,6 @@ import java.util.Properties;
 import org.apache.log4j.Appender;
 import org.apache.log4j.FileAppender;
 import org.apache.log4j.Level;
-import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 
@@ -124,12 +124,13 @@ public abstract class MgpDestination extends Destination {
      *            the properties set in the report server's conf file within the
      *            destination's configuration section ({@code //destination/property})
      */
-    protected static void initLogging( final Properties destinationsProperties, Class clazz ) {
+    protected static void initLogging( final Properties destinationsProperties, Class clazz ) throws RWException {
         cel( "Trying to init Logging for " + clazz.getName() );
         if ( destinationsProperties != null ) {
             Properties log4jProperties = new Properties();
             try {
-                InputStream in = clazz.getResourceAsStream( "/log4j.properties" );
+                String log4jPropertiesFileName = "/log4j" + U.classnameOnly( clazz ) + ".properties";
+                InputStream in = clazz.getResourceAsStream( log4jPropertiesFileName );
                 log4jProperties.load( in );
             } catch ( Exception any ) {
                 log4jProperties = null;
@@ -137,22 +138,31 @@ public abstract class MgpDestination extends Destination {
             }
 
             if ( log4jProperties != null ) {
-                cel( "Re-Configuring log4j ..." );
+                cel( "Found properties ... re-Configuring log4j ..." );
+                dumpProperties( log4jProperties );
                 PropertyConfigurator.configure( log4jProperties );
 
-                Logger logger = Logger.getLogger( clazz.getPackage().getName() );
+                Logger logger = Logger.getLogger( clazz ); //.getPackage().getName() );
                 setLogFile( destinationsProperties, logger );
                 setLogLevel( destinationsProperties, logger );
 
                 dumpLogger( logger );
                 Logger clazzLogger = Logger.getLogger( clazz );
                 dumpLogger( clazzLogger );
-                // dumpLogger( (Logger)Logger.getLogger( clazz ).getParent());
+                dumpLogger( (Logger)clazzLogger.getParent());
 
             }
         }
     }
-
+    
+    protected static void dumpProperties( Properties properties ) {
+        Enumeration keys = properties.keys();
+        while( keys.hasMoreElements() ){
+            String key = (String)keys.nextElement();
+            cel( "    " + key + " -> " + properties.getProperty( key, "<null>" ) );
+        }
+    }
+    
     protected static void dumpLogger( Logger logger ) {
         if ( logger == null ) {
             cel( "NULL Logger" );
@@ -189,7 +199,7 @@ public abstract class MgpDestination extends Destination {
         }
     }
 
-    private static void setLogFile( final Properties destinationsProperties, Logger logger ) {
+    private static void setLogFile( final Properties destinationsProperties, Logger logger ) throws RWException {
         String logFileName = destinationsProperties.getProperty( "logfile", null );
         if ( isEmpty( logFileName ) ) {
             String targetDir = Utility.getLogsDir();
@@ -204,9 +214,14 @@ public abstract class MgpDestination extends Destination {
                 Appender anAppender = (Appender) appenders.nextElement();
                 if ( FileAppender.class.isAssignableFrom( anAppender.getClass() ) ) {
                     FileAppender aFileAppender = (FileAppender) anAppender;
-                    if ( isEmpty( aFileAppender.getFile() ) ) {
-                        aFileAppender.setFile( logFileName );
-                    }
+                        boolean append = aFileAppender.getAppend();
+                        boolean bufferedIO = aFileAppender.getBufferedIO();
+                        int bufferSize = aFileAppender.getBufferSize();
+                        try { 
+                            aFileAppender.setFile( logFileName, append, bufferedIO, bufferSize );
+                        } catch ( IOException ioe ) {
+                            throw Utility.newRWException( ioe );
+                        }
                 }
             }
         }

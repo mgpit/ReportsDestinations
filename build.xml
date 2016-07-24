@@ -154,7 +154,7 @@
     </target>
 
     <target name="compileCommons" depends="cleanbuildcommons">
-        <javac includeantruntime="false" defaultexcludes="true" srcdir="${dir.src}" sourcepath="" destdir="${dir.build}" source="1.4" target="1.4">
+        <javac includeantruntime="false" defaultexcludes="true" srcdir="${dir.src}" destdir="${dir.build}" source="1.4" target="1.4">
             <compilerarg value="-Xbootclasspath/p:${toString:java14.bootstrap.class.path}" />
             <classpath refid="project.class.path" />
             <include name="**/commons/**" />
@@ -190,7 +190,7 @@
 
     <target name="packageZIPdest" depends="compileZIPdest">
         <echo message="About to make JAR archive ..." />
-        <copy file="${dir.res}/log4j.ZipDestination.properties" tofile="${dir.build}/log4j.properties"/>
+        <copy file="${dir.res}/log4j.ZipDestination.properties" todir="${dir.build}" overwrite="true"/>
         <jar destfile="${deploy.jar.ZIPdestination}" basedir="${dir.build}" update="false" />
     </target>
 
@@ -215,7 +215,7 @@
     </target>
     <target name="packageMQdest" depends="compileMQdest">
         <echo message="About to make JAR archive ..." />
-        <copy file="${dir.res}/log4j.MQDestination.properties" tofile="${dir.build}/log4j.properties"/>
+        <copy file="${dir.res}/log4j.MQDestination.properties" todir="${dir.build}" overwrite="true"/>
         <jar destfile="${deploy.jar.MQdestination}" basedir="${dir.build}" update="false" />
     </target>
 

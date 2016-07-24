@@ -92,7 +92,7 @@ public final class MQDestination extends MgpDestination {
      * @throws RWException
      */
     public static void init( Properties destinationsProperties ) throws RWException {
-        MgpDestination.init( destinationsProperties );
+        // MgpDestination.init( destinationsProperties );
         initLogging( destinationsProperties, MQDestination.class );
         registerPlugins( destinationsProperties );
         LOG.info( "Destination " + U.w( MQDestination.class.getName() ) + " started." );
