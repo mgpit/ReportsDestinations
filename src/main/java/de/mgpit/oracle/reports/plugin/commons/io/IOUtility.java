@@ -3,6 +3,7 @@ package de.mgpit.oracle.reports.plugin.commons.io;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -18,6 +19,20 @@ import oracle.reports.utility.Utility;
  *
  */
 public class IOUtility {
+    
+    public static String asLogFileName( String str ) {
+        String replaced = str.replace( '.', '_' );
+        return (replaced.endsWith( ".log" ))?replaced:replaced+".log";
+    }
+    
+    public static String asPlatformFileName( String filename ) {
+        try {
+            File f = new File(filename);
+            return f.getPath();
+        } catch ( NullPointerException nex ) {
+            return null;
+        }
+    }
 
     /**
      * Return a file name with extension .zip. If the file name already has extension .zip just return the file name provided.
@@ -45,8 +60,20 @@ public class IOUtility {
      *            full file name
      * @return the file name part
      */
-    public static String filenameOnly( final String fullFileName ) {
-        return Utility.fileNameOnly( fullFileName );
+    public static String fileNameOnly( final String fullFileName ) {
+        return (fullFileName==null)?null:Utility.fileNameOnly( fullFileName );
+    }
+
+    /**
+     * Construct a full file name (path and file name) from the parameters
+     * 
+     * @param directoryName
+     * @param fileName
+     * 
+     * @return the full file name
+     */
+    public static String fullFileName( final String directoryName, final String fileName ) {
+        return Utility.fullFileName( fileName, directoryName );
     }
 
     /**

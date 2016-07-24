@@ -17,20 +17,41 @@ import oracle.reports.utility.Utility;
  *
  */
 public final class U {
-    
-    public static final String classnameOnly( Class clazz ) {
+
+    public static final String classname( Class clazz ) {
         assertNotNull( clazz );
-        String packageName = clazz.getPackage().getName();
+        String packageName = packagename( clazz );
         String fullName = clazz.getName();
         return fullName.substring( packageName.length() );
     }
-    
-    public static final String classNameOnly( String maybeFullName ) {
-        assertNotEmpty( maybeFullName );
-        String[] names = maybeFullName.split( "\\." );
-        return names[ names.length-1 ];
+
+    public static final String classname( String maybeFullClassName ) {
+        assertNotEmpty( maybeFullClassName );
+        int lastDotPosition = maybeFullClassName.lastIndexOf( '.' );
+        return (lastDotPosition == Magic.CHARACTER_NOT_FOUND) ? maybeFullClassName
+                : maybeFullClassName.substring( lastDotPosition, +1 );
     }
-    
+
+    public static final String packagename( Class clazz ) {
+        assertNotNull( clazz );
+        Package thePackage = clazz.getPackage();
+        return (thePackage == null) ? "" : thePackage.getName();
+    }
+
+    public static final String packagename( String maybeFullClassName ) {
+        assertNotEmpty( maybeFullClassName );
+        int lastDotPosition = maybeFullClassName.lastIndexOf( '.' );
+        return (lastDotPosition == Magic.CHARACTER_NOT_FOUND) ? "" : maybeFullClassName.substring( 0, lastDotPosition );
+    }
+
+    public static final Object coalesce( Object optionalObject, Object defaultObject ) {
+        return (optionalObject == null) ? defaultObject : optionalObject;
+    }
+
+    public static final String coalesce( String optionalString, String defaultString ) {
+        return (optionalString == null) ? defaultString : optionalString;
+    }
+
     /**
      * Wraps a string in square brackets.
      * 
@@ -91,7 +112,7 @@ public final class U {
     public static String rpad( final int i, final int len ) {
         return rpad( String.valueOf( i ), len );
     }
-    
+
     public static String lpad( final String str, final int len ) {
         return pad( str, len, false );
     }
@@ -99,7 +120,6 @@ public final class U {
     public static String lpad( final int i, final int len ) {
         return lpad( String.valueOf( i ), len );
     }
-
 
     /**
      * 
