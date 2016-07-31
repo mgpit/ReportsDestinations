@@ -20,12 +20,12 @@ import oracle.reports.utility.Utility;
  */
 public class IOUtility {
     
-    public static String asLogFileName( String str ) {
+    public static String asLogfileFilename( String str ) {
         String replaced = str.replace( '.', '_' );
         return (replaced.endsWith( ".log" ))?replaced:replaced+".log";
     }
     
-    public static String asPlatformFileName( String filename ) {
+    public static String asPlatformFilename( String filename ) {
         try {
             File f = new File(filename);
             return f.getPath();
@@ -110,5 +110,5 @@ public class IOUtility {
         copyFromTo( new BufferedInputStream( in ), temporary );
         return temporary.toString();
     }
-
+    
 }

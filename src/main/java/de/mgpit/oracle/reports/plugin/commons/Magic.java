@@ -6,4 +6,6 @@ public class Magic {
     public static int CHARACTER_NOT_FOUND = -1;
     
     public static boolean DO_ENCODE = true;
+    public static boolean LOG_APPEND = true;
+    public static boolean LOG_NO_APPEND = false;
 }

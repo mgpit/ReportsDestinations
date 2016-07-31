@@ -154,7 +154,7 @@ public abstract class MgpDestination extends Destination {
             logger.setLevel( Level.toLevel( logLevel ) );
         }
     }
-
+    
     private static void setLogFile( final Properties destinationsProperties, Logger logger ) throws RWException {
         String logFileName = destinationsProperties.getProperty( "logfile", null );
         String targetDir = "";
@@ -180,8 +180,8 @@ public abstract class MgpDestination extends Destination {
                 if ( FileAppender.class.isAssignableFrom( anAppender.getClass() ) ) {
                     FileAppender aFileAppender = (FileAppender) anAppender;
                     if ( recalculateLogfileName ) {
-                        String defaultFileName = IOUtility.asLogFileName( logger.getName() );
-                        String givenFileName = IOUtility.fileNameOnly( IOUtility.asPlatformFileName( aFileAppender.getFile() ) );
+                        String defaultFileName = IOUtility.asLogfileFilename( logger.getName() );
+                        String givenFileName = IOUtility.fileNameOnly( IOUtility.asPlatformFilename( aFileAppender.getFile() ) );
                         cel( "defaultFileName: " + defaultFileName );
                         cel( "givenFileName: " + givenFileName );
                         logFileName = IOUtility.fullFileName( targetDir, U.coalesce( givenFileName, defaultFileName ) );
