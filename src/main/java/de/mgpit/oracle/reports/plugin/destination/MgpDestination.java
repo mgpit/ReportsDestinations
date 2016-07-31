@@ -1,20 +1,12 @@
 package de.mgpit.oracle.reports.plugin.destination;
 
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Enumeration;
 import java.util.Properties;
 
-import org.apache.log4j.Appender;
-import org.apache.log4j.FileAppender;
-import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.apache.log4j.PropertyConfigurator;
 
+import de.mgpit.oracle.reports.plugin.commons.DestinationsLogging;
 import de.mgpit.oracle.reports.plugin.commons.U;
-import de.mgpit.oracle.reports.plugin.commons.io.IOUtility;
 import oracle.reports.RWException;
 import oracle.reports.server.Destination;
 import oracle.reports.utility.Utility;
@@ -126,76 +118,19 @@ public abstract class MgpDestination extends Destination {
      *            destination's configuration section ({@code //destination/property})
      */
     protected static void initLogging( final Properties destinationsProperties, Class clazz ) throws RWException {
+        String logfileFilenameGiven = null;
+        String loglevelLevelnameGiven = null;
+        
         if ( destinationsProperties != null ) {
-            Properties log4jProperties = new Properties();
-            try {
-                String log4jPropertiesFileName = "/log4j" + U.classname( clazz ) + ".properties";
-                InputStream in = clazz.getResourceAsStream( log4jPropertiesFileName );
-                log4jProperties.load( in );
-            } catch ( Exception any ) {
-                log4jProperties = null;
-            }
-
-            if ( log4jProperties != null ) {
-                PropertyConfigurator.configure( log4jProperties );
-                Logger logger = Logger.getLogger( U.packagename( clazz ) );
-                setLogFile( destinationsProperties, logger );
-                setLogLevel( destinationsProperties, logger );
-            }
+            logfileFilenameGiven = destinationsProperties.getProperty( "logfile" );
+            loglevelLevelnameGiven = destinationsProperties.getProperty( "loglevel", "INFO" );
         }
+        
+        DestinationsLogging.setupPackageLevelLogger( clazz, logfileFilenameGiven, loglevelLevelnameGiven );
     }
 
-    /**
-     * 
-     */
-    private static void setLogLevel( final Properties destinationsProperties, final Logger logger ) {
-        String logLevel = destinationsProperties.getProperty( "loglevel" );
-        if ( !isEmpty( logLevel ) ) {
-            logger.setLevel( Level.toLevel( logLevel ) );
-        }
-    }
-    
-    private static void setLogFile( final Properties destinationsProperties, Logger logger ) throws RWException {
-        String logFileName = destinationsProperties.getProperty( "logfile", null );
-        String targetDir = "";
-        String message;
-        message = " using \"logfile\" property from Destination definition.";
 
-        boolean logFileNameProvided = !isEmpty( logFileName );
-        if ( !logFileNameProvided ) {
-            targetDir = Utility.getLogsDir();
-            message = " using Reports logs directory.";
-            if ( isEmpty( targetDir ) ) {
-                targetDir = Utility.getTempDir();
-                message = " using Reports temporary directory.";
-            }
-        }
-        boolean recalculateLogfileName = !isEmpty( targetDir ) && !logFileNameProvided;
-        boolean updateLoggersFileName = logFileNameProvided || recalculateLogfileName;
-
-        if ( updateLoggersFileName ) {
-            Enumeration appenders = logger.getAllAppenders();
-            while ( appenders.hasMoreElements() ) {
-                Appender anAppender = (Appender) appenders.nextElement();
-                if ( FileAppender.class.isAssignableFrom( anAppender.getClass() ) ) {
-                    FileAppender aFileAppender = (FileAppender) anAppender;
-                    if ( recalculateLogfileName ) {
-                        String defaultFileName = IOUtility.asLogfileFilename( logger.getName() );
-                        String givenFileName = IOUtility.fileNameOnly( IOUtility.asPlatformFilename( aFileAppender.getFile() ) );
-                        cel( "defaultFileName: " + defaultFileName );
-                        cel( "givenFileName: " + givenFileName );
-                        logFileName = IOUtility.fullFileName( targetDir, U.coalesce( givenFileName, defaultFileName ) );
-                    }
-                    aFileAppender.setFile( logFileName );
-                    aFileAppender.activateOptions();
-                }
-            }
-        }
-        logger.info( "Log file now is " + logFileName + message );
-
-    }
-
-    private static void cel( String str ) {
-        Utility.createErrorLog( str, "myerror.log" );
-    }
+//    private static void cel( String str ) {
+//        Utility.createErrorLog( str, "myerror.log" );
+//    }
 }

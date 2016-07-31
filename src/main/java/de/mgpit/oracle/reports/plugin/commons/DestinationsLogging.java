@@ -7,7 +7,6 @@ import java.security.AccessController;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.apache.log4j.Appender;
 import org.apache.log4j.FileAppender;
 import org.apache.log4j.Layout;
 import org.apache.log4j.Level;
@@ -44,7 +43,7 @@ public final class DestinationsLogging {
         setupLogger( clazz, U.packagename( clazz ), trimmedFilename, trimmedLoglevelName );
     }
 
-    private static final void setupLogger( Class clazz, String loggerName, String optionalFilename, String optionalLoglevelName )
+    protected static final void setupLogger( Class clazz, String loggerName, String optionalFilename, String optionalLoglevelName )
             throws RWException {
         if ( configuredDestinationLoggerNames.contains( loggerName ) ) return;
 
@@ -54,8 +53,11 @@ public final class DestinationsLogging {
         resetLoglevel( logger, optionalLoglevelName );
 
         try {
-            Appender newAppender = buildFileAppender( clazz, optionalFilename );
+            FileAppender newAppender = buildFileAppender( clazz, optionalFilename );
             logger.addAppender( newAppender );
+            
+            logger.info( "Logging to: " + newAppender.getFile() );
+            logger.info( "Current level is: " + logger.getLevel().toString() );
         } catch ( IOException ioex ) {
             throw Utility.newRWException( ioex );
         } finally {
@@ -66,7 +68,7 @@ public final class DestinationsLogging {
 
     }
 
-    private static final void resetLoglevel( Logger logger, String optionalLoglevelName ) {
+    protected static final void resetLoglevel( Logger logger, String optionalLoglevelName ) {
         Level newLevel = Level.INFO;
 
         if ( !U.isEmpty( optionalLoglevelName ) ) {
@@ -80,17 +82,17 @@ public final class DestinationsLogging {
         logger.setLevel( newLevel );
     }
 
-    private static final Appender buildFileAppender( Class clazz, String optionalFilename ) throws IOException {
+    protected static final FileAppender buildFileAppender( Class clazz, String optionalFilename ) throws IOException {
         String filename = givenOrFallbackFilenameFrom( optionalFilename, clazz );
         FileAppender newAppender = new FileAppender( DATE_LEVEL_MESSAGE_LAYOUT, filename, Magic.LOG_APPEND );
         return newAppender;
     }
 
-    private static final String givenOrFallbackFilenameFrom( String optionalFilename, Class clazz ) {
+    protected static final String givenOrFallbackFilenameFrom( String optionalFilename, Class clazz ) {
         return givenOrFallbackFilenameFrom( optionalFilename, clazz.getName() );
     }
 
-    private static final String givenOrFallbackFilenameFrom( String optionalFilename, String alternativeFilename ) {
+    protected static final String givenOrFallbackFilenameFrom( String optionalFilename, String alternativeFilename ) {
         String filenameToStartWith = U.coalesce( optionalFilename, alternativeFilename );
 
         File dummy = new File( filenameToStartWith );

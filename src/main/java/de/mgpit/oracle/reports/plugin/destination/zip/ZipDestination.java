@@ -12,7 +12,6 @@ import de.mgpit.oracle.reports.plugin.commons.ZipArchive.ArchivingException;
 import de.mgpit.oracle.reports.plugin.commons.io.IOUtility;
 import de.mgpit.oracle.reports.plugin.destination.MgpDestination;
 import oracle.reports.RWException;
-import oracle.reports.server.Destination;
 import oracle.reports.utility.Utility;
 
 /**
@@ -287,7 +286,6 @@ public final class ZipDestination extends MgpDestination {
      * @throws RWException
      */
     public static void init( final Properties destinationsProperties ) throws RWException {
-        // MgpDestination.init( destinationsProperties );
         initLogging( destinationsProperties, ZipDestination.class );
         LOG.info( "Destination " + U.w( ZipDestination.class.getName() ) + " started." );
     }

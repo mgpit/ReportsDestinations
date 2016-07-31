@@ -11,7 +11,6 @@ import org.apache.log4j.Logger;
 import de.mgpit.oracle.reports.plugin.commons.MQ;
 import de.mgpit.oracle.reports.plugin.commons.U;
 import de.mgpit.oracle.reports.plugin.destination.MgpDestination;
-import de.mgpit.oracle.reports.plugin.destination.zip.ZipDestination;
 import oracle.reports.RWException;
 import oracle.reports.utility.Utility;
 
