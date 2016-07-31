@@ -12,7 +12,9 @@ import org.apache.log4j.Layout;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
+import org.apache.log4j.RollingFileAppender;
 
+import de.mgpit.oracle.reports.plugin.commons.io.IOUtility;
 import oracle.reports.RWException;
 import oracle.reports.utility.Utility;
 import sun.security.action.GetPropertyAction;
@@ -31,20 +33,22 @@ public final class DestinationsLogging {
 
     private static final Layout DATE_LEVEL_MESSAGE_LAYOUT = new PatternLayout( "%d{yyyy-MM-dd HH:mm:ss} [%-5p] - %m%n" );
 
-    public static final void setupClassLevelLogger( Class clazz, String optionalFilename, String optionalLoglevelName )
-            throws RWException {
+    public static final void setupClassLevelLogger( final Class clazz, final String optionalFilename,
+            final String optionalLoglevelName ) throws RWException {
         setupLogger( clazz, U.classname( clazz ), optionalFilename, optionalLoglevelName );
     }
 
-    public static final void setupPackageLevelLogger( Class clazz, String optionalFilename, String optionalLoglevelName )
-            throws RWException {
-        String trimmedFilename = optionalFilename.trim();
-        String trimmedLoglevelName = optionalLoglevelName.trim().toUpperCase();
-        setupLogger( clazz, U.packagename( clazz ), trimmedFilename, trimmedLoglevelName );
+    public static final void setupPackageLevelLogger( final Class clazz, final String optionalFilename,
+            final String optionalLoglevelName ) throws RWException {
+        setupLogger( clazz, U.packagename( clazz ), optionalFilename, optionalLoglevelName );
     }
 
-    protected static final void setupLogger( Class clazz, String loggerName, String optionalFilename, String optionalLoglevelName )
-            throws RWException {
+    protected static final void setupLogger( final Class clazz, String givenLoggerName, final String givenOptionalFilename,
+            final String optionalLoglevelName ) throws RWException {
+
+        U.Rw.assertNotNull( givenLoggerName );
+        String loggerName = givenLoggerName.trim();
+        String optionalFilename = (givenOptionalFilename == null) ? givenOptionalFilename : givenOptionalFilename.trim();
         if ( configuredDestinationLoggerNames.contains( loggerName ) ) return;
 
         final Logger logger = Logger.getLogger( loggerName );
@@ -55,7 +59,7 @@ public final class DestinationsLogging {
         try {
             FileAppender newAppender = buildFileAppender( clazz, optionalFilename );
             logger.addAppender( newAppender );
-            
+
             logger.info( "Logging to: " + newAppender.getFile() );
             logger.info( "Current level is: " + logger.getLevel().toString() );
         } catch ( IOException ioex ) {
@@ -68,7 +72,7 @@ public final class DestinationsLogging {
 
     }
 
-    protected static final void resetLoglevel( Logger logger, String optionalLoglevelName ) {
+    protected static final void resetLoglevel( final Logger logger, final String optionalLoglevelName ) {
         Level newLevel = Level.INFO;
 
         if ( !U.isEmpty( optionalLoglevelName ) ) {
@@ -82,17 +86,21 @@ public final class DestinationsLogging {
         logger.setLevel( newLevel );
     }
 
-    protected static final FileAppender buildFileAppender( Class clazz, String optionalFilename ) throws IOException {
+    protected static final FileAppender buildFileAppender( final Class clazz, final String optionalFilename ) throws IOException {
         String filename = givenOrFallbackFilenameFrom( optionalFilename, clazz );
-        FileAppender newAppender = new FileAppender( DATE_LEVEL_MESSAGE_LAYOUT, filename, Magic.LOG_APPEND );
+        RollingFileAppender newAppender = new RollingFileAppender( DATE_LEVEL_MESSAGE_LAYOUT, filename, Magic.LOG_APPEND );
+        newAppender.setMaxFileSize( "1MB" );
+        newAppender.setMaxBackupIndex( 5 ); // arbitrary - may be sufficient for 5 days ...
+        newAppender.activateOptions();
         return newAppender;
     }
 
-    protected static final String givenOrFallbackFilenameFrom( String optionalFilename, Class clazz ) {
-        return givenOrFallbackFilenameFrom( optionalFilename, clazz.getName() );
+    protected static final String givenOrFallbackFilenameFrom( final String optionalFilename, final Class clazz ) {
+        String classNameAsFilename = IOUtility.asLogfileFilename( clazz.getName() );
+        return givenOrFallbackFilenameFrom( optionalFilename, classNameAsFilename );
     }
 
-    protected static final String givenOrFallbackFilenameFrom( String optionalFilename, String alternativeFilename ) {
+    protected static final String givenOrFallbackFilenameFrom( final String optionalFilename, final String alternativeFilename ) {
         String filenameToStartWith = U.coalesce( optionalFilename, alternativeFilename );
 
         File dummy = new File( filenameToStartWith );
@@ -104,7 +112,7 @@ public final class DestinationsLogging {
             if ( !isValidDirectory( directoryname ) ) {
                 directoryname = Utility.getTempDir();
                 if ( !isValidDirectory( directoryname ) ) {
-                    directoryname = getTempDir();
+                    directoryname = IOUtility.getTempDir();
                 }
             }
         }
@@ -113,17 +121,7 @@ public final class DestinationsLogging {
         return logfile.getPath();
     }
 
-    private static String tmpdir;
-
-    private static synchronized String getTempDir() {
-        if ( tmpdir == null ) {
-            GetPropertyAction a = new GetPropertyAction( "java.io.tmpdir" );
-            tmpdir = ((String) AccessController.doPrivileged( a ));
-        }
-        return tmpdir;
-    }
-
-    private static boolean isValidDirectory( String directoryname ) {
+    private static boolean isValidDirectory( final String directoryname ) {
         if ( U.isEmpty( directoryname ) ) {
             return false;
         }
@@ -131,7 +129,7 @@ public final class DestinationsLogging {
         return directory.exists();
     }
 
-    private static final boolean isDirectory( File file ) {
+    private static final boolean isDirectory( final File file ) {
         boolean maybeDirectory = file.exists();
         return maybeDirectory & file.isDirectory();
     }

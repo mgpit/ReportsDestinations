@@ -7,9 +7,11 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.security.AccessController;
 
 import de.mgpit.oracle.reports.plugin.commons.Units;
 import oracle.reports.utility.Utility;
+import sun.security.action.GetPropertyAction;
 
 /**
  * 
@@ -19,13 +21,23 @@ import oracle.reports.utility.Utility;
  *
  */
 public class IOUtility {
+
+    private static String tmpdir;
+
+    public static synchronized String getTempDir() {
+        if ( tmpdir == null ) {
+            GetPropertyAction a = new GetPropertyAction( "java.io.tmpdir" );
+            tmpdir = ((String) AccessController.doPrivileged( a ));
+        }
+        return tmpdir;
+    }
     
-    public static String asLogfileFilename( String str ) {
+    public static String asLogfileFilename( final String str ) {
         String replaced = str.replace( '.', '_' );
         return (replaced.endsWith( ".log" ))?replaced:replaced+".log";
     }
     
-    public static String asPlatformFilename( String filename ) {
+    public static String asPlatformFilename( final String filename ) {
         try {
             File f = new File(filename);
             return f.getPath();
