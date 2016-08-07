@@ -18,8 +18,7 @@ public final class MQDestination extends MgpDestination {
 
     private static final Logger LOG = Logger.getLogger( MQDestination.class );
 
-    private static boolean keepConnection = false;
-    private static Map registeredPlugins;
+    private static Map virtualDestinations;
 
     private MQ mq;
 
@@ -106,7 +105,7 @@ public final class MQDestination extends MgpDestination {
             if ( declaresContentPlugin( key ) ) {
                 String pluginName = extractPluginName( key );
                 String pluginClassName = destinationsProperties.getProperty( key );
-                boolean success = registerPlugin( pluginName, pluginClassName );
+                boolean success = registerVirtualDestination( pluginName, pluginClassName );
                 if ( !success ) {
                     registrationErrorOccured = true;
                 }
@@ -119,10 +118,10 @@ public final class MQDestination extends MgpDestination {
         }
     }
 
-    private static boolean registerPlugin( String pluginName, String pluginClassName ) {
+    private static boolean registerVirtualDestination( String pluginName, String pluginClassName ) {
         LOG.info( " >>> About to register plugin named " + U.w( pluginName ) );
-        if ( registeredPlugins == null ) {
-            registeredPlugins = new HashMap( 7 );
+        if ( virtualDestinations == null ) {
+            virtualDestinations = new HashMap( 7 );
         }
         Class clazz = null;
         try {
@@ -131,7 +130,7 @@ public final class MQDestination extends MgpDestination {
             LOG.fatal( cnf );
             return false;
         }
-        registeredPlugins.put( pluginName, clazz );
+        virtualDestinations.put( pluginName, clazz );
         return true;
     }
 

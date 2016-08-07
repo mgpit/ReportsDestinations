@@ -1,20 +1,17 @@
 package de.mgpit.oracle.reports.plugin.destination.content.decorators;
 
 
-import java.io.IOException;
-import de.mgpit.modernizr.java.lang.Enum;
-import java.io.InvalidObjectException;
-import java.io.ObjectInputStream;
-import java.io.ObjectStreamException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+import de.mgpit.modernizr.java.lang.Enum;
 import de.mgpit.oracle.reports.plugin.commons.U;
-import oracle.olapi.UnsupportedOperationException;
 
 public final class Steps extends de.mgpit.modernizr.java.lang.Enum {
+    private static final long serialVersionUID = -758473813852381487L;
+
     public static final Steps InHeader = new Steps( "InHeader", 0 );
     public static final Steps InPayload = new Steps( "InPayload", 1 );
     public static final Steps InTrailer = new Steps( "InTrailer", 2 );

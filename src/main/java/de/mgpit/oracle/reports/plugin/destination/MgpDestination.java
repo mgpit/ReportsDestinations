@@ -7,6 +7,7 @@ import org.apache.log4j.Logger;
 
 import de.mgpit.oracle.reports.plugin.commons.DestinationsLogging;
 import de.mgpit.oracle.reports.plugin.commons.U;
+import de.mgpit.oracle.reports.plugin.destination.mq.MQDestination;
 import oracle.reports.RWException;
 import oracle.reports.server.Destination;
 import oracle.reports.server.RWServer;
@@ -131,7 +132,7 @@ public abstract class MgpDestination extends Destination {
         DestinationsLogging.createOrReplacePackageLevelLogger( clazz, logfileFilenameGiven, loglevelLevelnameGiven );
     }
 
-    // private static void cel( String str ) {
-    // Utility.createErrorLog( str, "myerror.log" );
-    // }
+    public static void shutdown() {
+        Destination.shutdown();
+    }
 }

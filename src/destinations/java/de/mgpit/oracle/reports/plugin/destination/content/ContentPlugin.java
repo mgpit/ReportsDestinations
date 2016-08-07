@@ -3,8 +3,6 @@ package de.mgpit.oracle.reports.plugin.destination.content;
 
 import java.io.InputStream;
 
-import org.apache.log4j.Logger;
-
 import oracle.reports.RWException;
 
 /**
@@ -22,8 +20,6 @@ import oracle.reports.RWException;
  *
  */
 public abstract class ContentPlugin {
-
-    private static final Logger LOG = Logger.getLogger( ContentPlugin.class );
 
     /**
      * Applies the modification to the input stream.
