@@ -5,7 +5,8 @@
 <project name="Developer 2000 Reports" basedir=".">
 
     <!-- set global properties for this build -->
-    <property name="dir.src" location="src/main/java" />
+    <property name="dir.src.main" location="src/main/java" />
+    <property name="dir.src.dest" location="src/destinations/java" />
     <property name="dir.test" location="src/test/java" />
     <property name="dir.res" location="src/main/resources" />
     <property name="dir.build" location="tmp" />
@@ -119,15 +120,15 @@
     </target>
 
     <property name="jaxb.cdmdoc.packagename" value="de.mgpit.oracle.reports.plugin.destination.cdm.schema" />
-    <propertyreplace name="jaxb.cdmdoc.dir.schema" value="${dir.src}${file.separator}${jaxb.cdmdoc.packagename}" token="." replace="${file.separator}" />
+    <propertyreplace name="jaxb.cdmdoc.dir.schema" value="${dir.src.dest}${file.separator}${jaxb.cdmdoc.packagename}" token="." replace="${file.separator}" />
     <property name="schema.name" value="cdmdoc" />
     <property name="schema.schema.name" location="${jaxb.cdmdoc.dir.schema}/${schema.name}.xsd" />
     <property name="schema.bindings.name" location="${jaxb.cdmdoc.dir.schema}/${schema.name}.xjb" />
     <target name="ORA JAXB on cdmdoc" depends="splashit, Clean JAXB generated classes" description="Create JAXB classes for cdmdoc.xsd">
         <echo level="info" message="CDMDOC Schema Dir.....: ${jaxb.cdmdoc.dir.schema}" />
         <echo level="info" message="CDMDOC Package Name...: ${jaxb.cdmdoc.packagename}" />
-        <exec executable="cmd.exe" dir="${dir.src}" vmlauncher="false">
-            <env key="CLASSPATH" value="${dir.src};${lib.ora.xmlparser2};${lib.ora.xsu12};${lib.ora.xml}" />
+        <exec executable="cmd.exe" dir="${dir.src.dest}" vmlauncher="false">
+            <env key="CLASSPATH" value="${dir.src.dest};${lib.ora.xmlparser2};${lib.ora.xsu12};${lib.ora.xml}" />
             <arg value="/c" />
             <arg value="${orajaxb} -extension -bindingFile ${schema.bindings.name} -targetPkg ${jaxb.cdmdoc.packagename} -schema ${schema.schema.name}" />
         </exec>
@@ -136,8 +137,8 @@
     <target name="SUN JAXB on cdmdoc" depends="splashit, Clean JAXB generated classes" description="Create JAXB classes for cdmdoc.xsd">
         <echo level="info" message="CDMDOC Schema Dir.....: ${jaxb.cdmdoc.dir.schema}" />
         <echo level="info" message="CDMDOC Package Name...: ${jaxb.cdmdoc.packagename}" />
-        <exec executable="cmd.exe" dir="${dir.src}" vmlauncher="false">
-            <env key="CLASSPATH" value="${dir.src};${lib.sun.jaxb-api};${lib.sun.jaxb-xjc}" />
+        <exec executable="cmd.exe" dir="${dir.src.dest}" vmlauncher="false">
+            <env key="CLASSPATH" value="${dir.src.dest};${lib.sun.jaxb-api};${lib.sun.jaxb-xjc}" />
             <arg value="/c" />
             <arg value="${xjc} -extension -b ${schema.bindings.name} -p ${jaxb.cdmdoc.packagename} ${schema.schema.name} " />
         </exec>
@@ -154,56 +155,46 @@
     </target>
 
     <target name="compileCommons" depends="cleanbuildcommons">
-        <javac includeantruntime="false" defaultexcludes="true" srcdir="${dir.src}" destdir="${dir.build}" source="1.4" target="1.4">
+        <javac includeantruntime="false" defaultexcludes="true" srcdir="${dir.src.main}" destdir="${dir.build}" source="1.4" target="1.4">
             <compilerarg value="-Xbootclasspath/p:${toString:java14.bootstrap.class.path}" />
             <classpath refid="project.class.path" />
-            <include name="**/commons/**" />
-            <include name="**/plugin/destination/MgpDestination.java" />
-            <exclude name="**/cdm/**" />
-            <exclude name="**/spielwiese/**" />
-            <exclude name="**/zip/**" />
-            <exclude name="**/mq/**" />
         </javac>
     </target>
 
     <target name="package&amp;DeployCommons">
         <jar destfile="${deploy.jar.MgpCommons}" basedir="${dir.build}" update="false" />
         <copy verbose="true" file="${deploy.jar.MgpCommons}" todir="${dir.reports.jlib}" />
-        <delete file="${deploy.jar.MgpCommons}" failonerror="false"/>
+        <delete file="${deploy.jar.MgpCommons}" failonerror="false" />
     </target>
 
     <target name="9 Deploy Commons" description="Deploy Commons" depends="compileCommons, package&amp;DeployCommons" />
 
     <target name="compileZIPdest" depends="cleanbuild">
         <echo message="About to compile ZIP Destination ..." />
-        <echo level="info" message="Using classpath ${toString:ZIPdest.class.path}"/>
-        <javac includeantruntime="false" defaultexcludes="true" srcdir="${dir.src}" destdir="${dir.build}" source="1.4" target="1.4">
+        <echo level="info" message="Using classpath ${toString:ZIPdest.class.path}" />
+        <javac includeantruntime="false" defaultexcludes="true" srcdir="${dir.src.dest}" destdir="${dir.build}" source="1.4" target="1.4">
             <compilerarg value="-Xbootclasspath/p:${toString:java14.bootstrap.class.path}" />
             <classpath refid="ZIPdest.class.path" />
             <include name="**/zip/**" />
             <exclude name="**/cdm/**" />
-            <exclude name="**/spielwiese/**" />
-            <exclude name="**/commons/**" />
             <exclude name="**/mq/**" />
         </javac>
     </target>
 
     <target name="packageZIPdest" depends="compileZIPdest">
         <echo message="About to make JAR archive ..." />
-        <copy file="${dir.res}/log4j.ZipDestination.properties" todir="${dir.build}" overwrite="true"/>
+        <copy file="${dir.res}/log4j.ZipDestination.properties" todir="${dir.build}" overwrite="true" />
         <jar destfile="${deploy.jar.ZIPdestination}" basedir="${dir.build}" update="false" />
     </target>
 
     <target name="compileMQdest" depends="cleanbuild">
         <echo message="About to compile MQ Destination ..." />
-        <echo level="info" message="Using classpath ${toString:MQdest.class.path}"/>
-        <javac includeantruntime="false" defaultexcludes="true" srcdir="${dir.src}" destdir="${dir.build}" source="1.4" target="1.4">
+        <echo level="info" message="Using classpath ${toString:MQdest.class.path}" />
+        <javac includeantruntime="false" defaultexcludes="true" srcdir="${dir.src.dest}" destdir="${dir.build}" source="1.4" target="1.4">
             <compilerarg value="-Xbootclasspath/p:${toString:java14.bootstrap.class.path}" />
             <classpath refid="MQdest.class.path" />
             <include name="**/mq/**" />
             <exclude name="**/cdm/**" />
-            <exclude name="**/spielwiese/**" />
-            <exclude name="**/commons/**" />
             <exclude name="**/zip/**" />
         </javac>
     </target>
@@ -215,19 +206,19 @@
     </target>
     <target name="packageMQdest" depends="compileMQdest">
         <echo message="About to make JAR archive ..." />
-        <copy file="${dir.res}/log4j.MQDestination.properties" todir="${dir.build}" overwrite="true"/>
+        <copy file="${dir.res}/log4j.MQDestination.properties" todir="${dir.build}" overwrite="true" />
         <jar destfile="${deploy.jar.MQdestination}" basedir="${dir.build}" update="false" />
     </target>
 
     <target name="2 Deploy Zip Destination" depends="packageZIPdest" description="Deploy ZIP Destination">
         <copy verbose="true" file="${deploy.jar.ZIPdestination}" todir="${dir.reports.jlib}" />
-        <delete file="${deploy.jar.ZIPdestination}" failonerror="false"/>
+        <delete file="${deploy.jar.ZIPdestination}" failonerror="false" />
         <echo message="Zip Destination: Deployment finished" />
     </target>
 
     <target name="3 Deploy MQ Destination" depends="packageMQdest" description="Deploy MQ Destination">
         <copy verbose="true" file="${deploy.jar.MQdestination}" todir="${dir.reports.jlib}" />
-        <delete file="${deploy.jar.MQdestination}" failonerror="false"/>
+        <delete file="${deploy.jar.MQdestination}" failonerror="false" />
         <echo message="MQ Destination: Deployment finished" />
     </target>
 
@@ -238,11 +229,12 @@
     <target name="Make HTML Documentation" description="Prepare for documentation">
         <delete dir="res/html" failonerror="false" />
         <copy overwrite="true" todir="res/html">
-            <fileset dir="${dir.src}" id="sourcefiles">
+            <fileset dir="${dir.src.main}" id="sourcefiles#common">
                 <include name="**/*.java" />
-                <exclude name="**/com/**" />
+            </fileset>
+            <fileset dir="${dir.src.main}" id="sourcefiles#destination">
+                <include name="**/*.java" />
                 <exclude name="**/cdm/schema/**" />
-                <exclude name="**/spielwiese/**" />
             </fileset>
             <fileset dir="${dir.test}" id="testfiles">
                 <include name="**/*.java" />
