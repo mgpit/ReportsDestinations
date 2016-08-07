@@ -1,8 +1,6 @@
 package de.mgpit.oracle.reports.plugin.destination.cdm.schema;
 
 
-import java.io.StringWriter;
-
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
@@ -21,7 +19,6 @@ import javax.xml.transform.stream.StreamResult;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
-import de.mgpit.oracle.reports.plugin.commons.Units;
 import junit.framework.TestCase;
 
 public class MarshallTest extends TestCase {
@@ -71,7 +68,7 @@ public class MarshallTest extends TestCase {
         assertNotNull( cdmdoc );
         assertNotNull( content );
 
-        StringWriter xmlStream = new StringWriter( Units.ONE_KILOBYTE / 4 );
+        // StringWriter xmlStream = new StringWriter( Units.ONE_KILOBYTE / 4 );
         try {
 
             cdmdoc2xml.marshal( content, System.out );

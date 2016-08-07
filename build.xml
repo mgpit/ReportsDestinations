@@ -7,6 +7,7 @@
     <!-- set global properties for this build -->
     <property name="dir.src.main" location="src/main/java" />
     <property name="dir.src.dest" location="src/destinations/java" />
+    <property name="dir.src.payload" location="src/payload/java" />
     <property name="dir.test" location="src/test/java" />
     <property name="dir.res" location="src/main/resources" />
     <property name="dir.build" location="tmp" />
@@ -120,7 +121,8 @@
     </target>
 
     <property name="jaxb.cdmdoc.packagename" value="de.mgpit.oracle.reports.plugin.destination.cdm.schema" />
-    <propertyreplace name="jaxb.cdmdoc.dir.schema" value="${dir.src.dest}${file.separator}${jaxb.cdmdoc.packagename}" token="." replace="${file.separator}" />
+    <propertyreplace name="jaxb.cdmdoc.dir.schema" value="${dir.src.payload}${file.separator}${jaxb.cdmdoc.packagename}" token="." replace="${file.separator}" />
+    
     <property name="schema.name" value="cdmdoc" />
     <property name="schema.schema.name" location="${jaxb.cdmdoc.dir.schema}/${schema.name}.xsd" />
     <property name="schema.bindings.name" location="${jaxb.cdmdoc.dir.schema}/${schema.name}.xjb" />

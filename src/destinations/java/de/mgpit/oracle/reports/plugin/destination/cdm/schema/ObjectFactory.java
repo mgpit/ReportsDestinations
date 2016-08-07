@@ -115,7 +115,7 @@ public class ObjectFactory
 
    public Object getSchemaLocation() throws Exception
    {
-      return new java.io.File("H:/workspace/ReportsDestinations/src/destinations/java/de/mgpit/oracle/reports/plugin/destination/cdm/schema/cdmdoc.xsd").toURL();
+      return new java.io.File("H:/workspace/ReportsDestinations/src/payload/java/de/mgpit/oracle/reports/plugin/destination/cdm/schema/cdmdoc.xsd").toURL();
    }
 
    private oracle.xml.parser.v2.XMLDocument ownerDocument = 
