@@ -25,36 +25,36 @@ import sun.security.action.GetPropertyAction;
  * 
  * @author mgp
  * 
- * Factory for setting up a log file for an Oracle Reports destination plugin.
- * <p>
- * There are two factory methods
- * <ul>
- *      <li>{@link #createOrReplaceClassLevelLogger(Class, String, String)}</li>
- *      <li>{@link #createOrReplacePackageLevelLogger(Class, String, String)}</li>
- * </ul>
- * each taking three parameters
- * <ul>
- *      <li>a Class for determining the logger's namespace</li>
- *      <li>an optional filename/path for setting the log file</li>
- *      <li>an optional String for setting the logger's log level</li> 
- * </ul>
- * <h2>Determining the log file's file name</h2>
- * <ul>
- *      <li>The simplest situation is where that the caller of one of the factory methods provides a full path for the 
- *      log file's file name and points to a valid directory.</li>
- *      <li>If there's no file name provided the class' full name will be used as file name with all <code>.</code> (dots)
- *      replaced by <code>_</code> (underlines) and an extension of <code>.log</code>.</li>
- *      <li>If there directory provides is <strong>not valid</strong> (i.e. does not exist or there is no read/write access [for the
- *      Oracle Reports process] <sup>1</sup> ) the log file will be placed
- *      <ol>
- *          <li>in the Oracle Reports <code>logs directory</code>
- *          <li>or, if this is not valid, in the Oracle Reports <code>temp direcotry</code>
- *          <li>or, if this is not valid, in the <code>default temp direcotry</code> 
- *      </ol>
- * </ul>
- * <p>
- * <sup>1</sup> The "is valid" property is of course time dependent. Any changes made to the file system after creating
- * the logger may have the effect that the directory given is not valid any more. 
+ *         Factory for setting up a log file for an Oracle Reports destination plugin.
+ *         <p>
+ *         There are two factory methods
+ *         <ul>
+ *         <li>{@link #createOrReplaceClassLevelLogger(Class, String, String)}</li>
+ *         <li>{@link #createOrReplacePackageLevelLogger(Class, String, String)}</li>
+ *         </ul>
+ *         each taking three parameters
+ *         <ul>
+ *         <li>a Class for determining the logger's namespace</li>
+ *         <li>an optional filename/path for setting the log file</li>
+ *         <li>an optional String for setting the logger's log level</li>
+ *         </ul>
+ *         <h2>Determining the log file's file name</h2>
+ *         <ul>
+ *         <li>The simplest situation is where that the caller of one of the factory methods provides a full path for the
+ *         log file's file name and points to a valid directory.</li>
+ *         <li>If there's no file name provided the class' full name will be used as file name with all <code>.</code> (dots)
+ *         replaced by <code>_</code> (underlines) and an extension of <code>.log</code>.</li>
+ *         <li>If there directory provides is <strong>not valid</strong> (i.e. does not exist or there is no read/write access [for the
+ *         Oracle Reports process] <sup>1</sup> ) the log file will be placed
+ *         <ol>
+ *         <li>in the Oracle Reports <code>logs directory</code>
+ *         <li>or, if this is not valid, in the Oracle Reports <code>temp direcotry</code>
+ *         <li>or, if this is not valid, in the <code>default temp direcotry</code>
+ *         </ol>
+ *         </ul>
+ *         <p>
+ *         <sup>1</sup> The "is valid" property is of course time dependent. Any changes made to the file system after creating
+ *         the logger may have the effect that the directory given is not valid any more.
  */
 public final class DestinationsLogging {
 
@@ -80,7 +80,7 @@ public final class DestinationsLogging {
      *            A filename/path, maybe null
      * @param optionalLoglevelName
      *            Any String understood by log4j's {@link Level#toLevel} method. The log level for the logger, maybe null, defaults to <code>INFO</code>.
-     *            
+     * 
      * @throws RWException
      */
     public static final void createOrReplaceClassLevelLogger( final Class clazz, final String optionalFilename,
@@ -98,7 +98,7 @@ public final class DestinationsLogging {
      *            A filename/path, maybe null
      * @param optionalLoglevelName
      *            Any String understood by log4j's {@link Level#toLevel} method. The log level for the logger, maybe null, defaults to <code>INFO</code>.
-     *            
+     * 
      * @throws RWException
      */
     public static final void createOrReplacePackageLevelLogger( final Class clazz, final String optionalFilename,
@@ -185,27 +185,24 @@ public final class DestinationsLogging {
         return logfile.getPath();
     }
 
-    private static boolean isValidDirectory( final String directoryname ) {
-        if ( U.isEmpty( directoryname ) ) {
+    /**
+     * Checks if the pathname is a valid directory, i.e. must be
+     * <ul>
+     *      <li>an existing directory</li>
+     *      <li>readable</li>
+     *      <li>writable</li>
+     * </ul>
+     * @param maybeDirectoryname pathname to test
+     * @return <code>true</code> if the pathname is a valid directory, <code>false</code> else.
+     */
+    private static boolean isValidDirectory( final String maybeDirectoryname ) {
+        if ( U.isEmpty( maybeDirectoryname ) ) {
             return false;
         }
+        File possibleDirectory = new File( maybeDirectoryname );
         
-        return isDirectory( directoryname ) && canReadWriteDeleteInDirectory( directoryname );
-    }
-    
-    private static final boolean canReadWriteDeleteInDirectory( final String directoryname) {
-        boolean weCan = true;
-        try {
-            AccessController.checkPermission(new FilePermission(directoryname, "read,write,delete"));
-        } catch ( AccessControlException ace ) {
-            weCan = false;
-        }
-        return weCan;
-    }
-
-    private static final boolean isDirectory( final String maybeDirectoryName ) {
-        File maybeDirectory = new File( maybeDirectoryName );
-        return maybeDirectory.exists() && maybeDirectory.isDirectory();
+        boolean valid = possibleDirectory.isDirectory() && possibleDirectory.canRead() && possibleDirectory.canWrite();
+        return valid;
     }
 
 }

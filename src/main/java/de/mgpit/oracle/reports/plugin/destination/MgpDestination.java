@@ -9,6 +9,8 @@ import de.mgpit.oracle.reports.plugin.commons.DestinationsLogging;
 import de.mgpit.oracle.reports.plugin.commons.U;
 import oracle.reports.RWException;
 import oracle.reports.server.Destination;
+import oracle.reports.server.RWServer;
+import oracle.reports.utility.TraceHandler;
 import oracle.reports.utility.Utility;
 
 /**
@@ -120,17 +122,16 @@ public abstract class MgpDestination extends Destination {
     protected static void initLogging( final Properties destinationsProperties, Class clazz ) throws RWException {
         String logfileFilenameGiven = null;
         String loglevelLevelnameGiven = null;
-        
+
         if ( destinationsProperties != null ) {
             logfileFilenameGiven = destinationsProperties.getProperty( "logfile" );
             loglevelLevelnameGiven = destinationsProperties.getProperty( "loglevel", "INFO" );
         }
-        
+
         DestinationsLogging.createOrReplacePackageLevelLogger( clazz, logfileFilenameGiven, loglevelLevelnameGiven );
     }
 
-
-//    private static void cel( String str ) {
-//        Utility.createErrorLog( str, "myerror.log" );
-//    }
+    // private static void cel( String str ) {
+    // Utility.createErrorLog( str, "myerror.log" );
+    // }
 }
