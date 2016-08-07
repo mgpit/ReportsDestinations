@@ -34,7 +34,7 @@ public class DestinationsLoggingTest extends TestCase {
         boolean exceptionOccured = false;
         String message = "<null>";
         try {
-            DestinationsLogging.setupPackageLevelLogger( DestinationsLoggingTest.class, null, null );
+            DestinationsLogging.createOrReplacePackageLevelLogger( DestinationsLoggingTest.class, null, null );
         } catch ( Exception any ) {
             message = any.getMessage();
             any.printStackTrace();

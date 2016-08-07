@@ -126,7 +126,7 @@ public abstract class MgpDestination extends Destination {
             loglevelLevelnameGiven = destinationsProperties.getProperty( "loglevel", "INFO" );
         }
         
-        DestinationsLogging.setupPackageLevelLogger( clazz, logfileFilenameGiven, loglevelLevelnameGiven );
+        DestinationsLogging.createOrReplacePackageLevelLogger( clazz, logfileFilenameGiven, loglevelLevelnameGiven );
     }
 
 

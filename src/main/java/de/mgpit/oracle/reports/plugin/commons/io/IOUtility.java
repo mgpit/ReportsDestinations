@@ -24,6 +24,9 @@ public class IOUtility {
 
     private static String tmpdir;
 
+    /**
+     * @return pathname of the directory denoted by <code>java.io.tmpdir</code>.
+     */
     public static synchronized String getTempDir() {
         if ( tmpdir == null ) {
             GetPropertyAction a = new GetPropertyAction( "java.io.tmpdir" );
@@ -31,15 +34,24 @@ public class IOUtility {
         }
         return tmpdir;
     }
-    
+
+    /**
+     * Creates a log file name from the string given.
+     * <p>
+     * Will replace all occurrences of <code>.</code> (dots) by <code>_</code> (underline) in the string given
+     * and eventually add a <code>.log</code> file extension.
+     * @param str
+     *            name string to convert
+     * @return a log file name
+     */
     public static String asLogfileFilename( final String str ) {
         String replaced = str.replace( '.', '_' );
-        return (replaced.endsWith( ".log" ))?replaced:replaced+".log";
+        return (replaced.endsWith( ".log" )) ? replaced : replaced + ".log";
     }
-    
+
     public static String asPlatformFilename( final String filename ) {
         try {
-            File f = new File(filename);
+            File f = new File( filename );
             return f.getPath();
         } catch ( NullPointerException nex ) {
             return null;
@@ -73,7 +85,7 @@ public class IOUtility {
      * @return the file name part
      */
     public static String fileNameOnly( final String fullFileName ) {
-        return (fullFileName==null)?null:Utility.fileNameOnly( fullFileName );
+        return (fullFileName == null) ? null : Utility.fileNameOnly( fullFileName );
     }
 
     /**
@@ -122,5 +134,5 @@ public class IOUtility {
         copyFromTo( new BufferedInputStream( in ), temporary );
         return temporary.toString();
     }
-    
+
 }

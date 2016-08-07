@@ -2,7 +2,9 @@ package de.mgpit.oracle.reports.plugin.commons;
 
 
 import java.io.File;
+import java.io.FilePermission;
 import java.io.IOException;
+import java.security.AccessControlException;
 import java.security.AccessController;
 import java.util.LinkedList;
 import java.util.List;
@@ -19,6 +21,41 @@ import oracle.reports.RWException;
 import oracle.reports.utility.Utility;
 import sun.security.action.GetPropertyAction;
 
+/**
+ * 
+ * @author mgp
+ * 
+ * Factory for setting up a log file for an Oracle Reports destination plugin.
+ * <p>
+ * There are two factory methods
+ * <ul>
+ *      <li>{@link #createOrReplaceClassLevelLogger(Class, String, String)}</li>
+ *      <li>{@link #createOrReplacePackageLevelLogger(Class, String, String)}</li>
+ * </ul>
+ * each taking three parameters
+ * <ul>
+ *      <li>a Class for determining the logger's namespace</li>
+ *      <li>an optional filename/path for setting the log file</li>
+ *      <li>an optional String for setting the logger's log level</li> 
+ * </ul>
+ * <h2>Determining the log file's file name</h2>
+ * <ul>
+ *      <li>The simplest situation is where that the caller of one of the factory methods provides a full path for the 
+ *      log file's file name and points to a valid directory.</li>
+ *      <li>If there's no file name provided the class' full name will be used as file name with all <code>.</code> (dots)
+ *      replaced by <code>_</code> (underlines) and an extension of <code>.log</code>.</li>
+ *      <li>If there directory provides is <strong>not valid</strong> (i.e. does not exist or there is no read/write access [for the
+ *      Oracle Reports process] <sup>1</sup> ) the log file will be placed
+ *      <ol>
+ *          <li>in the Oracle Reports <code>logs directory</code>
+ *          <li>or, if this is not valid, in the Oracle Reports <code>temp direcotry</code>
+ *          <li>or, if this is not valid, in the <code>default temp direcotry</code> 
+ *      </ol>
+ * </ul>
+ * <p>
+ * <sup>1</sup> The "is valid" property is of course time dependent. Any changes made to the file system after creating
+ * the logger may have the effect that the directory given is not valid any more. 
+ */
 public final class DestinationsLogging {
 
     /**
@@ -33,17 +70,43 @@ public final class DestinationsLogging {
 
     private static final Layout DATE_LEVEL_MESSAGE_LAYOUT = new PatternLayout( "%d{yyyy-MM-dd HH:mm:ss} [%-5p] - %m%n" );
 
-    public static final void setupClassLevelLogger( final Class clazz, final String optionalFilename,
+    /**
+     * Creates a log4j logger for the namespace definded by the class' full name.
+     * The logger will have one appender - a RollingFileAppender.
+     * 
+     * @param clazz
+     *            The class for which the logger will be set up. Will be used to derive the logger namespace. May be used for determining the log file name.
+     * @param optionalFilename
+     *            A filename/path, maybe null
+     * @param optionalLoglevelName
+     *            Any String understood by log4j's {@link Level#toLevel} method. The log level for the logger, maybe null, defaults to <code>INFO</code>.
+     *            
+     * @throws RWException
+     */
+    public static final void createOrReplaceClassLevelLogger( final Class clazz, final String optionalFilename,
             final String optionalLoglevelName ) throws RWException {
         setupLogger( clazz, U.classname( clazz ), optionalFilename, optionalLoglevelName );
     }
 
-    public static final void setupPackageLevelLogger( final Class clazz, final String optionalFilename,
+    /**
+     * Creates a log4j logger for the namespace definded by the class' package name.
+     * The logger will have one appender - a RollingFileAppender.
+     * 
+     * @param clazz
+     *            The class for which the logger will be set up. Will be used to derive the logger namespace. May be used for determining the log file name.
+     * @param optionalFilename
+     *            A filename/path, maybe null
+     * @param optionalLoglevelName
+     *            Any String understood by log4j's {@link Level#toLevel} method. The log level for the logger, maybe null, defaults to <code>INFO</code>.
+     *            
+     * @throws RWException
+     */
+    public static final void createOrReplacePackageLevelLogger( final Class clazz, final String optionalFilename,
             final String optionalLoglevelName ) throws RWException {
         setupLogger( clazz, U.packagename( clazz ), optionalFilename, optionalLoglevelName );
     }
 
-    protected static final void setupLogger( final Class clazz, String givenLoggerName, final String givenOptionalFilename,
+    static final void setupLogger( final Class clazz, String givenLoggerName, final String givenOptionalFilename,
             final String optionalLoglevelName ) throws RWException {
 
         U.Rw.assertNotNull( givenLoggerName );
@@ -72,7 +135,7 @@ public final class DestinationsLogging {
 
     }
 
-    protected static final void resetLoglevel( final Logger logger, final String optionalLoglevelName ) {
+    static final void resetLoglevel( final Logger logger, final String optionalLoglevelName ) {
         Level newLevel = Level.INFO;
 
         if ( !U.isEmpty( optionalLoglevelName ) ) {
@@ -86,7 +149,7 @@ public final class DestinationsLogging {
         logger.setLevel( newLevel );
     }
 
-    protected static final FileAppender buildFileAppender( final Class clazz, final String optionalFilename ) throws IOException {
+    static final FileAppender buildFileAppender( final Class clazz, final String optionalFilename ) throws IOException {
         String filename = givenOrFallbackFilenameFrom( optionalFilename, clazz );
         RollingFileAppender newAppender = new RollingFileAppender( DATE_LEVEL_MESSAGE_LAYOUT, filename, Magic.LOG_APPEND );
         newAppender.setMaxFileSize( "1MB" );
@@ -95,12 +158,12 @@ public final class DestinationsLogging {
         return newAppender;
     }
 
-    protected static final String givenOrFallbackFilenameFrom( final String optionalFilename, final Class clazz ) {
+    static final String givenOrFallbackFilenameFrom( final String optionalFilename, final Class clazz ) {
         String classNameAsFilename = IOUtility.asLogfileFilename( clazz.getName() );
         return givenOrFallbackFilenameFrom( optionalFilename, classNameAsFilename );
     }
 
-    protected static final String givenOrFallbackFilenameFrom( final String optionalFilename, final String alternativeFilename ) {
+    static final String givenOrFallbackFilenameFrom( final String optionalFilename, final String alternativeFilename ) {
         String filenameToStartWith = U.coalesce( optionalFilename, alternativeFilename );
 
         File dummy = new File( filenameToStartWith );
@@ -113,6 +176,7 @@ public final class DestinationsLogging {
                 directoryname = Utility.getTempDir();
                 if ( !isValidDirectory( directoryname ) ) {
                     directoryname = IOUtility.getTempDir();
+                    // Assumption: tempdir will always exist and be valid
                 }
             }
         }
@@ -125,13 +189,23 @@ public final class DestinationsLogging {
         if ( U.isEmpty( directoryname ) ) {
             return false;
         }
-        File directory = new File( directoryname );
-        return directory.exists();
+        
+        return isDirectory( directoryname ) && canReadWriteDeleteInDirectory( directoryname );
+    }
+    
+    private static final boolean canReadWriteDeleteInDirectory( final String directoryname) {
+        boolean weCan = true;
+        try {
+            AccessController.checkPermission(new FilePermission(directoryname, "read,write,delete"));
+        } catch ( AccessControlException ace ) {
+            weCan = false;
+        }
+        return weCan;
     }
 
-    private static final boolean isDirectory( final File file ) {
-        boolean maybeDirectory = file.exists();
-        return maybeDirectory & file.isDirectory();
+    private static final boolean isDirectory( final String maybeDirectoryName ) {
+        File maybeDirectory = new File( maybeDirectoryName );
+        return maybeDirectory.exists() && maybeDirectory.isDirectory();
     }
 
 }
