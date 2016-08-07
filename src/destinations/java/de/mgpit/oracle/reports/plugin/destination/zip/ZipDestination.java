@@ -91,14 +91,14 @@ public final class ZipDestination extends MgpDestination {
 
     private ZipArchive zipArchive;
     private String zipEntryName;
-    private boolean inAppendingMode;
+    // private boolean inAppendingMode;
 
     /**
      * Stop the distribution cycle.
      */
     protected void stop() throws RWException {
         try {
-            getZipArchive().close();
+            this.zipArchive.close();
             super.stop();
         } catch ( Exception any ) {
             LOG.error( "Error during finishing distribution. See following message(s)!" );
@@ -180,8 +180,7 @@ public final class ZipDestination extends MgpDestination {
      * @throws ArchivingException
      */
     protected void addFileToArchive( final String sourceFileName, final String entryName ) throws ArchivingException {
-        ZipArchive zipArchive = getZipArchive();
-        zipArchive.addFile( sourceFileName, entryName );
+        this.zipArchive.addFile( sourceFileName, entryName );
     }
 
     /**
@@ -210,11 +209,11 @@ public final class ZipDestination extends MgpDestination {
 
             String zipArchiveFileName = getZipArchiveNameFromCallParameters( allProperties, targetName );
             setZipEntryName( Utility.fileNameOnly( targetName ) );
-            setInAppendingMode( getAppendFlagFromCallParameters( allProperties ) );
+            boolean inAppendingMode = getAppendFlagFromCallParameters( allProperties );
 
-            createZipArchive( zipArchiveFileName, isInAppendingMode() );
+            createZipArchive( zipArchiveFileName, inAppendingMode );
 
-            LOG.info( "Starting distribution to " + U.w( zipArchiveFileName ) + ". " + modeMessage() );
+            LOG.info( "Starting distribution to " + U.w( zipArchiveFileName ) + ". " + modeMessage( inAppendingMode ) );
             continueToSend = true;
         }
         return continueToSend;
@@ -254,7 +253,7 @@ public final class ZipDestination extends MgpDestination {
      *            allProperties
      * @return
      */
-    private String getZipArchiveNameFromCallParameters( final Properties allProperties, final String targetName ) {
+    private static String getZipArchiveNameFromCallParameters( final Properties allProperties, final String targetName ) {
         String zipArchiveNameProvided = allProperties.getProperty( "ZIPFILENAME",
                 allProperties.getProperty( "zipfilename", targetName ) );
         String calculatedZipArchiveName = IOUtility.withZipExtension( zipArchiveNameProvided );
@@ -269,12 +268,12 @@ public final class ZipDestination extends MgpDestination {
      *            report
      * @return
      */
-    private boolean getAppendFlagFromCallParameters( final Properties allProperties ) {
+    private static boolean getAppendFlagFromCallParameters( final Properties allProperties ) {
         String appendParameterValue = allProperties.getProperty( "APPEND", allProperties.getProperty( "append", "FALSE" ) );
         return StringCodedBoolean.valueOf( appendParameterValue );
     }
 
-    private String modeMessage() {
+    private static String modeMessage( boolean inAppendingMode ) {
         return inAppendingMode ? "New entries will be appended to ZIP file." : "New ZIP file will be created.";
     }
 
@@ -293,18 +292,6 @@ public final class ZipDestination extends MgpDestination {
     public static void shutdown() {
         MgpDestination.shutdown();
         LOG.info( "Destination " + U.w( ZipDestination.class.getName() ) + " shut down." );
-    }
-
-    private ZipArchive getZipArchive() {
-        return this.zipArchive;
-    }
-
-    private void setInAppendingMode( final boolean inAppendingMode ) {
-        this.inAppendingMode = inAppendingMode;
-    }
-
-    public boolean isInAppendingMode() {
-        return this.inAppendingMode;
     }
 
     private void setZipEntryName( final String zipEntryName ) {

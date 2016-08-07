@@ -7,11 +7,8 @@ import org.apache.log4j.Logger;
 
 import de.mgpit.oracle.reports.plugin.commons.DestinationsLogging;
 import de.mgpit.oracle.reports.plugin.commons.U;
-import de.mgpit.oracle.reports.plugin.destination.mq.MQDestination;
 import oracle.reports.RWException;
 import oracle.reports.server.Destination;
-import oracle.reports.server.RWServer;
-import oracle.reports.utility.TraceHandler;
 import oracle.reports.utility.Utility;
 
 /**
