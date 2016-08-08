@@ -129,8 +129,8 @@
     <target name="ORA JAXB on cdmdoc" depends="splashit, Clean JAXB generated classes" description="Create JAXB classes for cdmdoc.xsd">
         <echo level="info" message="CDMDOC Schema Dir.....: ${jaxb.cdmdoc.dir.schema}" />
         <echo level="info" message="CDMDOC Package Name...: ${jaxb.cdmdoc.packagename}" />
-        <exec executable="cmd.exe" dir="${dir.src.dest}" vmlauncher="false">
-            <env key="CLASSPATH" value="${dir.src.dest};${lib.ora.xmlparser2};${lib.ora.xsu12};${lib.ora.xml}" />
+        <exec executable="cmd.exe" dir="${dir.src.payload}" vmlauncher="false">
+            <env key="CLASSPATH" value="${dir.src.payload};${lib.ora.xmlparser2};${lib.ora.xsu12};${lib.ora.xml}" />
             <arg value="/c" />
             <arg value="${orajaxb} -extension -bindingFile ${schema.bindings.name} -targetPkg ${jaxb.cdmdoc.packagename} -schema ${schema.schema.name}" />
         </exec>
@@ -139,8 +139,8 @@
     <target name="SUN JAXB on cdmdoc" depends="splashit, Clean JAXB generated classes" description="Create JAXB classes for cdmdoc.xsd">
         <echo level="info" message="CDMDOC Schema Dir.....: ${jaxb.cdmdoc.dir.schema}" />
         <echo level="info" message="CDMDOC Package Name...: ${jaxb.cdmdoc.packagename}" />
-        <exec executable="cmd.exe" dir="${dir.src.dest}" vmlauncher="false">
-            <env key="CLASSPATH" value="${dir.src.dest};${lib.sun.jaxb-api};${lib.sun.jaxb-xjc}" />
+        <exec executable="cmd.exe" dir="${dir.src.payload}" vmlauncher="false">
+            <env key="CLASSPATH" value="${dir.src.payload};${lib.sun.jaxb-api};${lib.sun.jaxb-xjc}" />
             <arg value="/c" />
             <arg value="${xjc} -extension -b ${schema.bindings.name} -p ${jaxb.cdmdoc.packagename} ${schema.schema.name} " />
         </exec>
