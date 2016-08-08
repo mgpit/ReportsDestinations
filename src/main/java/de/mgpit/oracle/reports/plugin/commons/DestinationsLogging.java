@@ -71,6 +71,8 @@ public final class DestinationsLogging {
     private static final List configuredDestinationLoggerNames = new LinkedList();
 
     private static final Layout DATE_LEVEL_MESSAGE_LAYOUT = new PatternLayout( "%d{yyyy-MM-dd HH:mm:ss} [%-5p] - %m%n" );
+    
+    private static final Layout VERBOSE_LAYOUT = new PatternLayout( "%d{yyyy-MM-dd HH:mm:ss} | %-55C | %-25t | [%-5p] - %m%n" );
 
     /**
      * Creates a log4j logger for the namespace definded by the class' full name.
@@ -153,7 +155,8 @@ public final class DestinationsLogging {
 
     static final FileAppender buildFileAppender( final Class clazz, final String optionalFilename ) throws IOException {
         String filename = givenOrFallbackFilenameFrom( optionalFilename, clazz );
-        RollingFileAppender newAppender = new RollingFileAppender( DATE_LEVEL_MESSAGE_LAYOUT, filename, Magic.APPEND_MESSAGES_TO_LOGFILE );
+        RollingFileAppender newAppender = new RollingFileAppender( DATE_LEVEL_MESSAGE_LAYOUT, filename,
+                Magic.APPEND_MESSAGES_TO_LOGFILE );
         newAppender.setMaxFileSize( "1MB" );
         newAppender.setMaxBackupIndex( 5 ); // arbitrary - may be sufficient for 5 days ...
         newAppender.activateOptions();
@@ -217,9 +220,32 @@ public final class DestinationsLogging {
         if ( !rootLoggerIsSetUp ) {
             root.removeAllAppenders();
             root.setLevel( Level.INFO );
-            ConsoleAppender console = new ConsoleAppender( DATE_LEVEL_MESSAGE_LAYOUT );
-            console.setThreshold( root.getLevel() );
-            root.addAppender( console );
+
+            String directoryname;
+            directoryname = Utility.getLogsDir();
+            if ( !isValidDirectory( directoryname ) ) {
+                directoryname = Utility.getTempDir();
+                if ( !isValidDirectory( directoryname ) ) {
+                    directoryname = IOUtility.getTempDir();
+                }
+            }
+
+            File logFile = new File( new File( directoryname ), IOUtility.asLogfileFilename( MgpDestination.class.getName() ) );
+            try {
+                RollingFileAppender rootLog = new RollingFileAppender( VERBOSE_LAYOUT, logFile.getPath(),
+                        Magic.OVERWRITE_OR_CREATE_LOGFILE );
+                rootLog.setThreshold( root.getLevel() );
+                rootLog.setMaxFileSize( "1MB" );
+                rootLog.setMaxBackupIndex( 1 );
+                rootLog.activateOptions();
+                root.addAppender( rootLog );
+            } catch ( IOException ioex ) {
+                ConsoleAppender consoleLog = new ConsoleAppender( VERBOSE_LAYOUT, "System.err" );
+                consoleLog.setThreshold( root.getLevel() );
+                consoleLog.activateOptions();
+                root.addAppender( consoleLog );
+                root.error( "Error on setting up Root File Appender", ioex );
+            }
             rootLoggerIsSetUp = true;
         }
 
