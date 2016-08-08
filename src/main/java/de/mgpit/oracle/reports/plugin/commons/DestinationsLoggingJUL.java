@@ -55,7 +55,7 @@ public class DestinationsLoggingJUL {
         removeExistingHandlersOnLogger( logger );
 
         try {
-            FileHandler fileHandler = new FileHandler( filename, Units.ONE_MEGABYTE, 0, Magic.LOG_APPEND );
+            FileHandler fileHandler = new FileHandler( filename, Units.ONE_MEGABYTE, 0, Magic.APPEND_MESSAGES_TO_LOGFILE );
             fileHandler.setFormatter( FORMATTER );
             logger.addHandler( fileHandler );
         } catch ( IOException ioex ) {

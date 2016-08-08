@@ -1,7 +1,10 @@
 package de.mgpit.oracle.reports.plugin.destination;
 
 
+import java.util.Iterator;
 import java.util.Properties;
+import java.util.Set;
+import java.util.TreeSet;
 
 import org.apache.log4j.Logger;
 
@@ -27,8 +30,8 @@ import oracle.reports.utility.Utility;
  */
 public abstract class MgpDestination extends Destination {
 
-    private static final Logger LOG = Logger.getLogger( MgpDestination.class );
-
+    protected abstract Logger getLogger();
+    
     /**
      * 
      * @param format
@@ -77,13 +80,29 @@ public abstract class MgpDestination extends Destination {
      */
     protected boolean start( final Properties allProperties, final String targetName, final int totalNumberOfFiles,
             final long totalFileSize, final short mainFormat ) throws RWException {
-        LOG.info( "Distributing to Destination " + getDestype() );
-        LOG.info(
+        getLogger().info( "Distributing to Destination " + getDestype() );
+        getLogger().info(
                 "Distribution target name is " + U.w( targetName ) + ". Main format is " + getFileFormatAsMimeType( mainFormat ) );
-        LOG.info( "Distribution will contain " + U.w( totalNumberOfFiles ) + " files with a total size of " + U.w( totalFileSize )
+        getLogger().info( "Distribution will contain " + U.w( totalNumberOfFiles ) + " files with a total size of " + U.w( totalFileSize )
                 + " bytes." );
+        
+        if ( getLogger().isDebugEnabled()) {
+            dumpProperties( allProperties );
+        }
 
         return true; // continue to send
+    }
+    
+    protected void dumpProperties( final Properties allProperties ) {
+        Set keys = new TreeSet(); // we want the keys sorted ... 
+        keys.addAll( allProperties.keySet() );
+        Iterator allKeys = keys.iterator();
+        getLogger().debug( "Got the following properties ..." );
+        while ( allKeys.hasNext() ) {
+            String key = (String) allKeys.next();
+            String value = U.coalesce( allProperties.getProperty( key ), "<null>" );
+            getLogger().debug( U.w( key ) + " -> " + U.w( value ) ); 
+        }
     }
 
     /**
@@ -95,13 +114,14 @@ public abstract class MgpDestination extends Destination {
      * @throws RWException
      */
     public static void init( final Properties destinationsProperties ) throws RWException {
+        final Logger log = Logger.getRootLogger();
         initLogging( destinationsProperties, MgpDestination.class );
-        LOG.info( "Destination logging successfully initialized with properties: " + destinationsProperties );
+        log.info( "Destination logging successfully initialized with properties: " + destinationsProperties );
         try {
             Destination.init( destinationsProperties );
         } catch ( RWException rwException ) {
-            LOG.error( "Error during initializing Destination. See following message(s)!" );
-            LOG.error( rwException );
+            log.error( "Error during initializing Destination. See following message(s)!" );
+            log.error( rwException );
             throw rwException;
         }
     }
@@ -125,7 +145,8 @@ public abstract class MgpDestination extends Destination {
             logfileFilenameGiven = destinationsProperties.getProperty( "logfile" );
             loglevelLevelnameGiven = destinationsProperties.getProperty( "loglevel", "INFO" );
         }
-
+        
+        DestinationsLogging.assertRootLogger();
         DestinationsLogging.createOrReplacePackageLevelLogger( clazz, logfileFilenameGiven, loglevelLevelnameGiven );
     }
 

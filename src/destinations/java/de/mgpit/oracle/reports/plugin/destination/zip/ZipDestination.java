@@ -101,12 +101,12 @@ public final class ZipDestination extends MgpDestination {
             this.zipArchive.close();
             super.stop();
         } catch ( Exception any ) {
-            LOG.error( "Error during finishing distribution. See following message(s)!" );
-            LOG.error( any );
+            getLogger().error( "Error during finishing distribution. See following message(s)!" );
+            getLogger().error( any );
             RWException rwException = Utility.newRWException( any );
             throw rwException;
         }
-        LOG.info( "Finished distribution to " + U.w( getZipArchiveFileName() ) );
+        getLogger().info( "Finished distribution to " + U.w( getZipArchiveFileName() ) );
     }
 
     /**
@@ -131,8 +131,8 @@ public final class ZipDestination extends MgpDestination {
                 sendOtherFile( cacheFileName, fileFormat );
             }
         } catch ( Exception any ) {
-            LOG.error( "Error during sending file " + U.w( cacheFileName ) + ". See following message(s)!" );
-            LOG.error( any );
+            getLogger().error( "Error during sending file " + U.w( cacheFileName ) + ". See following message(s)!" );
+            getLogger().error( any );
             RWException rwException = Utility.newRWException( any );
             throw rwException;
         }
@@ -148,8 +148,8 @@ public final class ZipDestination extends MgpDestination {
      * @throws ArchivingException
      */
     private void sendMainFile( final String cacheFileName, final short fileFormat ) throws ArchivingException {
-        LOG.info( "Sending Main file named " + U.w( cacheFileName ) + " to " + U.w( getZipArchiveFileName() ) );
-        LOG.info( "ZIP Entry will be of format " + humanReadable( fileFormat ) + " named " + U.w( getZipEntryName() ) );
+        getLogger().info( "Sending Main file named " + U.w( cacheFileName ) + " to " + U.w( getZipArchiveFileName() ) );
+        getLogger().info( "ZIP Entry will be of format " + humanReadable( fileFormat ) + " named " + U.w( getZipEntryName() ) );
         addFileToArchive( cacheFileName, getZipEntryName() );
     }
 
@@ -164,8 +164,8 @@ public final class ZipDestination extends MgpDestination {
      */
     private void sendOtherFile( final String cacheFileName, final short fileFormat ) throws ArchivingException {
         String otherFileZipEntryName = Utility.fileNameOnly( cacheFileName );
-        LOG.info( "Sending Other file named " + U.w( cacheFileName ) + " to " + U.w( getZipArchiveFileName() ) );
-        LOG.info( "ZIP Entry will be of format " + humanReadable( fileFormat ) + " named " + U.w( otherFileZipEntryName ) );
+        getLogger().info( "Sending Other file named " + U.w( cacheFileName ) + " to " + U.w( getZipArchiveFileName() ) );
+        getLogger().info( "ZIP Entry will be of format " + humanReadable( fileFormat ) + " named " + U.w( otherFileZipEntryName ) );
         addFileToArchive( cacheFileName, otherFileZipEntryName );
     }
 
@@ -202,7 +202,6 @@ public final class ZipDestination extends MgpDestination {
      */
     protected boolean start( final Properties allProperties, final String targetName, final int totalNumberOfFiles,
             final long totalFileSize, short mainFormat ) throws RWException {
-
         boolean continueToSend = super.start( allProperties, targetName, totalNumberOfFiles, totalFileSize, mainFormat );
 
         if ( continueToSend ) {
@@ -213,7 +212,7 @@ public final class ZipDestination extends MgpDestination {
 
             createZipArchive( zipArchiveFileName, inAppendingMode );
 
-            LOG.info( "Starting distribution to " + U.w( zipArchiveFileName ) + ". " + modeMessage( inAppendingMode ) );
+            getLogger().info( "Starting distribution to " + U.w( zipArchiveFileName ) + ". " + modeMessage( inAppendingMode ) );
             continueToSend = true;
         }
         return continueToSend;
@@ -304,6 +303,10 @@ public final class ZipDestination extends MgpDestination {
 
     private String getZipArchiveFileName() {
         return this.zipArchive.getFileName();
+    }
+    
+    protected Logger getLogger() {
+        return LOG;
     }
 
 }

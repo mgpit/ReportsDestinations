@@ -29,12 +29,12 @@ public final class MQDestination extends MgpDestination {
         try {
             super.stop();
         } catch ( Exception any ) {
-            LOG.error( "Error during finishing distribution. See following message(s)!" );
-            LOG.error( any );
+            getLogger().error( "Error during finishing distribution. See following message(s)!" );
+            getLogger().error( any );
             RWException rwException = Utility.newRWException( any );
             throw rwException;
         }
-        LOG.info( "Finished distribution to " + U.w( mq ) );
+        getLogger().info( "Finished distribution to " + U.w( mq ) );
     }
 
     /**
@@ -76,7 +76,6 @@ public final class MQDestination extends MgpDestination {
         boolean continueToSend = super.start( allProperties, targetName, totalNumberOfFiles, totalFileSize, mainFormat );
 
         if ( continueToSend ) {
-
             continueToSend = true;
         }
         return continueToSend;
@@ -92,20 +91,20 @@ public final class MQDestination extends MgpDestination {
     public static void init( Properties destinationsProperties ) throws RWException {
         // MgpDestination.init( destinationsProperties );
         initLogging( destinationsProperties, MQDestination.class );
-        registerPlugins( destinationsProperties );
+        registerVirtualDestinations( destinationsProperties );
         LOG.info( "Destination " + U.w( MQDestination.class.getName() ) + " started." );
     }
 
-    private static void registerPlugins( Properties destinationsProperties ) throws RWException {
+    private static void registerVirtualDestinations( Properties destinationsProperties ) throws RWException {
         Enumeration keys = destinationsProperties.keys();
-        LOG.info( "About to register Content Plugins ..." );
+        LOG.info( "About to register virtual destinations ..." );
         boolean registrationErrorOccured = false;
         while ( keys.hasMoreElements() ) {
             String key = (String) keys.nextElement();
-            if ( declaresContentPlugin( key ) ) {
-                String pluginName = extractPluginName( key );
-                String pluginClassName = destinationsProperties.getProperty( key );
-                boolean success = registerVirtualDestination( pluginName, pluginClassName );
+            if ( declaresVirtualDestinationPlugin( key ) ) {
+                String virtualDestinationName = extractVirtualDestinationName( key );
+                String virtualDestinationClassName = destinationsProperties.getProperty( key );
+                boolean success = registerVirtualDestination( virtualDestinationName, virtualDestinationClassName );
                 if ( !success ) {
                     registrationErrorOccured = true;
                 }
@@ -134,15 +133,15 @@ public final class MQDestination extends MgpDestination {
         return true;
     }
 
-    private static boolean declaresContentPlugin( String key ) {
-        return key.startsWith( "content." );
+    private static boolean declaresVirtualDestinationPlugin( String key ) {
+        return key.startsWith( "virtual." );
     }
 
-    private static String extractPluginName( String key ) {
+    private static String extractVirtualDestinationName( String key ) {
         String[] pathElements = key.split( "\\." );
         int numberOfElements = pathElements.length;
         if ( numberOfElements < 2 ) {
-            LOG.warn( "Got invalid plugin name: " + U.w( key ) );
+            LOG.warn( "Got invalid virtual destination name: " + U.w( key ) );
             return null;
         }
         return pathElements[numberOfElements - 1];
@@ -151,5 +150,9 @@ public final class MQDestination extends MgpDestination {
     public static void shutdown() {
         MgpDestination.shutdown();
         LOG.info( "Destination " + U.w( MQDestination.class.getName() ) + " shut down." );
+    }
+    
+    protected Logger getLogger() {
+        return LOG;
     }
 }

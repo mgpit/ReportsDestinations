@@ -9,6 +9,7 @@ import java.security.AccessController;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.FileAppender;
 import org.apache.log4j.Layout;
 import org.apache.log4j.Level;
@@ -17,6 +18,7 @@ import org.apache.log4j.PatternLayout;
 import org.apache.log4j.RollingFileAppender;
 
 import de.mgpit.oracle.reports.plugin.commons.io.IOUtility;
+import de.mgpit.oracle.reports.plugin.destination.MgpDestination;
 import oracle.reports.RWException;
 import oracle.reports.utility.Utility;
 import sun.security.action.GetPropertyAction;
@@ -116,8 +118,8 @@ public final class DestinationsLogging {
 
         final Logger logger = Logger.getLogger( loggerName );
         logger.removeAllAppenders();
-
         resetLoglevel( logger, optionalLoglevelName );
+        logger.setAdditivity( Magic.DONT_ADD_MESSAGES_TO_ANCESTORS );
 
         try {
             FileAppender newAppender = buildFileAppender( clazz, optionalFilename );
@@ -151,7 +153,7 @@ public final class DestinationsLogging {
 
     static final FileAppender buildFileAppender( final Class clazz, final String optionalFilename ) throws IOException {
         String filename = givenOrFallbackFilenameFrom( optionalFilename, clazz );
-        RollingFileAppender newAppender = new RollingFileAppender( DATE_LEVEL_MESSAGE_LAYOUT, filename, Magic.LOG_APPEND );
+        RollingFileAppender newAppender = new RollingFileAppender( DATE_LEVEL_MESSAGE_LAYOUT, filename, Magic.APPEND_MESSAGES_TO_LOGFILE );
         newAppender.setMaxFileSize( "1MB" );
         newAppender.setMaxBackupIndex( 5 ); // arbitrary - may be sufficient for 5 days ...
         newAppender.activateOptions();
@@ -188,11 +190,13 @@ public final class DestinationsLogging {
     /**
      * Checks if the pathname is a valid directory, i.e. must be
      * <ul>
-     *      <li>an existing directory</li>
-     *      <li>readable</li>
-     *      <li>writable</li>
+     * <li>an existing directory</li>
+     * <li>readable</li>
+     * <li>writable</li>
      * </ul>
-     * @param maybeDirectoryname pathname to test
+     * 
+     * @param maybeDirectoryname
+     *            pathname to test
      * @return <code>true</code> if the pathname is a valid directory, <code>false</code> else.
      */
     private static boolean isValidDirectory( final String maybeDirectoryname ) {
@@ -200,9 +204,25 @@ public final class DestinationsLogging {
             return false;
         }
         File possibleDirectory = new File( maybeDirectoryname );
-        
+
         boolean valid = possibleDirectory.isDirectory() && possibleDirectory.canRead() && possibleDirectory.canWrite();
         return valid;
+    }
+
+    private static boolean rootLoggerIsSetUp = false;
+
+    public static void assertRootLogger() {
+        Logger root = Logger.getRootLogger();
+
+        if ( !rootLoggerIsSetUp ) {
+            root.removeAllAppenders();
+            root.setLevel( Level.INFO );
+            ConsoleAppender console = new ConsoleAppender( DATE_LEVEL_MESSAGE_LAYOUT );
+            console.setThreshold( root.getLevel() );
+            root.addAppender( console );
+            rootLoggerIsSetUp = true;
+        }
+
     }
 
 }
