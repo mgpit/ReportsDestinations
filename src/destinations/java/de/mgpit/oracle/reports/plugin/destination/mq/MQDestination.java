@@ -31,8 +31,7 @@ public final class MQDestination extends MgpDestination {
         } catch ( Exception any ) {
             getLogger().error( "Error during finishing distribution. See following message(s)!" );
             getLogger().error( any );
-            RWException rwException = Utility.newRWException( any );
-            throw rwException;
+            throw Utility.newRWException( any );
         }
         getLogger().info( "Finished distribution to " + U.w( mq ) );
     }
@@ -51,7 +50,11 @@ public final class MQDestination extends MgpDestination {
      * 
      */
     protected void sendFile( boolean isMainFile, String cacheFileName, short fileFormat, long fileSize ) throws RWException {
-        // NOP
+        if ( isMainFile ) {
+            getLogger().info( "Sending main file from cache " + cacheFileName );
+        } else {
+            getLogger().info( "Sending additional file from cache " + cacheFileName );
+        }
     }
 
     /**
@@ -77,6 +80,8 @@ public final class MQDestination extends MgpDestination {
 
         if ( continueToSend ) {
             continueToSend = true;
+        } else {
+            getLogger().warn( "Cannot continue to send ..." );
         }
         return continueToSend;
     }

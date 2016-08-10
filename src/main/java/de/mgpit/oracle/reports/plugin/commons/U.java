@@ -1,6 +1,13 @@
 package de.mgpit.oracle.reports.plugin.commons;
 
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.codec.binary.StringUtils;
+
+import de.mgpit.oracle.reports.plugin.commons.io.IOUtility;
 import oracle.reports.RWException;
 import oracle.reports.utility.Utility;
 
@@ -66,7 +73,7 @@ public final class U {
     }
 
     public static String w( final Object o ) {
-        return w( o.toString() );
+        return w( (o == null) ? "<null object>" : o.toString() );
     }
 
     public static String w( final short sh ) {
@@ -79,6 +86,43 @@ public final class U {
 
     public static String w( final long lng ) {
         return w( "" + lng );
+    }
+
+    private static final String PW = "**********";
+
+    public static String obfuscate( final String connectString ) {
+        if ( connectString == null ) {
+            return PW;
+        }
+        String connectStringRegex = "^\\s*(\\S+?)/(\\S+?)(@(\\S*))?\\s*$";
+        Pattern connectStringPattern = Pattern.compile( connectStringRegex );
+        Matcher matcher = connectStringPattern.matcher( connectString );
+
+        String obfuscated = PW;
+        if ( matcher.find() ) {
+            String username = matcher.group( 1 );
+            String database = matcher.group( 4 );
+            obfuscated = username + "/" + PW + (isEmpty( database ) ? "" : "@".concat( database ));
+        }
+
+        return obfuscated;
+    }
+
+    public static boolean isBase64Marked( String str ) {
+        if ( str == null ) {
+            return false;
+        }
+        return str.startsWith( Magic.BASE64_MARKER );
+    }
+
+    public static String decodeIfBase64( String str ) {
+        if ( !isBase64Marked( str ) ) {
+            return str;
+        }
+        String encoded = str.substring( Magic.BASE64_MARKER.length() );
+        
+        String decoded = (Base64.isBase64( encoded )) ? StringUtils.newStringUtf8( Base64.decodeBase64( encoded ) ) : encoded;
+        return decoded;
     }
 
     public static String pad( final String str, final int len, final boolean append ) {

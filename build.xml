@@ -30,6 +30,7 @@
     <property name="lib.rwrun" location="${dir.reports.jlib}/rwrun.jar" />
     <property name="lib.zrclient" location="${oracle.home.jlib}/zrclient.jar" />
     <property name="lib.log4j" location="${dir.reports.jlib}/log4j-1.2.4.jar" />
+    <property name="lib.commons-codec" location="${dir.reports.jlib}/commons-codec-1.5.jar" />
 
     <scriptdef name="propertyreplace" language="javascript">
         <attribute name="name" />
@@ -58,6 +59,7 @@
         <pathelement path="${lib.rwrun}" />
         <pathelement path="${lib.zrclient}/" />
         <pathelement path="${lib.log4j}" />
+        <pathelement path="${lib.commons-codec}" />
     </path>
 
     <property name="orajaxb" location="${oracle.home}\bin\orajaxb.bat" />

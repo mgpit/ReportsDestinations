@@ -103,8 +103,7 @@ public final class ZipDestination extends MgpDestination {
         } catch ( Exception any ) {
             getLogger().error( "Error during finishing distribution. See following message(s)!" );
             getLogger().error( any );
-            RWException rwException = Utility.newRWException( any );
-            throw rwException;
+            throw Utility.newRWException( any );
         }
         getLogger().info( "Finished distribution to " + U.w( getZipArchiveFileName() ) );
     }
@@ -214,6 +213,8 @@ public final class ZipDestination extends MgpDestination {
 
             getLogger().info( "Starting distribution to " + U.w( zipArchiveFileName ) + ". " + modeMessage( inAppendingMode ) );
             continueToSend = true;
+        } else {
+            getLogger().warn( "Cannot continue to send ..." );
         }
         return continueToSend;
     }

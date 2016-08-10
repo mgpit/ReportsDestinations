@@ -123,13 +123,13 @@ public class IOUtility {
         return temporary.toByteArray();
     }
 
-    public static String asUTF8String( final InputStream in ) throws IOException {
+    public static String inputAsUTF8String( final InputStream in ) throws IOException {
         final ByteArrayOutputStream temporary = new ByteArrayOutputStream();
         copyFromTo( new BufferedInputStream( in ), temporary );
         return temporary.toString( "UTF-8" );
     }
 
-    public static String asPlatformString( final InputStream in ) throws IOException {
+    public static String inputAsPlatformString( final InputStream in ) throws IOException {
         final ByteArrayOutputStream temporary = new ByteArrayOutputStream();
         copyFromTo( new BufferedInputStream( in ), temporary );
         return temporary.toString();

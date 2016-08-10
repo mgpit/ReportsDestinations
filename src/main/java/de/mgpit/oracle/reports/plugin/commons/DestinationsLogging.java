@@ -70,9 +70,9 @@ public final class DestinationsLogging {
      */
     private static final List configuredDestinationLoggerNames = new LinkedList();
 
-    private static final Layout DATE_LEVEL_MESSAGE_LAYOUT = new PatternLayout( "%d{yyyy-MM-dd HH:mm:ss} [%-5p] - %m%n" );
+    private static final Layout DATE_LEVEL_MESSAGE_LAYOUT = new PatternLayout( "%d{ISO8601} [%-5p] :: %m%n" );
     
-    private static final Layout VERBOSE_LAYOUT = new PatternLayout( "%d{yyyy-MM-dd HH:mm:ss} | %-55C | %-25t | [%-5p] - %m%n" );
+    private static final Layout VERBOSE_WIDE_LAYOUT = new PatternLayout( "%d{ISO8601} | %-65C | %-25t | %-5p :: %m%n" );
 
     /**
      * Creates a log4j logger for the namespace definded by the class' full name.
@@ -121,7 +121,7 @@ public final class DestinationsLogging {
         final Logger logger = Logger.getLogger( loggerName );
         logger.removeAllAppenders();
         resetLoglevel( logger, optionalLoglevelName );
-        logger.setAdditivity( Magic.DONT_ADD_MESSAGES_TO_ANCESTORS );
+        logger.setAdditivity( Magic.ADD_MESSAGES_TO_ANCESTORS );
 
         try {
             FileAppender newAppender = buildFileAppender( clazz, optionalFilename );
@@ -232,15 +232,15 @@ public final class DestinationsLogging {
 
             File logFile = new File( new File( directoryname ), IOUtility.asLogfileFilename( MgpDestination.class.getName() ) );
             try {
-                RollingFileAppender rootLog = new RollingFileAppender( VERBOSE_LAYOUT, logFile.getPath(),
-                        Magic.OVERWRITE_OR_CREATE_LOGFILE );
+                RollingFileAppender rootLog = new RollingFileAppender( VERBOSE_WIDE_LAYOUT, logFile.getPath(),
+                        Magic.APPEND_MESSAGES_TO_LOGFILE );
                 rootLog.setThreshold( root.getLevel() );
-                rootLog.setMaxFileSize( "1MB" );
-                rootLog.setMaxBackupIndex( 1 );
+                rootLog.setMaxFileSize( "10MB" );
+                rootLog.setMaxBackupIndex( 3 );
                 rootLog.activateOptions();
                 root.addAppender( rootLog );
             } catch ( IOException ioex ) {
-                ConsoleAppender consoleLog = new ConsoleAppender( VERBOSE_LAYOUT, "System.err" );
+                ConsoleAppender consoleLog = new ConsoleAppender( VERBOSE_WIDE_LAYOUT, "System.err" );
                 consoleLog.setThreshold( root.getLevel() );
                 consoleLog.activateOptions();
                 root.addAppender( consoleLog );

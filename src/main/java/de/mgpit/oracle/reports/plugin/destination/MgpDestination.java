@@ -8,7 +8,10 @@ import java.util.TreeSet;
 
 import org.apache.log4j.Logger;
 
+import HTTPClient.ParseException;
+import HTTPClient.URI;
 import de.mgpit.oracle.reports.plugin.commons.DestinationsLogging;
+import de.mgpit.oracle.reports.plugin.commons.Magic;
 import de.mgpit.oracle.reports.plugin.commons.U;
 import oracle.reports.RWException;
 import oracle.reports.server.Destination;
@@ -31,7 +34,7 @@ import oracle.reports.utility.Utility;
 public abstract class MgpDestination extends Destination {
 
     protected abstract Logger getLogger();
-    
+
     /**
      * 
      * @param format
@@ -83,26 +86,52 @@ public abstract class MgpDestination extends Destination {
         getLogger().info( "Distributing to Destination " + getDestype() );
         getLogger().info(
                 "Distribution target name is " + U.w( targetName ) + ". Main format is " + getFileFormatAsMimeType( mainFormat ) );
-        getLogger().info( "Distribution will contain " + U.w( totalNumberOfFiles ) + " files with a total size of " + U.w( totalFileSize )
-                + " bytes." );
-        
-        if ( getLogger().isDebugEnabled()) {
+        getLogger().info( "Distribution will contain " + U.w( totalNumberOfFiles ) + " files with a total size of "
+                + U.w( totalFileSize ) + " bytes." );
+
+        if ( getLogger().isDebugEnabled() ) {
             dumpProperties( allProperties );
         }
 
         return true; // continue to send
     }
-    
+
     protected void dumpProperties( final Properties allProperties ) {
-        Set keys = new TreeSet(); // we want the keys sorted ... 
+        Logger lOG = getLogger();
+        Set keys = new TreeSet(); // we want the keys sorted ...
         keys.addAll( allProperties.keySet() );
         Iterator allKeys = keys.iterator();
-        getLogger().debug( "Got the following properties ..." );
+
+        lOG.debug( "Got the following properties ..." );
         while ( allKeys.hasNext() ) {
             String key = (String) allKeys.next();
-            String value = U.coalesce( allProperties.getProperty( key ), "<null>" );
-            getLogger().debug( U.w( key ) + " -> " + U.w( value ) ); 
+            String givenValue = allProperties.getProperty( key );
+
+            String valueToPrint = filter( key, givenValue );
+            lOG.debug( U.w( key ) + " -> " + U.w( valueToPrint.length() ) + U.w( valueToPrint ) );
         }
+    }
+
+    protected static String filter( final String key, final String givenValue ) {
+        if ( givenValue == null ) {
+            return "<null>";
+        }
+
+        final String inspectedValue = U.decodeIfBase64( givenValue );
+
+        if ( "userid".equalsIgnoreCase( key ) ) {
+            return U.obfuscate( inspectedValue );
+        }
+
+        if ( "url".equalsIgnoreCase( key ) || "uri".equalsIgnoreCase( key ) ) {
+            try {
+                URI uri = new URI( inspectedValue );
+                return uri.toString();
+            } catch ( ParseException parsex ) {
+                return "<notparsable>" + inspectedValue;
+            }
+        }
+        return inspectedValue;
     }
 
     /**
@@ -145,7 +174,7 @@ public abstract class MgpDestination extends Destination {
             logfileFilenameGiven = destinationsProperties.getProperty( "logfile" );
             loglevelLevelnameGiven = destinationsProperties.getProperty( "loglevel", "INFO" );
         }
-        
+
         DestinationsLogging.assertRootLogger();
         DestinationsLogging.createOrReplacePackageLevelLogger( clazz, logfileFilenameGiven, loglevelLevelnameGiven );
     }

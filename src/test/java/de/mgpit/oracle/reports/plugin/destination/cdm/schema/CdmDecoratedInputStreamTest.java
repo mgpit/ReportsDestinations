@@ -34,7 +34,7 @@ public class CdmDecoratedInputStreamTest extends TestCase {
 
         boolean exceptionOccured = false;
         try {
-            String actual1 = IOUtility.asUTF8String( cdmPlainPayloadStream );
+            String actual1 = IOUtility.inputAsUTF8String( cdmPlainPayloadStream );
             assertEquals( expected1, actual1 );
         } catch ( Exception any ) {
             exceptionOccured = true;
@@ -51,7 +51,7 @@ public class CdmDecoratedInputStreamTest extends TestCase {
 
         boolean exceptionOccured = false;
         try {
-            String actual2 = IOUtility.asUTF8String( cdmBase64PayloadStream );
+            String actual2 = IOUtility.inputAsUTF8String( cdmBase64PayloadStream );
             assertEquals( expected2, actual2 );
             
         } catch ( Exception any ) {

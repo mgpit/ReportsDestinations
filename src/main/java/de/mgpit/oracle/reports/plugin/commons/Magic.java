@@ -16,4 +16,7 @@ public class Magic {
     public static final boolean ADD_MESSAGES_TO_ANCESTORS = true;
     public static final boolean DONT_ADD_MESSAGES_TO_ANCESTORS = false;
     
+    
+    public static final String BASE64_MARKER = "(BASE64)";
+    
 }
