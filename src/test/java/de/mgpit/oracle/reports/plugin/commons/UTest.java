@@ -9,6 +9,10 @@ public class UTest extends TestCase {
         super.setUp();
     }
 
+    protected void tearDown() throws Exception {
+        super.tearDown();
+    }
+
     public void testObfuscate() {
         String connectString;
 
@@ -29,14 +33,26 @@ public class UTest extends TestCase {
 
         connectString = "lorem ipsum";
         assertEquals( "*****", U.obfuscate( connectString ) );
-        
+
         connectString = null;
         assertEquals( "*****", U.obfuscate( connectString ) );
-        
+
     }
 
-    protected void tearDown() throws Exception {
-        super.tearDown();
+    public void testClassname() {
+        
+        System.out.println( U.classname( Object.class ) );
+        System.out.println( Object.class.getName() );
+        System.out.println( U.packagename( Object.class ) );
+        System.out.println( Object.class.getPackage() );
+        assertEquals( "Object", U.classname( Object.class ) );
+        
+        System.out.println( U.classname( String.class ) );
+        System.out.println( String.class.getName() );
+        System.out.println( U.packagename( String.class ) );
+        System.out.println( String.class.getPackage() );
+        assertEquals( "String", U.classname( String.class ) );
+        
     }
 
 }

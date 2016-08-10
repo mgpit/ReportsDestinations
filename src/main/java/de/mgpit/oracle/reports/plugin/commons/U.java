@@ -25,24 +25,28 @@ import oracle.reports.utility.Utility;
  */
 public final class U {
 
+    /**
+     * Returns the classes class name, only. Similar to Class.getSimpleName()
+     * 
+     * @param clazz
+     *            the class
+     * @return the classes class name
+     */
     public static final String classname( Class clazz ) {
         assertNotNull( clazz );
-        String packageName = packagename( clazz );
-        String fullName = clazz.getName();
-        return fullName.substring( packageName.length() );
+        return classname( clazz.getName() );
     }
 
     public static final String classname( String maybeFullClassName ) {
         assertNotEmpty( maybeFullClassName );
         int lastDotPosition = maybeFullClassName.lastIndexOf( '.' );
         return (lastDotPosition == Magic.CHARACTER_NOT_FOUND) ? maybeFullClassName
-                : maybeFullClassName.substring( lastDotPosition, +1 );
+                : maybeFullClassName.substring( lastDotPosition + 1 );
     }
 
     public static final String packagename( Class clazz ) {
         assertNotNull( clazz );
-        Package thePackage = clazz.getPackage();
-        return (thePackage == null) ? "" : thePackage.getName();
+        return packagename( clazz.getName() );
     }
 
     public static final String packagename( String maybeFullClassName ) {
@@ -120,7 +124,7 @@ public final class U {
             return str;
         }
         String encoded = str.substring( Magic.BASE64_MARKER.length() );
-        
+
         String decoded = (Base64.isBase64( encoded )) ? StringUtils.newStringUtf8( Base64.decodeBase64( encoded ) ) : encoded;
         return decoded;
     }

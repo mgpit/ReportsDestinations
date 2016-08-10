@@ -71,7 +71,7 @@ public final class DestinationsLogging {
     private static final List configuredDestinationLoggerNames = new LinkedList();
 
     private static final Layout DATE_LEVEL_MESSAGE_LAYOUT = new PatternLayout( "%d{ISO8601} [%-5p] :: %m%n" );
-    
+
     private static final Layout VERBOSE_WIDE_LAYOUT = new PatternLayout( "%d{ISO8601} | %-65C | %-25t | %-5p :: %m%n" );
 
     /**
@@ -110,6 +110,22 @@ public final class DestinationsLogging {
         setupLogger( clazz, U.packagename( clazz ), optionalFilename, optionalLoglevelName );
     }
 
+    /**
+     * Sets up a logger once. Subsequent calls for the same logger will have no effect.
+     * <p>
+     * The logger will be stripped of any existing appenders and given a RollingFileAppender.
+     * 
+     * @param clazz
+     *            Should be class of the caller. Will be used to derive default values.
+     * @param givenLoggerName
+     *            Name of / namespace for the logger
+     * @param givenOptionalFilename
+     *            file name for the loggers file appender. On null name will be derived from clazz
+     * @param optionalLoglevelName
+     *            log level to set. On null level will be info.
+     * 
+     * @throws RWException
+     */
     static final void setupLogger( final Class clazz, String givenLoggerName, final String givenOptionalFilename,
             final String optionalLoglevelName ) throws RWException {
 
