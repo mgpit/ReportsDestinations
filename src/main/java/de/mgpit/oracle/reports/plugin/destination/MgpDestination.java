@@ -11,9 +11,9 @@ import org.apache.log4j.Logger;
 import HTTPClient.ParseException;
 import HTTPClient.URI;
 import de.mgpit.oracle.reports.plugin.commons.DestinationsLogging;
-import de.mgpit.oracle.reports.plugin.commons.Magic;
 import de.mgpit.oracle.reports.plugin.commons.U;
 import oracle.reports.RWException;
+import oracle.reports.plugin.destination.ftp.DesFTP;
 import oracle.reports.server.Destination;
 import oracle.reports.utility.Utility;
 
@@ -37,35 +37,35 @@ public abstract class MgpDestination extends Destination {
 
     /**
      * 
-     * @param format
+     * @param formatCode
      *            numeric format code
      * @return the numerically coded {@code format} in human readable format
      *         as "[<em>&lt;String&gt;</em>|<em>&lt;Mime String&gt;</em>]"
      */
-    public static final String humanReadable( short format ) {
-        return U.w( getFileFormatAsString( format ) + "|" + getFileFormatAsMimeType( format ) );
+    public static final String humanReadable( short formatCode ) {
+        return U.w( getFileFormatAsString( formatCode ) + "|" + getFileFormatAsMimeType( formatCode ) );
     }
 
     /**
      * 
-     * @param format
+     * @param formatCode
      *            numeric format code
      * @return the numerically coded {@code format} in human readable format
      *         as "&lt;String&gt;</em>"
      */
-    public static final String getFileFormatAsString( final short format ) {
-        return Utility.format2String( format );
+    public static final String getFileFormatAsString( final short formatCode ) {
+        return Utility.format2String( formatCode );
     }
 
     /**
      * 
-     * @param format
+     * @param formatCode
      *            numeric format code
      * @return the numerically coded {@code format} in human readable format
      *         as "<em>&lt;Mime String&gt;</em>"
      */
-    public static final String getFileFormatAsMimeType( final short format ) {
-        return Utility.format2Mime( format );
+    public static final String getFileFormatAsMimeType( final short formatCode ) {
+        return Utility.format2Mime( formatCode );
     }
 
     /**
@@ -97,18 +97,24 @@ public abstract class MgpDestination extends Destination {
     }
 
     protected void dumpProperties( final Properties allProperties ) {
-        Logger lOG = getLogger();
-        Set keys = new TreeSet(); // we want the keys sorted ...
-        keys.addAll( allProperties.keySet() );
-        Iterator allKeys = keys.iterator();
+        dumpProperties( allProperties, getLogger() );
+    }
 
-        lOG.debug( "Got the following properties ..." );
-        while ( allKeys.hasNext() ) {
-            String key = (String) allKeys.next();
-            String givenValue = allProperties.getProperty( key );
+    static protected void dumpProperties( final Properties givenProperties, Logger logger ) {
+        if ( logger.isDebugEnabled() ) {
+            Set keys = new TreeSet(); // we want the keys sorted ...
+            keys.addAll( givenProperties.keySet() );
+            Iterator allKeys = keys.iterator();
 
-            String valueToPrint = filter( key, givenValue );
-            lOG.debug( U.w( key ) + " -> " + U.w( valueToPrint.length() ) + U.w( valueToPrint ) );
+            logger.debug( "Got the following properties ..." );
+            while ( allKeys.hasNext() ) {
+                String key = (String) allKeys.next();
+                String givenValue = givenProperties.getProperty( key );
+
+                String valueToPrint = filter( key, givenValue );
+                StringBuffer sb = new StringBuffer();
+                logger.debug( U.w( U.lpad( key, 20 ) ) + " -> " + U.w( U.lpad( valueToPrint.length(), 4 ) ) + U.w( valueToPrint ) );
+            }
         }
     }
 
@@ -181,5 +187,18 @@ public abstract class MgpDestination extends Destination {
 
     public static void shutdown() {
         Destination.shutdown();
+    }
+
+    /**
+     * Answers if the given file fomat is binary.
+     * <p>
+     * For convenience, only. Delegates to {@link DesFTP#isBinaryFile(short)}
+     * 
+     * @param formatCode
+     *            the magic format code of the file ...
+     * @return true if the file format identified by <code>formatCode</code> is a binary format.
+     */
+    public static boolean isBinaryFile( short formatCode ) {
+        return new DesFTP().isBinaryFile( formatCode );
     }
 }

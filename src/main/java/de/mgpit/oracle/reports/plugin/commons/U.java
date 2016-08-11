@@ -129,28 +129,32 @@ public final class U {
         return decoded;
     }
 
-    public static String pad( final String str, final int len, final boolean append ) {
+    public static String pad( final String str, final int len, char pad, final boolean appendPadding ) {
         int currentLength = str.length();
         int delta = len - currentLength;
-        boolean prepend = !append;
+        boolean prependPadding = !appendPadding;
 
         String padded;
         if ( delta < 0 ) {
-            padded = str.substring( 0, len );
+            padded = str; //.substring( 0, len );
         } else {
             StringBuffer sb = new StringBuffer( len );
-            if ( prepend ) {
+            if ( appendPadding ) {
                 sb.append( str );
             }
             for ( int i = 0; i < delta; i++ ) {
-                sb.append( ' ' );
+                sb.append( pad );
             }
-            if ( append ) {
+            if ( prependPadding ) {
                 sb.append( str );
             }
             padded = sb.toString();
         }
         return padded;
+    }
+    
+    public static String pad( final String str, final int len, final boolean appendPadding ) {
+        return pad( str, len, ' ', appendPadding );
     }
 
     public static String rpad( final String str, final int len ) {
@@ -167,6 +171,24 @@ public final class U {
 
     public static String lpad( final int i, final int len ) {
         return lpad( String.valueOf( i ), len );
+    }
+    
+    
+    
+    public static String rpad( final String str, final int len, char pad ) {
+        return pad( str, len, pad, true );
+    }
+
+    public static String rpad( final int i, final int len, char pad ) {
+        return rpad( String.valueOf( i ), len, pad );
+    }
+
+    public static String lpad( final String str, final int len, char pad ) {
+        return pad( str, len, pad, false );
+    }
+
+    public static String lpad( final int i, final int len, char pad ) {
+        return lpad( String.valueOf( i ), len, pad );
     }
 
     /**

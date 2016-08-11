@@ -18,7 +18,7 @@ public final class MQDestination extends MgpDestination {
 
     private static final Logger LOG = Logger.getLogger( MQDestination.class );
 
-    private static Map virtualDestinations;
+    private static Map virtualDestinations = new HashMap( 7 ); // instantiated for synchronization ...
 
     private MQ mq;
 
@@ -94,51 +94,49 @@ public final class MQDestination extends MgpDestination {
      * @throws RWException
      */
     public static void init( Properties destinationsProperties ) throws RWException {
-        // MgpDestination.init( destinationsProperties );
         initLogging( destinationsProperties, MQDestination.class );
+        dumpProperties( destinationsProperties, LOG );
         registerVirtualDestinations( destinationsProperties );
         LOG.info( "Destination " + U.w( MQDestination.class.getName() ) + " started." );
     }
 
     private static void registerVirtualDestinations( Properties destinationsProperties ) throws RWException {
         Enumeration keys = destinationsProperties.keys();
-        LOG.info( "About to register virtual destinations ..." );
+        LOG.info( "About to search for and register virtual destinations ..." );
         boolean registrationErrorOccured = false;
-        while ( keys.hasMoreElements() ) {
-            String key = (String) keys.nextElement();
-            if ( declaresVirtualDestinationPlugin( key ) ) {
-                String virtualDestinationName = extractVirtualDestinationName( key );
-                String virtualDestinationClassName = destinationsProperties.getProperty( key );
-                boolean success = registerVirtualDestination( virtualDestinationName, virtualDestinationClassName );
-                if ( !success ) {
-                    registrationErrorOccured = true;
+
+        synchronized (virtualDestinations) {
+            while ( keys.hasMoreElements() ) {
+                String key = (String) keys.nextElement();
+                if ( keyIsVirtualDestinationDefinition( key ) ) {
+                    String virtualDestinationName = extractVirtualDestinationName( key );
+                    String virtualDestinationClassName = destinationsProperties.getProperty( key );
+                    boolean success = registerVirtualDestination( virtualDestinationName, virtualDestinationClassName );
+                    if ( !success ) {
+                        registrationErrorOccured = true;
+                    }
                 }
             }
         }
         if ( registrationErrorOccured ) {
-            LOG.error( "Could not register all Contetn Plugins!" );
-            // throw Utility.newRWException( new Exception(
-            // "At least one Plugin could not be found! See Destination's logfile for more information!" ) );
+            LOG.warn( "Could not register all Content Plugins!" );
         }
     }
 
     private static boolean registerVirtualDestination( String pluginName, String pluginClassName ) {
         LOG.info( " >>> About to register plugin named " + U.w( pluginName ) );
-        if ( virtualDestinations == null ) {
-            virtualDestinations = new HashMap( 7 );
-        }
         Class clazz = null;
         try {
             clazz = Class.forName( pluginClassName );
         } catch ( ClassNotFoundException cnf ) {
-            LOG.fatal( cnf );
+            LOG.warn( cnf );
             return false;
         }
         virtualDestinations.put( pluginName, clazz );
         return true;
     }
 
-    private static boolean declaresVirtualDestinationPlugin( String key ) {
+    private static boolean keyIsVirtualDestinationDefinition( String key ) {
         return key.startsWith( "virtual." );
     }
 
@@ -156,8 +154,9 @@ public final class MQDestination extends MgpDestination {
         MgpDestination.shutdown();
         LOG.info( "Destination " + U.w( MQDestination.class.getName() ) + " shut down." );
     }
-    
+
     protected Logger getLogger() {
         return LOG;
     }
+
 }

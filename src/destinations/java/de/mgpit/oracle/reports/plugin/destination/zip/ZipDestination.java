@@ -286,6 +286,7 @@ public final class ZipDestination extends MgpDestination {
      */
     public static void init( final Properties destinationsProperties ) throws RWException {
         initLogging( destinationsProperties, ZipDestination.class );
+        dumpProperties( destinationsProperties, LOG );
         LOG.info( "Destination " + U.w( ZipDestination.class.getName() ) + " started." );
     }
 
@@ -305,7 +306,7 @@ public final class ZipDestination extends MgpDestination {
     private String getZipArchiveFileName() {
         return this.zipArchive.getFileName();
     }
-    
+
     protected Logger getLogger() {
         return LOG;
     }
