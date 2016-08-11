@@ -132,44 +132,61 @@ public final class DestinationsLogging {
         U.Rw.assertNotNull( givenLoggerName );
         String loggerName = givenLoggerName.trim();
         String optionalFilename = (givenOptionalFilename == null) ? givenOptionalFilename : givenOptionalFilename.trim();
-        if ( configuredDestinationLoggerNames.contains( loggerName ) ) return;
 
-        final Logger logger = Logger.getLogger( loggerName );
-        logger.removeAllAppenders();
-        resetLoglevel( logger, optionalLoglevelName );
-        logger.setAdditivity( Magic.ADD_MESSAGES_TO_ANCESTORS );
+        /* From observation the report server sets up all destinations sequentially
+         * running the main thread. Yet ensure only one thread manipulates the {@see #configuredDestinationLoggerNames}
+         * at the same time.
+         */
+        synchronized (configuredDestinationLoggerNames) {
+            if ( configuredDestinationLoggerNames.contains( loggerName ) ) return;
 
-        try {
-            FileAppender newAppender = buildFileAppender( clazz, optionalFilename );
-            logger.addAppender( newAppender );
+            final Logger logger = Logger.getLogger( loggerName );
+            logger.removeAllAppenders();
+            resetLoglevel( logger, optionalLoglevelName );
+            logger.setAdditivity( Magic.ADD_MESSAGES_TO_ANCESTORS );
 
-            logger.info( "Logging to: " + newAppender.getFile() );
-            logger.info( "Current level is: " + logger.getLevel().toString() );
-        } catch ( IOException ioex ) {
-            throw Utility.newRWException( ioex );
-        } finally {
-            // At least we tried to setup the logger named "loggerName" ...
-            // ... so don't try again in any case
-            configuredDestinationLoggerNames.add( loggerName );
+            try {
+                FileAppender newAppender = buildFileAppender( clazz, optionalFilename );
+                logger.addAppender( newAppender );
+
+                logger.info( "Logging to: " + newAppender.getFile() );
+                logger.info( "Current level is: " + logger.getLevel().toString() );
+            } catch ( IOException ioex ) {
+                throw Utility.newRWException( ioex );
+            } finally {
+                // At least we tried to setup the logger named "loggerName" ...
+                // ... so don't try again in any case
+                configuredDestinationLoggerNames.add( loggerName );
+            }
         }
 
     }
 
-    static final void resetLoglevel( final Logger logger, final String optionalLoglevelName ) {
+    /**
+     * (Re)sets the loggers log level.
+     * <p>
+     * In contrast to {@link Level#toLevel(String)} the fallback level will be {@link Level#INFO}.
+     * 
+     * @param logger
+     *            the logger to modify
+     * @param optionalLoglevelName
+     *            log level name as in {@link Level#toLevel(String)}
+     */
+    private static final void resetLoglevel( final Logger logger, final String optionalLoglevelName ) {
         Level newLevel = Level.INFO;
 
         if ( !U.isEmpty( optionalLoglevelName ) ) {
             newLevel = Level.toLevel( optionalLoglevelName );
             if ( !newLevel.toString().equals( optionalLoglevelName ) ) {
                 // Conversion failed ...
-                // Don't want DEBUG als fallback, though
+                // Don't want DEBUG as fallback, though
                 newLevel = Level.INFO;
             }
         }
         logger.setLevel( newLevel );
     }
 
-    static final FileAppender buildFileAppender( final Class clazz, final String optionalFilename ) throws IOException {
+    private static final FileAppender buildFileAppender( final Class clazz, final String optionalFilename ) throws IOException {
         String filename = givenOrFallbackFilenameFrom( optionalFilename, clazz );
         RollingFileAppender newAppender = new RollingFileAppender( DATE_LEVEL_MESSAGE_LAYOUT, filename,
                 Magic.APPEND_MESSAGES_TO_LOGFILE );
@@ -179,11 +196,13 @@ public final class DestinationsLogging {
         return newAppender;
     }
 
+    /* Leave it package global for JUnit Tests ... */
     static final String givenOrFallbackFilenameFrom( final String optionalFilename, final Class clazz ) {
         String classNameAsFilename = IOUtility.asLogfileFilename( clazz.getName() );
         return givenOrFallbackFilenameFrom( optionalFilename, classNameAsFilename );
     }
 
+    /* Leave it package global for JUnit Tests ... */
     static final String givenOrFallbackFilenameFrom( final String optionalFilename, final String alternativeFilename ) {
         String filenameToStartWith = U.coalesce( optionalFilename, alternativeFilename );
 
@@ -230,7 +249,11 @@ public final class DestinationsLogging {
 
     private static boolean rootLoggerIsSetUp = false;
 
-    public static void assertRootLogger() {
+    /* From observation the report server sets up all destinations sequentially
+     * running the main thread. Yet ensure only one thread manipulates the {@see #rootLoggerIsSetUp}
+     * at the same time.
+     */
+    public synchronized static void assertRootLoggerExists() {
         Logger root = Logger.getRootLogger();
 
         if ( !rootLoggerIsSetUp ) {

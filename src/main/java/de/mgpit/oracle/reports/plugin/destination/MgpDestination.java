@@ -136,15 +136,18 @@ public abstract class MgpDestination extends Destination {
 
     /**
      * Initialize the destination on Report Server startup.
-     *
+     * <p>
+     * All destinations seem to be set up by the <code>main</code> thread of the reports server so we
+     * should not expect multithreading issues ...
+     * 
      * @param destinationsProperties
      *            the properties set in the report server's conf file within the
      *            destination's configuration section ({@code //destination/property})
      * @throws RWException
      */
     public static void init( final Properties destinationsProperties ) throws RWException {
-        final Logger log = Logger.getRootLogger();
         initLogging( destinationsProperties, MgpDestination.class );
+        final Logger log = Logger.getRootLogger();
         log.info( "Destination logging successfully initialized with properties: " + destinationsProperties );
         try {
             Destination.init( destinationsProperties );
@@ -156,27 +159,24 @@ public abstract class MgpDestination extends Destination {
     }
 
     /**
-     * Initializes the logging of the destination based on the properties provided in the destination's
-     * configuration within the report server's conf file.
+     * Initializes the logging of the destination based on the properties provided for the destination
+     * in the report server's conf file.
      * Will override the corresponding settings of the {@code log4j.properties} distributed with the destination's JAR file.
      * <p>
-     * Will set the root {@code loglevel} if provided and the log file for {@code log4j.appender.fileout.File}.
      * 
      * @param destinationsProperties
      *            the properties set in the report server's conf file within the
      *            destination's configuration section ({@code //destination/property})
      */
     protected static void initLogging( final Properties destinationsProperties, Class clazz ) throws RWException {
-        String logfileFilenameGiven = null;
-        String loglevelLevelnameGiven = null;
 
         if ( destinationsProperties != null ) {
-            logfileFilenameGiven = destinationsProperties.getProperty( "logfile" );
-            loglevelLevelnameGiven = destinationsProperties.getProperty( "loglevel", "INFO" );
-        }
+            final String logfileFilenameGiven = destinationsProperties.getProperty( "logfile" );
+            final String loglevelLevelnameGiven = destinationsProperties.getProperty( "loglevel", "INFO" );
 
-        DestinationsLogging.assertRootLogger();
-        DestinationsLogging.createOrReplacePackageLevelLogger( clazz, logfileFilenameGiven, loglevelLevelnameGiven );
+            DestinationsLogging.assertRootLoggerExists();
+            DestinationsLogging.createOrReplacePackageLevelLogger( clazz, logfileFilenameGiven, loglevelLevelnameGiven );
+        }
     }
 
     public static void shutdown() {
