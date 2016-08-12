@@ -158,11 +158,12 @@ public abstract class MgpDestination extends Destination {
      * @param fileSize
      *            file size of the file to be distributed
      * 
+     * 
+     * TODO: Should I really make this final?
      */
-    protected void sendFile( boolean isMainFile, String cacheFileFilename, short fileFormat, long fileSize ) throws RWException {
-        this.indexOfCurrentlyDistributedFile++;
+    protected final void sendFile( boolean isMainFile, String cacheFileFilename, short fileFormat, long fileSize ) throws RWException {
         try {
-            
+            this.indexOfCurrentlyDistributedFile++;
             getLogger().info( "Sending file " + U.w( U.lpad( indexOfCurrentlyDistributedFile, 2 ) + "/"
                     + U.lpad( numberOfFilesInDistribution, 2 ) ) );
             if ( isMainFile ) {

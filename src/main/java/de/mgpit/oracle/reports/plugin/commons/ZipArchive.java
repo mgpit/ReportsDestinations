@@ -93,7 +93,6 @@ public class ZipArchive {
     }
 
     private ZipArchive() {
-        // NOP
     }
 
     private ZipArchive( final String fileName ) {
@@ -122,16 +121,15 @@ public class ZipArchive {
             return this;
         }
 
-        ZipOutputStream zipper = getZipper();
         try {
             final File destinationFile = new File( getFileName() );
             if ( destinationFile.exists() ) {
                 if ( isAppending() ) {
-                    copyExistingEntries( destinationFile, zipper );
+                    copyExistingEntries( destinationFile, getZipper() );
                 }
                 destinationFile.delete();
             }
-            zipper.close();
+            getZipper().close();
             markClosed();
             final boolean successful = temporaryFile.renameTo( destinationFile );
             LOG.info( "Creation of " + getFileName() + " was" + (successful ? " " : " not") + "successful." );
@@ -277,12 +275,11 @@ public class ZipArchive {
     private void createEntryUsingInput( final InputStream source, final String entryName, long entrysTimestamp )
             throws ArchivingException {
         final ZipEntry zipEntry = new ZipEntry( entryName );
-        final ZipOutputStream zipper = getZipper();
-
+        
         try {
             zipEntry.setTime( entrysTimestamp );
             zipEntry.setComment( "Created by ZipArchive" );
-            createEntry( zipper, zipEntry, source );
+            createEntry( getZipper(), zipEntry, source );
         } catch ( IOException ioException ) {
             final String message = "Error when creating a new Entry from file!";
             LOG.error( message, ioException );

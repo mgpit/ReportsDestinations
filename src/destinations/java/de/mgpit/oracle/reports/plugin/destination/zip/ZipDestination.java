@@ -115,24 +115,6 @@ public final class ZipDestination extends MgpDestination {
     }
 
     /**
-     * Send another file from the current distribution to the destination.
-     * 
-     * @param isMainFile
-     *            flag if the file to be distributed is the main file
-     * @param cacheFileFilename
-     *            full file name of the cache file to be distributed
-     * @param fileFormat
-     *            file format code of the file to be distributed
-     * @param fileSize
-     *            file size of the file to be distributed
-     * 
-     */
-    protected void sendFile( final boolean isMainFile, final String cacheFileFilename, final short fileFormat, final long fileSize )
-            throws RWException {
-        super.sendFile( isMainFile, cacheFileFilename, fileFormat, fileSize );
-    }
-
-    /**
      * Send the main file to the destination
      * 
      * @param cacheFileFilename

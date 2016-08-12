@@ -37,23 +37,6 @@ public final class MQDestination extends MgpDestination {
     }
 
     /**
-     * Send a file from the current distribution to the destination.
-     * 
-     * @param isMainFile
-     *            flag if the file to be distributed is the main file
-     * @param cacheFileFilename
-     *            full file name of the cache file to be distributed
-     * @param fileFormat
-     *            file format code of the file to be distributed
-     * @param fileSize
-     *            file size of the file to be distributed
-     * 
-     */
-    protected void sendFile( boolean isMainFile, String cacheFileFilename, short fileFormat, long fileSize ) throws RWException {
-        super.sendFile( isMainFile, cacheFileFilename, fileFormat, fileSize );
-    }
-
-    /**
      * Start a new distribution cycle for a report to this destination. Will
      * distribute one or many files depending on the format.
      * 
