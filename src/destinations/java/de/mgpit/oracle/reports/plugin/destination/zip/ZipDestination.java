@@ -1,10 +1,16 @@
 package de.mgpit.oracle.reports.plugin.destination.zip;
 
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.util.Properties;
 
+import org.apache.commons.codec.binary.Base64InputStream;
 import org.apache.log4j.Logger;
 
+import de.mgpit.oracle.reports.plugin.commons.Magic;
 import de.mgpit.oracle.reports.plugin.commons.StringCodedBoolean;
 import de.mgpit.oracle.reports.plugin.commons.U;
 import de.mgpit.oracle.reports.plugin.commons.ZipArchive;
@@ -90,7 +96,7 @@ public final class ZipDestination extends MgpDestination {
     private static final Logger LOG = Logger.getLogger( ZipDestination.class );
 
     private ZipArchive zipArchive;
-    private String zipEntryName;
+    // private String zipEntryName;
     // private boolean inAppendingMode;
 
     /**
@@ -113,7 +119,7 @@ public final class ZipDestination extends MgpDestination {
      * 
      * @param isMainFile
      *            flag if the file to be distributed is the main file
-     * @param cacheFileName
+     * @param cacheFileFilename
      *            full file name of the cache file to be distributed
      * @param fileFormat
      *            file format code of the file to be distributed
@@ -121,65 +127,69 @@ public final class ZipDestination extends MgpDestination {
      *            file size of the file to be distributed
      * 
      */
-    protected void sendFile( final boolean isMainFile, final String cacheFileName, final short fileFormat, final long fileSize )
+    protected void sendFile( final boolean isMainFile, final String cacheFileFilename, final short fileFormat, final long fileSize )
             throws RWException {
-        try {
-            if ( isMainFile ) {
-                sendMainFile( cacheFileName, fileFormat );
-            } else {
-                sendOtherFile( cacheFileName, fileFormat );
-            }
-        } catch ( Exception any ) {
-            getLogger().error( "Error during sending file " + U.w( cacheFileName ) + ". See following message(s)!" );
-            getLogger().error( any );
-            RWException rwException = Utility.newRWException( any );
-            throw rwException;
-        }
+        super.sendFile( isMainFile, cacheFileFilename, fileFormat, fileSize );
     }
 
     /**
      * Send the main file to the destination
      * 
-     * @param cacheFileName
+     * @param cacheFileFilename
      *            full file name of the cache file to be distributed
      * @param fileFormat
      *            file format code
-     * @throws ArchivingException
+     * @throws RWException
      */
-    private void sendMainFile( final String cacheFileName, final short fileFormat ) throws ArchivingException {
-        getLogger().info( "Sending Main file named " + U.w( cacheFileName ) + " to " + U.w( getZipArchiveFileName() ) );
-        getLogger().info( "ZIP Entry will be of format " + humanReadable( fileFormat ) + " named " + U.w( getZipEntryName() ) );
-        addFileToArchive( cacheFileName, getZipEntryName() );
+    protected void sendMainFile( final String cacheFileFilename, final short fileFormat ) throws RWException {
+        String entryName = IOUtility.fileNameOnly( getDesname() );
+        getLogger().info( "MAIN file " + U.w( cacheFileFilename ) + " of format " + humanReadable( fileFormat ) + " will be put as "
+                + U.w( entryName ) + " to " + U.w( getZipArchiveFileName() ) );
+        addFileToArchive( cacheFileFilename, entryName );
     }
 
     /**
      * Send any subordinate file to the destination
      * 
-     * @param cacheFileName
+     * @param cacheFileFilename
      *            full file name of the cache file to be distributed
      * @param fileFormat
      *            file format code
-     * @throws ArchivingException
+     * @throws RWException
      */
-    private void sendOtherFile( final String cacheFileName, final short fileFormat ) throws ArchivingException {
-        String otherFileZipEntryName = Utility.fileNameOnly( cacheFileName );
-        getLogger().info( "Sending Other file named " + U.w( cacheFileName ) + " to " + U.w( getZipArchiveFileName() ) );
-        getLogger().info( "ZIP Entry will be of format " + humanReadable( fileFormat ) + " named " + U.w( otherFileZipEntryName ) );
-        addFileToArchive( cacheFileName, otherFileZipEntryName );
+    protected void sendOtherFile( final String cacheFileFilename, final short fileFormat ) throws RWException {
+        String entryName = IOUtility.fileNameOnly( IOUtility.fileNameOnly( cacheFileFilename ) );
+        getLogger().info( "Other file " + U.w( cacheFileFilename ) + " of format " + humanReadable( fileFormat ) + " will be put as "
+                + U.w( entryName ) + " to " + U.w( getZipArchiveFileName() ) );
+        addFileToArchive( cacheFileFilename, entryName );
     }
 
     /**
      * Put a file to the ZIP archive
      * 
-     * @param sourceFileName
+     * @param sourceFileFilename
      *            name of the source file (i.e. cache file) to be put into the
      *            archive
      * @param entryName
      *            name for the source in the ZIP file
      * @throws ArchivingException
      */
-    protected void addFileToArchive( final String sourceFileName, final String entryName ) throws ArchivingException {
-        this.zipArchive.addFile( sourceFileName, entryName );
+    protected void addFileToArchive( final String sourceFileFilename, final String givenEntryName ) throws RWException {
+        String entryName = IOUtility.fileNameOnly( U.coalesce( givenEntryName, sourceFileFilename ) );
+        entryName += ".base64";
+        try {
+            File sourceFile = new File( sourceFileFilename );
+            InputStream in = new FileInputStream( sourceFile );
+            Base64InputStream base64Input = new Base64InputStream( in, Magic.ENCODE_WITH_BASE64 );
+            this.zipArchive.addFromStream( base64Input, entryName, sourceFile.lastModified() );
+        } catch ( FileNotFoundException fileNotFound ) {
+            getLogger().error( fileNotFound );
+            throw Utility.newRWException( fileNotFound );
+        } catch ( ArchivingException archivingException ) {
+            getLogger().error( archivingException );
+            throw Utility.newRWException( archivingException );
+        }
+
     }
 
     /**
@@ -206,7 +216,6 @@ public final class ZipDestination extends MgpDestination {
         if ( continueToSend ) {
 
             String zipArchiveFileName = getZipArchiveNameFromCallParameters( allProperties, targetName );
-            setZipEntryName( Utility.fileNameOnly( targetName ) );
             boolean inAppendingMode = getAppendFlagFromCallParameters( allProperties );
 
             createZipArchive( zipArchiveFileName, inAppendingMode );
@@ -295,13 +304,13 @@ public final class ZipDestination extends MgpDestination {
         LOG.info( "Destination " + U.w( ZipDestination.class.getName() ) + " shut down." );
     }
 
-    private void setZipEntryName( final String zipEntryName ) {
-        this.zipEntryName = zipEntryName;
-    }
-
-    private String getZipEntryName() {
-        return this.zipEntryName;
-    }
+    // private void setZipEntryName( final String zipEntryName ) {
+    // this.zipEntryName = zipEntryName;
+    // }
+    //
+    // private String getZipEntryName() {
+    // return this.zipEntryName;
+    // }
 
     private String getZipArchiveFileName() {
         return this.zipArchive.getFileName();

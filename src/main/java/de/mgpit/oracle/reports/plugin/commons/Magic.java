@@ -8,7 +8,8 @@ public class Magic {
     public static final int CHARACTER_NOT_FOUND = -1;
     
     // Base64 magic numbers
-    public static final boolean DO_ENCODE = true;
+    public static final boolean ENCODE_WITH_BASE64 = true;
+    public static final boolean DECODE_FROM_BASE64 = false;
     
     // log4j magic numbers
     public static final boolean APPEND_MESSAGES_TO_LOGFILE = true;

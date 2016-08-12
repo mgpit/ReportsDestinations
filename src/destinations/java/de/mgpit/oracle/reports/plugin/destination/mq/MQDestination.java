@@ -41,7 +41,7 @@ public final class MQDestination extends MgpDestination {
      * 
      * @param isMainFile
      *            flag if the file to be distributed is the main file
-     * @param cacheFileName
+     * @param cacheFileFilename
      *            full file name of the cache file to be distributed
      * @param fileFormat
      *            file format code of the file to be distributed
@@ -49,12 +49,8 @@ public final class MQDestination extends MgpDestination {
      *            file size of the file to be distributed
      * 
      */
-    protected void sendFile( boolean isMainFile, String cacheFileName, short fileFormat, long fileSize ) throws RWException {
-        if ( isMainFile ) {
-            getLogger().info( "Sending main file from cache " + cacheFileName );
-        } else {
-            getLogger().info( "Sending additional file from cache " + cacheFileName );
-        }
+    protected void sendFile( boolean isMainFile, String cacheFileFilename, short fileFormat, long fileSize ) throws RWException {
+        super.sendFile( isMainFile, cacheFileFilename, fileFormat, fileSize );
     }
 
     /**
@@ -84,6 +80,16 @@ public final class MQDestination extends MgpDestination {
             getLogger().warn( "Cannot continue to send ..." );
         }
         return continueToSend;
+    }
+
+    protected void sendMainFile( String cacheFileFilename, short fileFormat ) throws RWException {
+        // TODO Auto-generated method stub
+
+    }
+
+    protected void sendOtherFile( String cacheFileFilename, short fileFormat ) throws RWException {
+        // TODO Auto-generated method stub
+
     }
 
     /**

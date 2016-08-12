@@ -46,7 +46,7 @@ public class CdmDecoratedInputStreamTest extends TestCase {
     
     public void testBase64Payload() {
         ByteArrayInputStream payload = new ByteArrayInputStream( "Lorem Ipsum Dolor Si amet".getBytes() );        
-        Base64InputStream transformedPayload = new Base64InputStream( payload, Magic.DO_ENCODE );
+        Base64InputStream transformedPayload = new Base64InputStream( payload, Magic.ENCODE_WITH_BASE64 );
         CdmDecoratedInputStream cdmBase64PayloadStream = new CdmDecoratedInputStream( transformedPayload, TestHelper.getCdm1() );
 
         boolean exceptionOccured = false;

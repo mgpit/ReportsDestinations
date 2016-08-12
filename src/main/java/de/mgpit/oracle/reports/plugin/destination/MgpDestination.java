@@ -35,6 +35,9 @@ public abstract class MgpDestination extends Destination {
 
     protected abstract Logger getLogger();
 
+    private int numberOfFilesInDistribution = -1;
+    private int indexOfCurrentlyDistributedFile = -1;
+
     /**
      * 
      * @param formatCode
@@ -89,6 +92,9 @@ public abstract class MgpDestination extends Destination {
         getLogger().info( "Distribution will contain " + U.w( totalNumberOfFiles ) + " files with a total size of "
                 + U.w( totalFileSize ) + " bytes." );
 
+        this.numberOfFilesInDistribution = totalNumberOfFiles;
+        this.indexOfCurrentlyDistributedFile = 0;
+
         if ( getLogger().isDebugEnabled() ) {
             dumpProperties( allProperties );
         }
@@ -138,6 +144,56 @@ public abstract class MgpDestination extends Destination {
             }
         }
         return inspectedValue;
+    }
+
+    /**
+     * Send a file from the current distribution to the destination.
+     * 
+     * @param isMainFile
+     *            flag if the file to be distributed is the main file
+     * @param cacheFileFilename
+     *            full file name of the cache file to be distributed
+     * @param fileFormat
+     *            file format code of the file to be distributed
+     * @param fileSize
+     *            file size of the file to be distributed
+     * 
+     */
+    protected void sendFile( boolean isMainFile, String cacheFileFilename, short fileFormat, long fileSize ) throws RWException {
+        this.indexOfCurrentlyDistributedFile++;
+        try {
+            
+            getLogger().info( "Sending file " + U.w( U.lpad( indexOfCurrentlyDistributedFile, 2 ) + "/"
+                    + U.lpad( numberOfFilesInDistribution, 2 ) ) );
+            if ( isMainFile ) {
+                sendMainFile( cacheFileFilename, fileFormat );
+            } else {
+                sendOtherFile( cacheFileFilename, fileFormat );
+            }
+        } catch ( RWException rwException ) {
+            throw rwException;
+        } catch ( Exception any ) {
+            getLogger().error( "Error during sending file " + U.w( cacheFileFilename ) + ". See following message(s)!" );
+            getLogger().error( any );
+            RWException rwException = Utility.newRWException( any );
+            throw rwException;
+        }
+    }
+
+    protected abstract void sendMainFile( String cacheFileFilename, short fileFormat ) throws RWException;
+
+    protected abstract void sendOtherFile( String cacheFileFilename, short fileFormat ) throws RWException;
+
+    /**
+     * Stop the distribution cycle.
+     */
+    protected void stop() throws RWException {
+        try {
+            super.stop();
+        } finally {
+            this.indexOfCurrentlyDistributedFile = -1;
+            this.numberOfFilesInDistribution = -1;
+        }
     }
 
     /**

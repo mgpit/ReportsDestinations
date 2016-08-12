@@ -7,6 +7,8 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
@@ -28,10 +30,10 @@ import de.mgpit.oracle.reports.plugin.commons.io.IOUtility;
  *         The archive can be opened in appending or overwriting mode by calling
  *         one of the classes factory methods named {@link #newOrExistingNamed(String)} or {@link #newNamed(String)}.
  *         <p>
- *         New entries will be added by providing a file name and an entry name to {@link #addFile(String, String)}. 
+ *         New entries will be added by providing a file name and an entry name to {@link #addFile(String, String)}.
  *         During one distribution entry names must be unique, i.e. each call {@link #addFile(String, String)} must provide different
  *         entry name.
- *         <p> 
+ *         <p>
  *         At the end clients of ZipArchive have to {@link #close()} the ZIP archive.
  *         <p>
  *         When appending to an existing archive the ZipArchive will partially be able to handle duplicate entries, meaning that
@@ -112,7 +114,8 @@ public class ZipArchive {
      * Finally the temporary file will be renamed to the destination file name.
      * 
      * @return the receiving ZipArchive instance
-     * @throws ArchivingException on any error during copying or renaming
+     * @throws ArchivingException
+     *             on any error during copying or renaming
      */
     public ZipArchive close() throws ArchivingException {
         if ( !this.isOpen() ) {
@@ -172,12 +175,12 @@ public class ZipArchive {
     }
 
     /**
-     * Add a file to the ZIP archive.
+     * Creates a new entry in the ZIP archive using the file's content.
      * 
-     * @param sourceFileName
+     * @param sourceFileFilename
      *            full file name of the source file to be put into the archive
      * @param entryName
-     *            entry name the file will have in the ZIP archive. If provided {@code null} the
+     *            entry name the file will have in the ZIP archive.
      * @return the receiving ZipArchive instance
      * 
      * @throws ArchivingException
@@ -185,23 +188,71 @@ public class ZipArchive {
      * @throws Error
      *             if one of the parameters is provided as null or empty String.
      */
-    public ZipArchive addFile( final String sourceFileName, final String entryName ) throws ArchivingException {
-        U.assertNotEmpty( sourceFileName, "sourceFileName must not be null or empty string!" );
+    public ZipArchive addFile( final String sourceFileFilename, final String entryName ) throws ArchivingException {
+        U.assertNotEmpty( sourceFileFilename, "sourceFileName must not be null or empty string!" );
         U.assertNotEmpty( entryName, "entryName must not be null or empty string!" );
-        
-        if ( !isOpen() ) {
-            openTemporaryZipArchive();
+        try {
+            File sourceFile = new File( sourceFileFilename );
+            final FileInputStream fileInput = new FileInputStream( sourceFile );
+            addFromStream( fileInput, entryName, sourceFile.lastModified() );
+        } catch ( FileNotFoundException notfound ) {
+            final String message = "Error when creating a new Entry from file!";
+            LOG.error( message, notfound );
+            throw new ArchivingException( message, notfound );
         }
-        createEntryFromFile( sourceFileName, entryName );
-        registerEntry( sourceFileName, entryName );
         return this;
     }
 
-    private void registerEntry( final String sourceFileName, final String entryName ) {
+    /**
+     * Creates a new entry in the ZIP archive using the content provided by the InputStream.
+     * 
+     * @param source
+     *            an Input stream providing the content to be put into the archive
+     * @param entryName
+     *            entry name the file will have in the ZIP archive.
+     * @return the receiving ZipArchive instance
+     * 
+     * @throws ArchivingException
+     *             if an error occurs during adding.
+     * @throws Error
+     *             if one of the parameters is provided as null or empty String.
+     */
+    public ZipArchive addFromStream( final InputStream source, final String entryName ) throws ArchivingException {
+        return addFromStream( source, entryName, System.currentTimeMillis() );
+    }
+
+    /**
+     * Creates a new entry in the ZIP archive using the content provided by the InputStream.
+     * 
+     * @param source
+     *            an Input stream providing the content to be put into the archive
+     * @param entryName
+     *            entry name the file will have in the ZIP archive.
+     * @param time
+     *            the modification date to set for the entry
+     * @return the receiving ZipArchive instance
+     * 
+     * @throws ArchivingException
+     *             if an error occurs during adding.
+     * @throws Error
+     *             if one of the parameters is provided as null or empty String.
+     */
+    public ZipArchive addFromStream( final InputStream source, final String entryName, long time ) throws ArchivingException {
+        U.assertNotNull( source, "Input stream must not be null!" );
+        U.assertNotEmpty( entryName, "entryName must not be null or empty string!" );
+        if ( !isOpen() ) {
+            openTemporaryZipArchive();
+        }
+        createEntryUsingInput( source, entryName, time );
+        registerEntry( entryName );
+        return this;
+    }
+
+    private void registerEntry( final String entryName ) {
         if ( entriesCreated == null ) {
             entriesCreated = new HashMap();
         }
-        entriesCreated.put( entryName, sourceFileName );
+        entriesCreated.put( entryName, Boolean.TRUE );
     }
 
     private boolean hasEntry( final ZipEntry entry ) {
@@ -223,25 +274,15 @@ public class ZipArchive {
         markOpened();
     }
 
-    /**
-     * Create a new ZIP file entry including file content.
-     * 
-     * @param sourceFileName
-     *            full file name of the source file to be put into the archive
-     * @param entryName
-     *            entry name the file will have in the ZIP archive
-     * @throws ArchivingException
-     */
-    private void createEntryFromFile( final String sourceFilename, final String entryName ) throws ArchivingException {
+    private void createEntryUsingInput( final InputStream source, final String entryName, long entrysTimestamp )
+            throws ArchivingException {
         final ZipEntry zipEntry = new ZipEntry( entryName );
         final ZipOutputStream zipper = getZipper();
 
         try {
-            final File sourceFile = new File( sourceFilename );
-            zipEntry.setTime( sourceFile.lastModified() );
+            zipEntry.setTime( entrysTimestamp );
             zipEntry.setComment( "Created by ZipArchive" );
-            final FileInputStream fileInput = new FileInputStream( sourceFile );
-            createEntry( zipper, zipEntry, fileInput );
+            createEntry( zipper, zipEntry, source );
         } catch ( IOException ioException ) {
             final String message = "Error when creating a new Entry from file!";
             LOG.error( message, ioException );
