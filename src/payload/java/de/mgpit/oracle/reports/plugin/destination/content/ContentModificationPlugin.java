@@ -24,6 +24,7 @@ import oracle.reports.RWException;
  */
 public interface ContentModificationPlugin {
 
+    public static String PREFIX = "transformer.";
     /**
      * Wraps the input stream.
      * 
@@ -36,4 +37,56 @@ public interface ContentModificationPlugin {
     public String mimetype();
     
     public String fileExtension();
+    
+    public static final class PluginName {
+        public static PluginName of(String name){
+            return new PluginName( name );
+        }
+        String name = "";
+        private PluginName( String name) {
+            this.name = name;
+        }
+        public String toString() {
+            return name;
+        }
+        
+        public String name() {
+            return name;
+        }
+
+        public final boolean equals(Object other) {
+            if (this==other) {
+                return true;
+            };
+            if ( other.getClass() == this.getClass() ) {
+                PluginName otherPluginName = (PluginName)other;
+                if ( this.name == null && otherPluginName.name == null ) {
+                    return true;
+                }
+                return this.name.equals( otherPluginName.name );
+            } else {
+                return false;
+            }
+        }
+
+        public final int hashCode() {
+            return (name==null)?0:name.hashCode();
+        }
+        
+        public int compareTo( Object o ){
+            return compareTo((PluginName)o);
+        }
+        
+        public int compareTo( PluginName otherPluginName ){
+            if ( this.name != null ){
+                return this.name.compareTo(  otherPluginName.name );
+            } else if ( otherPluginName != null ) {
+                return otherPluginName.name.compareTo( this.name );
+            } else {
+                // must be null both ...
+                return 0;
+            }
+        }
+         
+    }
 }
