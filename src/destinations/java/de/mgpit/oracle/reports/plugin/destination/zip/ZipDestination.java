@@ -139,7 +139,7 @@ public final class ZipDestination extends MgpDestination {
      *            file format code
      * @throws RWException
      */
-    protected void sendOtherFile( final String cacheFileFilename, final short fileFormat ) throws RWException {
+    protected void sendAdditionalFile( final String cacheFileFilename, final short fileFormat ) throws RWException {
         String entryName = IOUtility.fileNameOnly( IOUtility.fileNameOnly( cacheFileFilename ) );
         getLogger().info( "Other file " + U.w( cacheFileFilename ) + " of format " + humanReadable( fileFormat ) + " will be put as "
                 + U.w( entryName ) + " to " + U.w( getZipArchiveFileName() ) );
@@ -171,8 +171,9 @@ public final class ZipDestination extends MgpDestination {
             getLogger().error( archivingException );
             throw Utility.newRWException( archivingException );
         }
-
     }
+    
+    
 
     /**
      * Start a new distribution cycle for a report to this destination. Will

@@ -163,6 +163,13 @@
             <compilerarg value="-Xbootclasspath/p:${toString:java14.bootstrap.class.path}" />
             <classpath refid="project.class.path" />
         </javac>
+
+        <javac includeantruntime="false" defaultexcludes="true" srcdir="${dir.src.payload}" destdir="${dir.build}" source="1.4" target="1.4">
+            <exclude name="**/cdm/**"/>
+            <compilerarg value="-Xbootclasspath/p:${toString:java14.bootstrap.class.path}" />
+            <classpath refid="project.class.path" />
+        </javac>
+
     </target>
 
     <target name="package&amp;DeployCommons">
@@ -225,7 +232,7 @@
         <delete file="${deploy.jar.MQdestination}" failonerror="false" />
         <echo message="MQ Destination: Deployment finished" />
     </target>
-
+    
     <target name="1 Deploy Destinations" description="Create and Deploy Destinations" depends="9 Deploy Commons,2 Deploy Zip Destination,3 Deploy MQ Destination">
         <echo message="Deployment finished" />
     </target>
@@ -288,7 +295,6 @@
                     <filetokenizer />
                     <scriptfilter language="javascript">
                         <![CDATA[
-                        self.log( self.getClass() );
                         var theToken=self.getToken();
                         var startOf = theToken.indexOf( '<pre><code class="language-java">' );
                         if ( startOf > -1 ) {

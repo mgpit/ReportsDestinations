@@ -125,11 +125,11 @@ public class ZipArchive {
             final File destinationFile = new File( getFileName() );
             if ( destinationFile.exists() ) {
                 if ( isAppending() ) {
-                    copyExistingEntries( destinationFile, getZipper() );
+                    copyExistingEntries( destinationFile );
                 }
                 destinationFile.delete();
             }
-            getZipper().close();
+            this.zipper.close();
             markClosed();
             final boolean successful = temporaryFile.renameTo( destinationFile );
             LOG.info( "Creation of " + getFileName() + " was" + (successful ? " " : " not") + "successful." );
@@ -151,7 +151,7 @@ public class ZipArchive {
      *            the temporary ZIP file used during creation
      * @throws IOException
      */
-    private void copyExistingEntries( final File existingZipFile, final ZipOutputStream zipper ) throws IOException {
+    private void copyExistingEntries( final File existingZipFile ) throws IOException {
         LOG.info( "About to copy entries from existing ZIP archive ..." );
         final ZipFile zipFile = new ZipFile( existingZipFile );
         final Enumeration entries = zipFile.entries();
@@ -161,9 +161,9 @@ public class ZipArchive {
                 LOG.debug( " *** Copying entry " + anEntry + " from existing archive ..." );
                 if ( !anEntry.isDirectory() ) {
                     InputStream zipped = zipFile.getInputStream( anEntry );
-                    createEntry( zipper, anEntry, zipped );
+                    createEntry( anEntry, zipped );
                 } else {
-                    zipper.closeEntry();
+                    this.zipper.closeEntry();
                 }
             } else {
                 LOG.debug( " *** Skipping entry " + anEntry + ". Newer version exists." );
@@ -241,7 +241,7 @@ public class ZipArchive {
         if ( !isOpen() ) {
             openTemporaryZipArchive();
         }
-        createEntryUsingInput( source, entryName, time );
+        createEntryFromInputStream( source, entryName, time );
         registerEntry( entryName );
         return this;
     }
@@ -272,14 +272,14 @@ public class ZipArchive {
         markOpened();
     }
 
-    private void createEntryUsingInput( final InputStream source, final String entryName, long entrysTimestamp )
+    private void createEntryFromInputStream( final InputStream source, final String entryName, long entrysTimestamp )
             throws ArchivingException {
         final ZipEntry zipEntry = new ZipEntry( entryName );
         
         try {
             zipEntry.setTime( entrysTimestamp );
             zipEntry.setComment( "Created by ZipArchive" );
-            createEntry( getZipper(), zipEntry, source );
+            createEntry( zipEntry, source );
         } catch ( IOException ioException ) {
             final String message = "Error when creating a new Entry from file!";
             LOG.error( message, ioException );
@@ -287,18 +287,14 @@ public class ZipArchive {
         }
     }
 
-    private void createEntry( ZipOutputStream zipper, ZipEntry zipEntry, InputStream contentSource ) throws IOException {
+    private void createEntry( ZipEntry zipEntry, InputStream contentSource ) throws IOException {
         try {
-            zipper.putNextEntry( zipEntry );
-            IOUtility.copyFromTo( contentSource, zipper );
+            this.zipper.putNextEntry( zipEntry );
+            IOUtility.copyFromTo( contentSource, this.zipper );
         } finally {
-            zipper.closeEntry();
+            this.zipper.closeEntry();
             contentSource.close();
         }
-    }
-
-    private ZipOutputStream getZipper() {
-        return this.zipper;
     }
 
     private String getTemporaryFileName() {

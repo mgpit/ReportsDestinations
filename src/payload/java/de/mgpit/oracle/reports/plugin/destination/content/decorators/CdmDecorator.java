@@ -5,14 +5,17 @@ import java.io.InputStream;
 
 import de.mgpit.oracle.reports.plugin.destination.cdm.Cdm;
 import de.mgpit.oracle.reports.plugin.destination.cdm.CdmDecoratedInputStream;
+import de.mgpit.oracle.reports.plugin.destination.content.ContentModificationPlugin;
 import oracle.reports.RWException;
 
-public abstract class CdmDecorator extends AbstractContentDecorator {
+public abstract class CdmDecorator implements ContentModificationPlugin {
 
-    protected InputStream decorate( final InputStream in ) throws RWException {
-        return new CdmDecoratedInputStream( in, getCdm() );                
+    public CdmDecorator() {
+    };
+
+    public InputStream wrap( final InputStream in ) throws RWException {
+        return new CdmDecoratedInputStream( in, getCdm() );
     }
-    
-    public abstract Cdm getCdm();
 
+    protected abstract Cdm getCdm();
 }

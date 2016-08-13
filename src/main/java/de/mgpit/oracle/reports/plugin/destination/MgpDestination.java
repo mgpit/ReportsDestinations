@@ -1,6 +1,10 @@
 package de.mgpit.oracle.reports.plugin.destination;
 
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.util.Iterator;
 import java.util.Properties;
 import java.util.Set;
@@ -15,6 +19,7 @@ import de.mgpit.oracle.reports.plugin.commons.U;
 import oracle.reports.RWException;
 import oracle.reports.plugin.destination.ftp.DesFTP;
 import oracle.reports.server.Destination;
+import oracle.reports.utility.ResourceManager;
 import oracle.reports.utility.Utility;
 
 /**
@@ -159,17 +164,19 @@ public abstract class MgpDestination extends Destination {
      *            file size of the file to be distributed
      * 
      * 
-     * TODO: Should I really make this final?
+     *            TODO: Should I really make this final?
      */
-    protected final void sendFile( boolean isMainFile, String cacheFileFilename, short fileFormat, long fileSize ) throws RWException {
+    protected final void sendFile( boolean isMainFile, String cacheFileFilename, short fileFormat, long fileSize )
+            throws RWException {
+        U.Rw.assertNotEmpty( cacheFileFilename );
         try {
             this.indexOfCurrentlyDistributedFile++;
-            getLogger().info( "Sending file " + U.w( U.lpad( indexOfCurrentlyDistributedFile, 2 ) + "/"
-                    + U.lpad( numberOfFilesInDistribution, 2 ) ) );
+            getLogger().info( "Sending file "
+                    + U.w( U.lpad( indexOfCurrentlyDistributedFile, 2 ) + "/" + U.lpad( numberOfFilesInDistribution, 2 ) ) );
             if ( isMainFile ) {
                 sendMainFile( cacheFileFilename, fileFormat );
             } else {
-                sendOtherFile( cacheFileFilename, fileFormat );
+                sendAdditionalFile( cacheFileFilename, fileFormat );
             }
         } catch ( RWException rwException ) {
             throw rwException;
@@ -179,11 +186,49 @@ public abstract class MgpDestination extends Destination {
             RWException rwException = Utility.newRWException( any );
             throw rwException;
         }
+//        } catch ( Throwable thrown ) {
+//            getLogger().fatal( "Fatal Error during sending file " + U.w( cacheFileFilename ) + ". See following message(s)!" );
+//            getLogger().fatal( thrown );
+//            throw Utility.newRWException( new Exception( thrown ) );
+//        }
     }
 
+    /**
+     * Sends the main file from the distribution to the target.
+     * 
+     * @param cacheFileFilename
+     * @param fileFormat
+     * @throws RWException
+     */
     protected abstract void sendMainFile( String cacheFileFilename, short fileFormat ) throws RWException;
 
-    protected abstract void sendOtherFile( String cacheFileFilename, short fileFormat ) throws RWException;
+    /**
+     * Sends additional files from the distribution to the target.
+     * 
+     * @param cacheFileFilename
+     * @param fileFormat
+     * @throws RWException
+     */
+    protected abstract void sendAdditionalFile( String cacheFileFilename, short fileFormat ) throws RWException;
+
+    /**
+     * Opens an InputStream on the file given.
+     * 
+     * @param sourceFile
+     * @return InputStream on the source file
+     * 
+     * @throws RWException
+     */
+    protected InputStream getContent( File sourceFile ) throws RWException {
+        U.Rw.assertNotNull( sourceFile );
+        try {
+            InputStream in = new FileInputStream( sourceFile );
+            return in;
+        } catch ( FileNotFoundException fileNotFound ) {
+            getLogger().error( fileNotFound );
+            throw Utility.newRWException( fileNotFound );
+        }
+    }
 
     /**
      * Stop the distribution cycle.
