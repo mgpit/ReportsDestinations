@@ -8,6 +8,6 @@
     </head>
     <body>
         <p><a href="../index.html">Back</a></p>
-        <h2 id="toc">de.mgpit.oracle.reports.plugin.commons.U</h2>
+        <h2 id="toc">$$REPLACE$$</h2>
         <script src="../../js/prism.js"></script>
         <pre><code class="language-java">

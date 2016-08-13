@@ -124,7 +124,7 @@
 
     <property name="jaxb.cdmdoc.packagename" value="de.mgpit.oracle.reports.plugin.destination.cdm.schema" />
     <propertyreplace name="jaxb.cdmdoc.dir.schema" value="${dir.src.payload}${file.separator}${jaxb.cdmdoc.packagename}" token="." replace="${file.separator}" />
-    
+
     <property name="schema.name" value="cdmdoc" />
     <property name="schema.schema.name" location="${jaxb.cdmdoc.dir.schema}/${schema.name}.xsd" />
     <property name="schema.bindings.name" location="${jaxb.cdmdoc.dir.schema}/${schema.name}.xjb" />
@@ -230,21 +230,35 @@
         <echo message="Deployment finished" />
     </target>
 
+
+    <fileset dir="${dir.src.main}" id="sourcefiles#common">
+        <include name="**/*.java" />
+    </fileset>
+    <fileset dir="${dir.src.dest}" id="sourcefiles#destinations">
+        <include name="**/*.java" />
+    </fileset>
+    <fileset dir="${dir.src.payload}" id="sourcefiles#payload">
+        <exclude name="**/*.java" />
+    </fileset>
+    <fileset dir="${dir.test}" id="testfiles">
+        <include name="**/*.java" />
+        <exclude name="**/com/**" />
+        <exclude name="**/spielwiese/**" />
+    </fileset>
+
+    <union id="src.all">
+        <resources refid="sourcefiles#common" />
+        <resources refid="sourcefiles#destinations" />
+        <resources refid="sourcefiles#payload" />
+        <resources refid="testfiles" />
+    </union>
+
     <target name="Make HTML Documentation" description="Prepare for documentation">
         <delete dir="res/html" failonerror="false" />
+        <echo message="${toString:src.all}" />
         <copy overwrite="true" todir="res/html">
-            <fileset dir="${dir.src.main}" id="sourcefiles#common">
-                <include name="**/*.java" />
-            </fileset>
-            <fileset dir="${dir.src.main}" id="sourcefiles#destination">
-                <include name="**/*.java" />
-                <exclude name="**/cdm/schema/**" />
-            </fileset>
-            <fileset dir="${dir.test}" id="testfiles">
-                <include name="**/*.java" />
-                <exclude name="**/com/**" />
-                <exclude name="**/spielwiese/**" />
-            </fileset>
+
+            <resources refid="src.all" />
 
             <mapper>
                 <chainedmapper>
@@ -254,23 +268,48 @@
             </mapper>
             <filterchain>
                 <tokenfilter>
+                    <!-- remember: filetokenizer liest die ganze Datei -->
                     <filetokenizer />
                     <scriptfilter language="javascript">
                         <![CDATA[
-                        var newToken=self.getToken();
+                        var theToken=self.getToken();
                         /* Watch out! & must be replaced FIRST !!! 
                            Order matters ... */
-                        newToken = newToken.replace('&', '&amp;' );
-                        newToken = newToken.replace('<', '&lt;' );
-                        newToken = newToken.replace('>', '&gt;' );
-                        self.setToken(newToken);
-                        self.log( self.getToken().getClass() + " verarbeitet" );
+                        theToken = theToken.replace('&', '&amp;' );
+                        theToken = theToken.replace('<', '&lt;' );
+                        theToken = theToken.replace('>', '&gt;' );
+                        self.setToken(theToken);
                         ]]>
                     </scriptfilter>
                 </tokenfilter>
                 <concatfilter prepend="res/doc-header.html.fragment" />
                 <concatfilter append="res/doc-trailer.html.fragment" />
+                <tokenfilter>
+                    <filetokenizer />
+                    <scriptfilter language="javascript">
+                        <![CDATA[
+                        var theToken=self.getToken();
+                        var startOf = theToken.indexOf( '<pre><code class="language-java">' );
+                        if ( startOf > -1 ) {
+                            startOf = startOf + '<pre><code class="language-java">'.length + 1;
+                            startOf = theToken.indexOf( 'class', startOf );
+                            if ( startOf > -1 ) {
+                                startOf = startOf + 'class'.length + 1;
+                                var endOf = theToken.indexOf( " ", startOf );
+                                if ( endOf > startOf ) {
+                                    var replacement = theToken.substring( startOf, endOf );
+                                    replacement = replacement.trim();
+                                    theToken = theToken.replace( '$$REPLACE$$', replacement );
+                                }
+                            }
+                        }
+                        self.setToken( theToken );
+                        ]]>
+                    </scriptfilter>
+                </tokenfilter>
+
             </filterchain>
         </copy>
+
     </target>
 </project>
