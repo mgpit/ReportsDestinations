@@ -288,6 +288,7 @@
                     <filetokenizer />
                     <scriptfilter language="javascript">
                         <![CDATA[
+                        self.log( self.getClass() );
                         var theToken=self.getToken();
                         var startOf = theToken.indexOf( '<pre><code class="language-java">' );
                         if ( startOf > -1 ) {
@@ -307,9 +308,30 @@
                         ]]>
                     </scriptfilter>
                 </tokenfilter>
-
             </filterchain>
         </copy>
-
     </target>
+    
+    <!--
+    <scriptdef name="scripttest2" language="javascript">
+      <element name="fileset" type="fileset"/>
+   
+      <![CDATA[
+        filesets = elements.get("fileset");
+        project.log("Number of filesets = " + filesets.size());
+        for (i = 0; i < filesets.size(); ++i) {
+          project.log("fileset " + i + " basedir = "
+            + filesets.get(i).getDir(project));
+        }
+      ]]>
+   
+    </scriptdef>
+   
+    <target name="ZZZ Test" description="ZZZ Test">
+        <scripttest2>
+            <fileset dir="${dir.src.main}"/>
+            <fileset dir="${dir.src.dest}"/>
+            </scripttest2>
+    </target>
+    -->
 </project>
