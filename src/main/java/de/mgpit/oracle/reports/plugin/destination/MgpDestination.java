@@ -87,7 +87,24 @@ public abstract class MgpDestination extends Destination {
     }
 
     /**
+     * Start a new distribution cycle for a report to this destination. Will
+     * distribute one or many files depending on the format.
+     * <p>
+     * {@link Destination#setProperties()} and {@link Destination#getProperties()} indicate that the <code>allProperties</code>
+     * will already have been passed to the instance so passing them seems redundant.
      * 
+     * @param allProperties
+     *            all properties (parameters) passed to the report. 
+     *            For Oracle Forms&trade; this will include the parameters set via <code>SET_REPORT_OBJECT_PROPERTY</code>
+     *            plus the parameters passed via a <code>ParamList</code>
+     * @param targetName
+     *            target name of the distribution.
+     * @param totalNumberOfFiles
+     *            total number of files to be distributed.
+     * @param totalFileSize
+     *            total file size of all files distributed.
+     * @param mainFormat
+     *            the output format of the main file.
      */
     protected boolean start( final Properties allProperties, final String targetName, final int totalNumberOfFiles,
             final long totalFileSize, final short mainFormat ) throws RWException {
@@ -178,19 +195,14 @@ public abstract class MgpDestination extends Destination {
             } else {
                 sendAdditionalFile( cacheFileFilename, fileFormat );
             }
-        } catch ( RWException rwException ) {
-            throw rwException;
         } catch ( Exception any ) {
-            getLogger().error( "Error during sending file " + U.w( cacheFileFilename ) + ". See following message(s)!" );
-            getLogger().error( any );
+            getLogger().error( "Error during sending file " + U.w( cacheFileFilename ) + ".", any );
             RWException rwException = Utility.newRWException( any );
             throw rwException;
+        } catch ( Throwable thrown ) {
+            getLogger().fatal( "Fatal Error during sending file " + U.w( cacheFileFilename ) + ".", thrown );
+            throw Utility.newRWException( new Exception( thrown ) );
         }
-//        } catch ( Throwable thrown ) {
-//            getLogger().fatal( "Fatal Error during sending file " + U.w( cacheFileFilename ) + ". See following message(s)!" );
-//            getLogger().fatal( thrown );
-//            throw Utility.newRWException( new Exception( thrown ) );
-//        }
     }
 
     /**
@@ -225,7 +237,7 @@ public abstract class MgpDestination extends Destination {
             InputStream in = new FileInputStream( sourceFile );
             return in;
         } catch ( FileNotFoundException fileNotFound ) {
-            getLogger().error( fileNotFound );
+            getLogger().error( "Error on getting content for distribution.!", fileNotFound );
             throw Utility.newRWException( fileNotFound );
         }
     }
@@ -260,8 +272,7 @@ public abstract class MgpDestination extends Destination {
         try {
             Destination.init( destinationsProperties );
         } catch ( RWException rwException ) {
-            log.error( "Error during initializing Destination. See following message(s)!" );
-            log.error( rwException );
+            log.error( "Error during initializing Destination.", rwException );
             throw rwException;
         }
     }

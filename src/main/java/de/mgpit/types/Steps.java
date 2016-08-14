@@ -1,13 +1,10 @@
-package de.mgpit.oracle.reports.plugin.destination.content.decorators;
+package de.mgpit.types;
 
 
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-
-import de.mgpit.modernizr.java.lang.Enum;
-import de.mgpit.oracle.reports.plugin.commons.U;
 
 public final class Steps extends de.mgpit.modernizr.java.lang.Enum {
     private static final long serialVersionUID = -758473813852381487L;
@@ -18,40 +15,8 @@ public final class Steps extends de.mgpit.modernizr.java.lang.Enum {
 
     Class clazz;
 
-    private String name;
-    private int ordinal;
-
     private Steps( String name, int ordinal ) {
         super( name, ordinal );
-    }
-
-    public String toString() {
-        return name;
-    }
-
-    public int compareTo( Object o ) {
-        if ( this.getClass() != o.getClass() ) {
-            throw new ClassCastException();
-        }
-        Steps other = (Steps) o;
-        return this.ordinal - other.ordinal;
-    }
-
-    /* The following methods have been copied from java.lang.Enum ... */
-
-    public static Enum valueOf( Class enumType, String name ) {
-        return Steps.valueOf( name );
-    }
-
-    public static Steps valueOf( String name ) {
-        U.assertNotNull( name, "Name is Null!" );
-        Steps result = (Steps) ENUM_CONSTANT_DIRECTORY.get( name );
-
-        if ( result != null ) {
-            return result;
-        }
-
-        throw new IllegalArgumentException( "No constant " + Steps.class.getName() + "." + name );
     }
 
     /* This is some of the stuff the compiler generates when compiling an Enum ... */
@@ -72,9 +37,14 @@ public final class Steps extends de.mgpit.modernizr.java.lang.Enum {
         Iterator values = Arrays.asList( ENUM$VALUES ).iterator();
         while ( values.hasNext() ) {
             Steps step = (Steps) values.next();
-            ENUM_CONSTANT_DIRECTORY.put( step.name, step );
+            ENUM_CONSTANT_DIRECTORY.put( step.name(), step );
         }
 
+    }
+
+    public int compareTo( Object o ) {
+        Steps other = (Steps) o;
+        return this.compareTo( other );
     }
 
 }

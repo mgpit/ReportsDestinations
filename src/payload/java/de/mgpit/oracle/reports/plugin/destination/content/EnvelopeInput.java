@@ -1,7 +1,7 @@
-package de.mgpit.oracle.reports.plugin.destination.cdm;
+package de.mgpit.oracle.reports.plugin.destination.content;
 
 
-public interface Cdm {
+public interface EnvelopeInput {
 
     public boolean dataWanted();
 

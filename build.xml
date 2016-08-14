@@ -159,12 +159,12 @@
     </target>
 
     <target name="compileCommons" depends="cleanbuildcommons">
-        <javac includeantruntime="false" defaultexcludes="true" srcdir="${dir.src.main}" destdir="${dir.build}" source="1.4" target="1.4">
+        <javac includeantruntime="false" defaultexcludes="true" srcdir="${dir.src.main}" destdir="${dir.build}" source="1.4" target="1.4" debug="yes" >
             <compilerarg value="-Xbootclasspath/p:${toString:java14.bootstrap.class.path}" />
             <classpath refid="project.class.path" />
         </javac>
 
-        <javac includeantruntime="false" defaultexcludes="true" srcdir="${dir.src.payload}" destdir="${dir.build}" source="1.4" target="1.4">
+        <javac includeantruntime="false" defaultexcludes="true" srcdir="${dir.src.payload}" destdir="${dir.build}" source="1.4" target="1.4" debug="yes" >
             <exclude name="**/cdm/**"/>
             <compilerarg value="-Xbootclasspath/p:${toString:java14.bootstrap.class.path}" />
             <classpath refid="project.class.path" />
@@ -183,7 +183,7 @@
     <target name="compileZIPdest" depends="cleanbuild">
         <echo message="About to compile ZIP Destination ..." />
         <echo level="info" message="Using classpath ${toString:ZIPdest.class.path}" />
-        <javac includeantruntime="false" defaultexcludes="true" srcdir="${dir.src.dest}" destdir="${dir.build}" source="1.4" target="1.4">
+        <javac includeantruntime="false" defaultexcludes="true" srcdir="${dir.src.dest}" destdir="${dir.build}" source="1.4" target="1.4" debug="yes" >
             <compilerarg value="-Xbootclasspath/p:${toString:java14.bootstrap.class.path}" />
             <classpath refid="ZIPdest.class.path" />
             <include name="**/zip/**" />
@@ -201,7 +201,7 @@
     <target name="compileMQdest" depends="cleanbuild">
         <echo message="About to compile MQ Destination ..." />
         <echo level="info" message="Using classpath ${toString:MQdest.class.path}" />
-        <javac includeantruntime="false" defaultexcludes="true" srcdir="${dir.src.dest}" destdir="${dir.build}" source="1.4" target="1.4">
+        <javac includeantruntime="false" defaultexcludes="true" srcdir="${dir.src.dest}" destdir="${dir.build}" source="1.4" target="1.4" debug="yes" >
             <compilerarg value="-Xbootclasspath/p:${toString:java14.bootstrap.class.path}" />
             <classpath refid="MQdest.class.path" />
             <include name="**/mq/**" />

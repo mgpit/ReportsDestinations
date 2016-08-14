@@ -3,12 +3,12 @@ package de.mgpit.oracle.reports.plugin.destination.cdm.schema;
 import java.io.ByteArrayInputStream;
 
 import de.mgpit.oracle.reports.plugin.commons.Magic;
-import de.mgpit.oracle.reports.plugin.destination.cdm.Cdm;
+import de.mgpit.oracle.reports.plugin.destination.content.EnvelopeInput;
 
 public class TestHelper {
     
-    public static Cdm getCdm1() {
-        return new Cdm() {
+    public static EnvelopeInput getCdm1() {
+        return new EnvelopeInput() {
             private static final int IN_HEADER = 1;
             private static final int IN_DATA = 2;
             private static final int IN_FOOTER = 3;

@@ -39,11 +39,10 @@ public final class MQDestination extends MgpDestination {
                 ContentModificationPlugin transformer = (ContentModificationPlugin) newInstance;
                 return transformer;
             } catch ( InstantiationException cannotInstantiate ) {
-                LOG.fatal( cannotInstantiate );
-                LOG.fatal( "Cannot instantiate " + U.w( clazz.getName() ) );
+                LOG.fatal( "Cannot instantiate " + U.w( clazz.getName() ), cannotInstantiate );
                 throw Utility.newRWException( cannotInstantiate );
             } catch ( Exception anyOther ) {
-                LOG.error( anyOther );
+                LOG.error( "Error during instantiation of ContentModificationPlugin!", anyOther );
                 throw Utility.newRWException( anyOther );
             }
         } else {
@@ -61,8 +60,7 @@ public final class MQDestination extends MgpDestination {
         try {
             super.stop();
         } catch ( Exception any ) {
-            getLogger().error( "Error during finishing distribution. See following message(s)!" );
-            getLogger().error( any );
+            getLogger().error( "Error during finishing distribution!", any );
             throw Utility.newRWException( any );
         }
         getLogger().info( "Finished distribution to " + U.w( mq ) );
@@ -73,8 +71,9 @@ public final class MQDestination extends MgpDestination {
      * distribute one or many files depending on the format.
      * 
      * @param allProperties
-     *            all properties (system and user parameters) passed to the
-     *            report
+     *            all properties (parameters) passed to the report. 
+     *            For Oracle Forms&trade; this will include the parameters set via <code>SET_REPORT_OBJECT_PROPERTY</code>
+     *            plus the parameters passed via a <code>ParamList</code>
      * @param targetName
      *            target name of the distribution.
      * @param totalNumberOfFiles
@@ -113,8 +112,10 @@ public final class MQDestination extends MgpDestination {
             FileOutputStream fileOut = new FileOutputStream( targetFile );
             IOUtility.copyFromTo( source, fileOut );
         } catch ( FileNotFoundException fileNotFound ) {
+            getLogger().error( "Error during distribution! Could not find file to add!" );
             throw Utility.newRWException( fileNotFound );
         } catch ( IOException ioex ) {
+            getLogger().error( "Error during distribution! Could not copy file content!", ioex );
             throw Utility.newRWException( ioex );
         }
 
@@ -136,10 +137,11 @@ public final class MQDestination extends MgpDestination {
 
     private InputStream applyTransformers( InputStream initialStream ) throws RWException {
         InputStream wrapped = initialStream;
+        final Properties allProperties = getProperties();
         for ( int runIndex = 0; runIndex < this.transformationChain.length; runIndex++ ) {
             String givenName = this.transformationChain[runIndex];
             ContentModificationPlugin transformer = getNewPluginInstance( PluginName.of( givenName ) );
-            wrapped = transformer.wrap( wrapped );
+            wrapped = transformer.wrap( wrapped, allProperties );
             getLogger().info( "Transformer for " + U.w( givenName ) + " has been applied successfully." );
         }
         return wrapped;
@@ -167,7 +169,7 @@ public final class MQDestination extends MgpDestination {
         synchronized (CONTENTMODIFIERS) {
             while ( keys.hasMoreElements() ) {
                 String key = (String) keys.nextElement();
-                if ( keyIsConentModificationPluginDefinition( key ) ) {
+                if ( keyIsContentModificationPluginDefinition( key ) ) {
                     PluginName name = extractContentModificationPluginName( key );
                     String virtualDestinationClassName = destinationsProperties.getProperty( key );
                     boolean success = registerTransformer( name, virtualDestinationClassName );
@@ -196,7 +198,7 @@ public final class MQDestination extends MgpDestination {
         return true;
     }
 
-    private static boolean keyIsConentModificationPluginDefinition( String key ) {
+    private static boolean keyIsContentModificationPluginDefinition( String key ) {
         return key.startsWith( ContentModificationPlugin.PREFIX );
     }
 

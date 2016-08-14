@@ -4,22 +4,14 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 
 import de.mgpit.oracle.reports.plugin.commons.Magic;
-import de.mgpit.oracle.reports.plugin.destination.cdm.Cdm;
-import de.mgpit.oracle.reports.plugin.destination.cdm.CdmDecoratedInputStream;
+import de.mgpit.oracle.reports.plugin.destination.content.EnvelopeInput;
+import de.mgpit.oracle.reports.plugin.destination.content.io.EnvelopeWrappingInputStream;
 import oracle.reports.RWException;
 
-public class CdmCdm extends CdmDecorator {
+public class SimpleCdmDecorator extends CdmDecorator {
     
-    public String mimetype() {
-        return "application/xml";
-    }
-
-    public String fileExtension() {
-        return "xml";
-    }
-
-    protected Cdm getCdm() {
-        return new Cdm() {
+    protected EnvelopeInput getCdm() {
+        return new EnvelopeInput() {
             private static final int IN_HEADER = 1;
             private static final int IN_DATA = 2;
             private static final int IN_FOOTER = 3;

@@ -2,10 +2,7 @@ package de.mgpit.oracle.reports.plugin.commons;
 
 
 import java.io.File;
-import java.io.FilePermission;
 import java.io.IOException;
-import java.security.AccessControlException;
-import java.security.AccessController;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -19,9 +16,9 @@ import org.apache.log4j.RollingFileAppender;
 
 import de.mgpit.oracle.reports.plugin.commons.io.IOUtility;
 import de.mgpit.oracle.reports.plugin.destination.MgpDestination;
+import de.mgpit.types.TypedString;
 import oracle.reports.RWException;
 import oracle.reports.utility.Utility;
-import sun.security.action.GetPropertyAction;
 
 /**
  * 
@@ -69,6 +66,15 @@ public final class DestinationsLogging {
      * addressing the same logger will not override the logger with their configuration. This is "first come first serve"
      */
     private static final List configuredDestinationLoggerNames = new LinkedList();
+
+//    private static class VerbosePatternLayout extends PatternLayout {
+//        public VerbosePatternLayout( String pattern ) {
+//            super( pattern );
+//        }
+//        public boolean ignoresThrowable() {
+//            return false;
+//        }
+//    }
 
     private static final Layout DATE_LEVEL_MESSAGE_LAYOUT = new PatternLayout( "%d{ISO8601} [%-5p] :: %m%n" );
 
@@ -133,7 +139,8 @@ public final class DestinationsLogging {
         String loggerName = givenLoggerName.trim();
         String optionalFilename = (givenOptionalFilename == null) ? givenOptionalFilename : givenOptionalFilename.trim();
 
-        /* From observation the report server sets up all destinations sequentially
+        /*
+         * From observation the report server sets up all destinations sequentially
          * running the main thread. Yet ensure only one thread manipulates the {@see #configuredDestinationLoggerNames}
          * at the same time.
          */
@@ -249,7 +256,8 @@ public final class DestinationsLogging {
 
     private static boolean rootLoggerIsSetUp = false;
 
-    /* From observation the report server sets up all destinations sequentially
+    /*
+     * From observation the report server sets up all destinations sequentially
      * running the main thread. Yet ensure only one thread manipulates the {@see #rootLoggerIsSetUp}
      * at the same time.
      */

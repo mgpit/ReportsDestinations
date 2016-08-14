@@ -7,7 +7,7 @@ import org.apache.commons.codec.binary.Base64InputStream;
 
 import de.mgpit.oracle.reports.plugin.commons.Magic;
 import de.mgpit.oracle.reports.plugin.commons.io.IOUtility;
-import de.mgpit.oracle.reports.plugin.destination.cdm.CdmDecoratedInputStream;
+import de.mgpit.oracle.reports.plugin.destination.content.io.EnvelopeWrappingInputStream;
 import junit.framework.TestCase;
 
 public class CdmDecoratedInputStreamTest extends TestCase {
@@ -30,7 +30,7 @@ public class CdmDecoratedInputStreamTest extends TestCase {
 
     public void testPlainPayload() {
         ByteArrayInputStream payload = new ByteArrayInputStream( "Lorem Ipsum Dolor Si amet".getBytes() );
-        CdmDecoratedInputStream cdmPlainPayloadStream = new CdmDecoratedInputStream( payload, TestHelper.getCdm1() );
+        EnvelopeWrappingInputStream cdmPlainPayloadStream = new EnvelopeWrappingInputStream( payload, TestHelper.getCdm1() );
 
         boolean exceptionOccured = false;
         try {
@@ -47,7 +47,7 @@ public class CdmDecoratedInputStreamTest extends TestCase {
     public void testBase64Payload() {
         ByteArrayInputStream payload = new ByteArrayInputStream( "Lorem Ipsum Dolor Si amet".getBytes() );        
         Base64InputStream transformedPayload = new Base64InputStream( payload, Magic.ENCODE_WITH_BASE64 );
-        CdmDecoratedInputStream cdmBase64PayloadStream = new CdmDecoratedInputStream( transformedPayload, TestHelper.getCdm1() );
+        EnvelopeWrappingInputStream cdmBase64PayloadStream = new EnvelopeWrappingInputStream( transformedPayload, TestHelper.getCdm1() );
 
         boolean exceptionOccured = false;
         try {

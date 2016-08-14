@@ -107,8 +107,7 @@ public final class ZipDestination extends MgpDestination {
             this.zipArchive.close();
             super.stop();
         } catch ( Exception any ) {
-            getLogger().error( "Error during finishing distribution. See following message(s)!" );
-            getLogger().error( any );
+            getLogger().error( "Error during finishing distribution!", any );
             throw Utility.newRWException( any );
         }
         getLogger().info( "Finished distribution to " + U.w( getZipArchiveFileName() ) );
@@ -141,8 +140,8 @@ public final class ZipDestination extends MgpDestination {
      */
     protected void sendAdditionalFile( final String cacheFileFilename, final short fileFormat ) throws RWException {
         String entryName = IOUtility.fileNameOnly( IOUtility.fileNameOnly( cacheFileFilename ) );
-        getLogger().info( "Other file " + U.w( cacheFileFilename ) + " of format " + humanReadable( fileFormat ) + " will be put as "
-                + U.w( entryName ) + " to " + U.w( getZipArchiveFileName() ) );
+        getLogger().info( "Other file " + U.w( cacheFileFilename ) + " of format " + humanReadable( fileFormat )
+                + " will be put as " + U.w( entryName ) + " to " + U.w( getZipArchiveFileName() ) );
         addFileToArchive( cacheFileFilename, entryName );
     }
 
@@ -165,23 +164,22 @@ public final class ZipDestination extends MgpDestination {
             Base64InputStream base64Input = new Base64InputStream( in, Magic.ENCODE_WITH_BASE64 );
             this.zipArchive.addFromStream( base64Input, entryName, sourceFile.lastModified() );
         } catch ( FileNotFoundException fileNotFound ) {
-            getLogger().error( fileNotFound );
+            getLogger().error( "Error during distribution! Could not find file to add!" );
             throw Utility.newRWException( fileNotFound );
         } catch ( ArchivingException archivingException ) {
-            getLogger().error( archivingException );
+            getLogger().error( "Error during distribution! Could not archive file!", archivingException );
             throw Utility.newRWException( archivingException );
         }
     }
-    
-    
 
     /**
      * Start a new distribution cycle for a report to this destination. Will
      * distribute one or many files depending on the format.
      * 
      * @param allProperties
-     *            all properties (system and user parameters) passed to the
-     *            report
+     *            all properties (parameters) passed to the report. 
+     *            For Oracle Forms&trade; this will include the parameters set via <code>SET_REPORT_OBJECT_PROPERTY</code>
+     *            plus the parameters passed via a <code>ParamList</code>
      * @param targetName
      *            target name of the distribution. Will be the entry name of the
      *            ZIP file.
