@@ -39,7 +39,7 @@ public final class MQDestination extends MgpDestination {
                 ContentModificationPlugin transformer = (ContentModificationPlugin) newInstance;
                 return transformer;
             } catch ( InstantiationException cannotInstantiate ) {
-                LOG.fatal( "Cannot instantiate " + U.w( clazz.getName() ), cannotInstantiate );
+                LOG.error( "Cannot instantiate " + U.w( clazz.getName() ), cannotInstantiate );
                 throw Utility.newRWException( cannotInstantiate );
             } catch ( Exception anyOther ) {
                 LOG.error( "Error during instantiation of ContentModificationPlugin!", anyOther );
@@ -48,7 +48,7 @@ public final class MQDestination extends MgpDestination {
         } else {
             IllegalArgumentException illegalArgument = new IllegalArgumentException(
                     "No transformer named " + U.w( name ) + " has been registered!" );
-            LOG.error( illegalArgument );
+            LOG.fatal( illegalArgument );
             throw Utility.newRWException( illegalArgument );
         }
     }
@@ -71,7 +71,7 @@ public final class MQDestination extends MgpDestination {
      * distribute one or many files depending on the format.
      * 
      * @param allProperties
-     *            all properties (parameters) passed to the report. 
+     *            all properties (parameters) passed to the report.
      *            For Oracle Forms&trade; this will include the parameters set via <code>SET_REPORT_OBJECT_PROPERTY</code>
      *            plus the parameters passed via a <code>ParamList</code>
      * @param targetName

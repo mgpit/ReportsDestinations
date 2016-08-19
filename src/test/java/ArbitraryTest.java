@@ -1,8 +1,21 @@
 import java.awt.Color;
+import java.io.ByteArrayOutputStream;
 import java.io.FileOutputStream;
 import java.io.PrintWriter;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.Set;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 
 import com.lowagie.text.Chunk;
 import com.lowagie.text.Document;
@@ -64,9 +77,9 @@ public class ArbitraryTest extends TestCase {
             paragraph.add( "Hello World! Hello People! " + "Hello Sky! Hello Sun! Hello Moon! Hello Stars!" );
         }
         document.add( paragraph );
-        document.add(
-                new Paragraph( new Chunk("The right margin of this even page is 36pt (0.5 inch); " + "the left margin 72pt (1 inch)." 
-                , FontFactory.getFont( FontFactory.HELVETICA, 13, Font.BOLD, new Color(0, 204, 204 ) ) ) ) );
+        document.add( new Paragraph(
+                new Chunk( "The right margin of this even page is 36pt (0.5 inch); " + "the left margin 72pt (1 inch).",
+                        FontFactory.getFont( FontFactory.HELVETICA, 13, Font.BOLD, new Color( 0, 204, 204 ) ) ) ) );
         // step 5
         document.close();
     }
@@ -112,5 +125,6 @@ public class ArbitraryTest extends TestCase {
         writer.flush();
         reader.close();
     }
+
 
 }

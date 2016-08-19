@@ -1,15 +1,72 @@
 package de.mgpit.oracle.reports.plugin.destination.content.decorators;
 
+
 import java.io.ByteArrayInputStream;
-import java.io.InputStream;
+import java.io.ByteArrayOutputStream;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+
+import org.apache.log4j.Logger;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 import de.mgpit.oracle.reports.plugin.commons.Magic;
 import de.mgpit.oracle.reports.plugin.destination.content.EnvelopeInput;
-import de.mgpit.oracle.reports.plugin.destination.content.io.EnvelopeWrappingInputStream;
-import oracle.reports.RWException;
 
 public class SimpleCdmDecorator extends CdmDecorator {
-    
+    private static Logger LOG = Logger.getLogger( SimpleCdmDecorator.class );
+
+    Document cdm;
+
+    public SimpleCdmDecorator() {
+        DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
+        DocumentBuilder cdmBuilder;
+        try {
+            cdmBuilder = builderFactory.newDocumentBuilder();
+
+            cdm = cdmBuilder.newDocument();
+
+            Element cdmdoc = cdm.createElement( "cdmdoc" );
+            cdm.appendChild( cdmdoc );
+
+            Element data = cdm.createElement( "data" );
+            Element info = cdm.createElement( "info" );
+
+            cdmdoc.appendChild( data );
+            cdmdoc.appendChild( info );
+
+            Element created = cdm.createElement( "created" );
+            SimpleDateFormat dateFormat = new SimpleDateFormat( "YYYY.MM.ddTHH:mm:ss" );
+            String now = dateFormat.format( new Date() );
+            created.setNodeValue( now );
+            info.appendChild( created );
+
+            TransformerFactory transformerFactory = TransformerFactory.newInstance();
+            Transformer transformer = transformerFactory.newTransformer();
+            DOMSource source = new DOMSource( cdm );
+            StreamResult console = new StreamResult( new ByteArrayOutputStream() );
+
+            transformer.transform( source, console );
+
+        } catch ( ParserConfigurationException configException ) {
+            LOG.error( "Cannot create SimpleCdm!", configException );
+        } catch ( TransformerConfigurationException configException ) {
+            LOG.error( "Cannot create SimpleCdm!", configException );
+        } catch ( TransformerException transformerException ) {
+            LOG.error( "Cannot create SimpleCdm!", transformerException );
+        }
+    }
+
     protected EnvelopeInput getCdm() {
         return new EnvelopeInput() {
             private static final int IN_HEADER = 1;
