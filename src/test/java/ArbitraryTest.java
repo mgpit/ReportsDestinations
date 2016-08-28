@@ -32,6 +32,7 @@ import com.lowagie.text.pdf.PdfReader;
 import com.lowagie.text.pdf.PdfWriter;
 import com.lowagie.text.pdf.parser.PdfTextExtractor;
 
+import de.mgpit.oracle.reports.plugin.commons.U;
 import junit.framework.TestCase;
 
 public class ArbitraryTest extends TestCase {
@@ -86,50 +87,55 @@ public class ArbitraryTest extends TestCase {
     }
 
     public void testReadExisting() throws Exception {
-        final String filename = "";
-        PrintWriter writer = new PrintWriter( System.out );
-        PdfReader reader = new PdfReader( filename );
-        writer.println( filename );
-        writer.print( "Number of pages: " );
-        writer.println( reader.getNumberOfPages() );
-        PdfDictionary page1 = reader.getPageN( 1 );
-        Set page1Keys = page1.getKeys();
-        Iterator page1Inspect = page1Keys.iterator();
-        while ( page1Inspect.hasNext() ) {
-            PdfName key = (PdfName) page1Inspect.next();
-            PdfObject value = (PdfObject) page1.get( key );
-            writer.print( key.toString() );
-            writer.print( "->" );
-            writer.print( value.getClass() );
-            writer.print( "::" );
-            writer.println( value.toString() );
-        }
-        Rectangle mediabox = reader.getPageSize( 1 );
-        writer.print( "Size of page 1: [" );
-        writer.print( mediabox.getLeft() );
-        writer.print( ',' );
-        writer.print( mediabox.getBottom() );
-        writer.print( ',' );
-        writer.print( mediabox.getRight() );
-        writer.print( ',' );
-        writer.print( mediabox.getTop() );
-        writer.println( "]" );
-        writer.print( "Rotation of page 1: " );
-        writer.println( reader.getPageRotation( 1 ) );
-        writer.print( "Page size with rotation of page 1: " );
-        writer.println( reader.getPageSizeWithRotation( 1 ) );
-        writer.print( "Is rebuilt? " );
-        writer.println( reader.isRebuilt() );
-        writer.print( "Is encrypted? " );
-        writer.println( reader.isEncrypted() );
-        writer.println();
+        final String filename = "O:\\tmp\\reports\\output\\contracts_20160828.pdf";
+        final PdfReader reader = new PdfReader( filename );
+        final PrintWriter writer = new PrintWriter( System.out );
+        // writer.println( filename );
+        // writer.print( "Number of pages: " );
+        // writer.println( reader.getNumberOfPages() );
+        // PdfDictionary page1 = reader.getPageN( 1 );
+        // Set page1Keys = page1.getKeys();
+        // Iterator page1Inspect = page1Keys.iterator();
+        // while ( page1Inspect.hasNext() ) {
+        // PdfName key = (PdfName) page1Inspect.next();
+        // PdfObject value = (PdfObject) page1.get( key );
+        // writer.print( key.toString() );
+        // writer.print( "->" );
+        // writer.print( value.getClass() );
+        // writer.print( "::" );
+        // writer.println( value.toString() );
+        // }
+        // Rectangle mediabox = reader.getPageSize( 1 );
+        // writer.print( "Size of page 1: [" );
+        // writer.print( mediabox.getLeft() );
+        // writer.print( ',' );
+        // writer.print( mediabox.getBottom() );
+        // writer.print( ',' );
+        // writer.print( mediabox.getRight() );
+        // writer.print( ',' );
+        // writer.print( mediabox.getTop() );
+        // writer.println( "]" );
+        // writer.print( "Rotation of page 1: " );
+        // writer.println( reader.getPageRotation( 1 ) );
+        // writer.print( "Page size with rotation of page 1: " );
+        // writer.println( reader.getPageSizeWithRotation( 1 ) );
+        // writer.print( "Is rebuilt? " );
+        // writer.println( reader.isRebuilt() );
+        // writer.print( "Is encrypted? " );
+        // writer.println( reader.isEncrypted() );
+        // writer.println();
 
         PdfTextExtractor extractor = new PdfTextExtractor( reader );
-        String textInPage = extractor.getTextFromPage( 1 );
         writer.println();
-        writer.println( "Content is\n\n" );
-        writer.println( textInPage );
-
+        
+        int numberOfPages = reader.getNumberOfPages();
+        writer.println("The document has " + numberOfPages + " pages!" );
+        for ( int pageNumber = 1; pageNumber <= numberOfPages; pageNumber++ ) { 
+            String textInPage = extractor.getTextFromPage( pageNumber );
+            writer.println( U.rpad( "=", 40, '=' ) + "\n" + "Content for page " + pageNumber + " is\n" + U.rpad( "=", 40, '=' ) + "\n" );
+            writer.println( textInPage );
+            writer.println();
+        }
         writer.flush();
         reader.close();
     }

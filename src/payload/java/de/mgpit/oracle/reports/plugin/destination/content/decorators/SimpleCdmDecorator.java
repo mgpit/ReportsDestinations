@@ -29,42 +29,42 @@ public class SimpleCdmDecorator extends CdmDecorator {
     Document cdm;
 
     public SimpleCdmDecorator() {
-        DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
-        DocumentBuilder cdmBuilder;
-        try {
-            cdmBuilder = builderFactory.newDocumentBuilder();
-
-            cdm = cdmBuilder.newDocument();
-
-            Element cdmdoc = cdm.createElement( "cdmdoc" );
-            cdm.appendChild( cdmdoc );
-
-            Element data = cdm.createElement( "data" );
-            Element info = cdm.createElement( "info" );
-
-            cdmdoc.appendChild( data );
-            cdmdoc.appendChild( info );
-
-            Element created = cdm.createElement( "created" );
-            SimpleDateFormat dateFormat = new SimpleDateFormat( "YYYY.MM.ddTHH:mm:ss" );
-            String now = dateFormat.format( new Date() );
-            created.setNodeValue( now );
-            info.appendChild( created );
-
-            TransformerFactory transformerFactory = TransformerFactory.newInstance();
-            Transformer transformer = transformerFactory.newTransformer();
-            DOMSource source = new DOMSource( cdm );
-            StreamResult console = new StreamResult( new ByteArrayOutputStream() );
-
-            transformer.transform( source, console );
-
-        } catch ( ParserConfigurationException configException ) {
-            LOG.error( "Cannot create SimpleCdm!", configException );
-        } catch ( TransformerConfigurationException configException ) {
-            LOG.error( "Cannot create SimpleCdm!", configException );
-        } catch ( TransformerException transformerException ) {
-            LOG.error( "Cannot create SimpleCdm!", transformerException );
-        }
+//        DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
+//        DocumentBuilder cdmBuilder;
+//        try {
+//            cdmBuilder = builderFactory.newDocumentBuilder();
+//
+//            cdm = cdmBuilder.newDocument();
+//
+//            Element cdmdoc = cdm.createElement( "cdmdoc" );
+//            cdm.appendChild( cdmdoc );
+//
+//            Element data = cdm.createElement( "data" );
+//            Element info = cdm.createElement( "info" );
+//
+//            cdmdoc.appendChild( data );
+//            cdmdoc.appendChild( info );
+//
+//            Element created = cdm.createElement( "created" );
+//            SimpleDateFormat dateFormat = new SimpleDateFormat( "YYYY.MM.ddTHH:mm:ss" );
+//            String now = dateFormat.format( new Date() );
+//            created.setNodeValue( now );
+//            info.appendChild( created );
+//
+//            TransformerFactory transformerFactory = TransformerFactory.newInstance();
+//            Transformer transformer = transformerFactory.newTransformer();
+//            DOMSource source = new DOMSource( cdm );
+//            StreamResult console = new StreamResult( new ByteArrayOutputStream() );
+//
+//            transformer.transform( source, console );
+//
+//        } catch ( ParserConfigurationException configException ) {
+//            LOG.error( "Cannot create SimpleCdm!", configException );
+//        } catch ( TransformerConfigurationException configException ) {
+//            LOG.error( "Cannot create SimpleCdm!", configException );
+//        } catch ( TransformerException transformerException ) {
+//            LOG.error( "Cannot create SimpleCdm!", transformerException );
+//        }
     }
 
     protected EnvelopeInput getCdm() {

@@ -157,12 +157,10 @@ public final class ZipDestination extends MgpDestination {
      */
     protected void addFileToArchive( final String sourceFileFilename, final String givenEntryName ) throws RWException {
         String entryName = IOUtility.fileNameOnly( U.coalesce( givenEntryName, sourceFileFilename ) );
-        entryName += ".base64";
         try {
             File sourceFile = new File( sourceFileFilename );
             InputStream in = new FileInputStream( sourceFile );
-            Base64InputStream base64Input = new Base64InputStream( in, Magic.ENCODE_WITH_BASE64 );
-            this.zipArchive.addFromStream( base64Input, entryName, sourceFile.lastModified() );
+            this.zipArchive.addFromStream( in, entryName, sourceFile.lastModified() );
         } catch ( FileNotFoundException fileNotFound ) {
             getLogger().error( "Error during distribution! Could not find file to add!" );
             throw Utility.newRWException( fileNotFound );

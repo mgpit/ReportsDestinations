@@ -162,7 +162,7 @@ public abstract class MgpDestination extends Destination {
                 URI uri = new URI( inspectedValue );
                 return uri.toString();
             } catch ( ParseException parsex ) {
-                return "<notparsable>" + inspectedValue;
+                return "<notparsable>. Got: " + inspectedValue;
             }
         }
         return inspectedValue;
