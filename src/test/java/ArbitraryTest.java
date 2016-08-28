@@ -30,6 +30,7 @@ import com.lowagie.text.pdf.PdfName;
 import com.lowagie.text.pdf.PdfObject;
 import com.lowagie.text.pdf.PdfReader;
 import com.lowagie.text.pdf.PdfWriter;
+import com.lowagie.text.pdf.parser.PdfTextExtractor;
 
 import junit.framework.TestCase;
 
@@ -85,7 +86,7 @@ public class ArbitraryTest extends TestCase {
     }
 
     public void testReadExisting() throws Exception {
-        final String filename = "O:\\tmp\\reports\\output\\contracts_20160809.pdf";
+        final String filename = "";
         PrintWriter writer = new PrintWriter( System.out );
         PdfReader reader = new PdfReader( filename );
         writer.println( filename );
@@ -105,13 +106,13 @@ public class ArbitraryTest extends TestCase {
         }
         Rectangle mediabox = reader.getPageSize( 1 );
         writer.print( "Size of page 1: [" );
-        writer.print( mediabox.left() );
+        writer.print( mediabox.getLeft() );
         writer.print( ',' );
-        writer.print( mediabox.bottom() );
+        writer.print( mediabox.getBottom() );
         writer.print( ',' );
-        writer.print( mediabox.right() );
+        writer.print( mediabox.getRight() );
         writer.print( ',' );
-        writer.print( mediabox.top() );
+        writer.print( mediabox.getTop() );
         writer.println( "]" );
         writer.print( "Rotation of page 1: " );
         writer.println( reader.getPageRotation( 1 ) );
@@ -122,9 +123,15 @@ public class ArbitraryTest extends TestCase {
         writer.print( "Is encrypted? " );
         writer.println( reader.isEncrypted() );
         writer.println();
+
+        PdfTextExtractor extractor = new PdfTextExtractor( reader );
+        String textInPage = extractor.getTextFromPage( 1 );
+        writer.println();
+        writer.println( "Content is\n\n" );
+        writer.println( textInPage );
+
         writer.flush();
         reader.close();
     }
-
 
 }

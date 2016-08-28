@@ -1,25 +1,24 @@
 package de.mgpit.oracle.reports.plugin.destination.cdm.schema;
 
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.PrintWriter;
+
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.TransformerFactoryConfigurationError;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
 
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
+import org.xml.sax.Attributes;
+import org.xml.sax.SAXException;
+import org.xml.sax.helpers.DefaultHandler;
+
+import com.sun.java.util.collections.Arrays;
 
 import junit.framework.TestCase;
+import oracle.dss.util.xml.XMLObjectReader;
+import oracle.xml.comp.CXMLStream;
+import oracle.xml.io.XMLObjectInput;
 
 public class MarshallTest extends TestCase {
 
@@ -47,66 +46,56 @@ public class MarshallTest extends TestCase {
 
         try {
             currentContext = JAXBContext.newInstance( "de.mgpit.oracle.reports.plugin.destination.cdm.schema" );
+            cdmdoc2xml = currentContext.createMarshaller();
+            cdmdoc2xml.setProperty( Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.FALSE );
         } catch ( JAXBException e ) {
             noExceptionOccured = false;
             e.printStackTrace();
         }
         assertTrue( noExceptionOccured );
         assertNotNull( currentContext );
-
-        try {
-            cdmdoc2xml = currentContext.createMarshaller();
-            cdmdoc2xml.setProperty( Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE );
-            //cdmdoc2xml.setProperty( Marshaller.JAXB_FRAGMENT, Boolean.TRUE );
-
-        } catch ( JAXBException some ) {
-            some.printStackTrace();
-            noExceptionOccured = false;
-        }
-        assertTrue( noExceptionOccured );
         assertNotNull( cdmdoc2xml );
-        assertNotNull( cdmdoc );
-        assertNotNull( content );
 
-        // StringWriter xmlStream = new StringWriter( Units.ONE_KILOBYTE / 4 );
         try {
-
-            cdmdoc2xml.marshal( content, System.out );
-
-            DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory.newInstance();
-            DocumentBuilder docBuilder = docBuilderFactory.newDocumentBuilder();
-
-            // root elements
-            Document doc = docBuilder.newDocument();
-            Element rootElement = doc.createElement( "loremipsum" );
-            doc.appendChild( rootElement );
-            cdmdoc2xml.marshal( content, rootElement );
-            cdmdoc2xml.marshal( content, rootElement );
-            cdmdoc2xml.marshal( content, rootElement );
-            cdmdoc2xml.marshal( content, rootElement );
-
-            // output DOM XML to console
-            Transformer transformer = TransformerFactory.newInstance().newTransformer();
-            transformer.setOutputProperty( OutputKeys.INDENT, "yes" );
-            DOMSource source = new DOMSource( doc );
-            StreamResult console = new StreamResult( System.out );
-            transformer.transform( source, console );
-
+            cdmdoc2xml.marshal( cdmdoc, new PrintWriter( System.out ) );
         } catch ( JAXBException e ) {
             noExceptionOccured = false;
-        } catch ( ParserConfigurationException e ) {
-            noExceptionOccured = false;
-        } catch ( TransformerConfigurationException e ) {
-            noExceptionOccured = false;
-        } catch ( TransformerFactoryConfigurationError e ) {
-            noExceptionOccured = false;
-        } catch ( TransformerException e ) {
-            noExceptionOccured = false;
+            e.printStackTrace();
         }
+
+        try {
+            cdmdoc2xml.marshal( cdmdoc, new MyHandler() );
+        } catch ( JAXBException e ) {
+            noExceptionOccured = false;
+            e.printStackTrace();
+        }
+
         assertTrue( noExceptionOccured );
-        // String expected = "<?xml version = '1.0' encoding = 'UTF-8'?><cdmdoc><content><length>1000</length><data>Lorem Ipsum Dolor si Amet</data></content></cdmdoc>";
-        // String actual = xmlStream.toString();
-        // assertEquals( expected, actual );
+
+    }
+
+    public void testFizzBuzz() {
+        CXMLStream xml = new CXMLStream();
+        XMLObjectInput xmlIn = new XMLObjectInput( null );
+    }
+
+    private static class MyHandler extends DefaultHandler {
+        protected static String name( String namespaceURI, String localName, String qName ) {
+            return "".equals( namespaceURI ) ? qName : "{" + namespaceURI + "}" + localName;
+        }
+
+        public void startElement( String namespaceURI, String localName, String qName, Attributes atts ) throws SAXException {
+            System.out.print( "<" + name( namespaceURI, localName, qName ) + ">" );
+        }
+
+        public void endElement( String namespaceURI, String localName, String qName ) throws SAXException {
+            System.out.print( "</" + name( namespaceURI, localName, qName ) + ">" );
+        }
+
+        public void characters( char[] ch, int start, int length ) throws SAXException {
+            final String content = String.copyValueOf( ch, start, length );
+            System.out.print( content );
+        }
     }
 
 }
