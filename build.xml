@@ -245,7 +245,7 @@
         <include name="**/*.java" />
     </fileset>
     <fileset dir="${dir.src.payload}" id="sourcefiles#payload">
-        <exclude name="**/*.java" />
+        <include name="**/*.java" />
     </fileset>
     <fileset dir="${dir.test}" id="testfiles">
         <include name="**/*.java" />
