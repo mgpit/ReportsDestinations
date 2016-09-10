@@ -1,31 +1,41 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="unqualified">
 
-	<xs:element name="cdmdoc" type="cdmdoc" />
-	<xs:element name="content" type="content" />
+    <xs:element name="cdmdoc" type="cdmdoc" />
 
-	<xs:complexType name="cdmdoc">
-		<xs:sequence>
-			<xs:element ref="content" minOccurs="1" maxOccurs="1"/>
-		</xs:sequence>
-		<xs:attribute name="unifier"/>
-	</xs:complexType>
-
-
-	<xs:complexType name="content">
-		<xs:sequence>
-			<xs:element name="length" type="xs:int"  minOccurs="1"  maxOccurs="1"/>
-			<xs:element name="data" type="xs:string"  minOccurs="1" maxOccurs="1"/>
-            <xs:element name="propertys" type="property" minOccurs="0" maxOccurs="unbounded"/>
-		</xs:sequence>
-	</xs:complexType>
-    
-    <xs:element name="property" type="property"/>
-    <xs:complexType name="property">
+    <xs:complexType name="cdmdoc">
         <xs:sequence>
-            <xs:element name="key" type="xs:string"/>
-            <xs:element name="value" type="xs:string"/>
+            <xs:element name="content" type="content" minOccurs="1" maxOccurs="1" />
+        </xs:sequence>
+        <xs:attribute name="unifier" />
+    </xs:complexType>
+
+
+    <xs:complexType name="content">
+        <xs:sequence>
+            <xs:element name="length" type="xs:int" minOccurs="1" maxOccurs="1" />
+            <xs:element name="properties" type="properties" minOccurs="0" maxOccurs="1" />
+            <xs:element name="data" type="data" minOccurs="1" maxOccurs="1" />
         </xs:sequence>
     </xs:complexType>
     
+    <xs:simpleType name="data">
+        <xs:restriction base="xs:string"/>
+    </xs:simpleType>
+
+    <xs:complexType name="properties">
+        <xs:sequence>
+            <xs:element name="property" type="property" minOccurs="0" maxOccurs="unbounded" />
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="property">
+        <xs:simpleContent>
+            <xs:extension base="xs:string">
+                <xs:attribute name="key" type="xs:string" />
+            </xs:extension>
+        </xs:simpleContent>
+
+    </xs:complexType>
+
 </xs:schema>

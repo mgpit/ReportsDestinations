@@ -1,8 +1,6 @@
 package de.mgpit.oracle.reports.plugin.destination.cdm.schema;
 
 
-import java.io.IOException;
-import java.io.ObjectInput;
 import java.io.PrintWriter;
 
 import javax.xml.bind.JAXBContext;
@@ -13,12 +11,7 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
-import com.sun.java.util.collections.Arrays;
-
 import junit.framework.TestCase;
-import oracle.dss.util.xml.XMLObjectReader;
-import oracle.xml.comp.CXMLStream;
-import oracle.xml.io.XMLObjectInput;
 
 public class MarshallTest extends TestCase {
 
@@ -29,12 +22,23 @@ public class MarshallTest extends TestCase {
         ObjectFactory of = new ObjectFactory();
 
         Cdmdoc cdmdoc = null;
-        Content content = null;
+        ContentType content = null;
         try {
             cdmdoc = of.createCdmdoc();
-            content = of.createContent();
+            content = of.createContentType();
             content.setLength( 1000 );
-            content.setData( "Lorem Ipsum Dolor si Amet" );
+            
+            PropertiesType properties = of.createPropertiesType();
+            for ( int i = 1; i < 11; i++ ) {
+                PropertyType property = of.createPropertyType();
+                String indexAsText = String.valueOf( i );
+                property.setKey( indexAsText );
+                property.setValue( "The value is " + indexAsText );
+                properties.getProperty().add( property );
+            }
+            content.setProperties( properties );
+            
+            content.setData( "" );
             cdmdoc.setContent( content );
         } catch ( Exception any ) {
             noExceptionOccured = false;
@@ -47,7 +51,8 @@ public class MarshallTest extends TestCase {
         try {
             currentContext = JAXBContext.newInstance( "de.mgpit.oracle.reports.plugin.destination.cdm.schema" );
             cdmdoc2xml = currentContext.createMarshaller();
-            cdmdoc2xml.setProperty( Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.FALSE );
+            //cdmdoc2xml.setProperty(Marshaller.JAXB_SCHEMA_LOCATION, "");
+            cdmdoc2xml.setProperty( Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE );
         } catch ( JAXBException e ) {
             noExceptionOccured = false;
             e.printStackTrace();
@@ -63,21 +68,21 @@ public class MarshallTest extends TestCase {
             e.printStackTrace();
         }
 
-        try {
-            cdmdoc2xml.marshal( cdmdoc, new MyHandler() );
-        } catch ( JAXBException e ) {
-            noExceptionOccured = false;
-            e.printStackTrace();
-        }
-
-        assertTrue( noExceptionOccured );
+//        try {
+//            cdmdoc2xml.marshal( cdmdoc, new MyHandler() );
+//        } catch ( JAXBException e ) {
+//            noExceptionOccured = false;
+//            e.printStackTrace();
+//        }
+//
+//        assertTrue( noExceptionOccured );
 
     }
 
-    public void testFizzBuzz() {
-        CXMLStream xml = new CXMLStream();
-        XMLObjectInput xmlIn = new XMLObjectInput( null );
-    }
+//    public void testFizzBuzz() {
+//        CXMLStream xml = new CXMLStream();
+//        XMLObjectInput xmlIn = new XMLObjectInput( null );
+//    }
 
     private static class MyHandler extends DefaultHandler {
         protected static String name( String namespaceURI, String localName, String qName ) {
