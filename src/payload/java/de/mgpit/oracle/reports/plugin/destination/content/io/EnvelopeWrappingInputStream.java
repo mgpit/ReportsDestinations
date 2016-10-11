@@ -20,8 +20,8 @@ public class EnvelopeWrappingInputStream extends InputStream {
     private EnvelopeInput envelope;
 
     public EnvelopeWrappingInputStream( InputStream input, EnvelopeInput envelope ) {
-        U.assertNotNull( input );
-        U.assertNotNull( envelope );
+        U.assertNotNull( input, "Cannot wrap a null InputStream!" );
+        U.assertNotNull( envelope, "Cannot wrap with a null Envelope!" );
         this.input = input;
         this.envelope = envelope;
     }

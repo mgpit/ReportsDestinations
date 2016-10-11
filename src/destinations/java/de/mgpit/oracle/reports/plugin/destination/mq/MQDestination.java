@@ -17,8 +17,8 @@ import de.mgpit.oracle.reports.plugin.commons.MQ;
 import de.mgpit.oracle.reports.plugin.commons.U;
 import de.mgpit.oracle.reports.plugin.commons.io.IOUtility;
 import de.mgpit.oracle.reports.plugin.destination.MgpDestination;
-import de.mgpit.oracle.reports.plugin.destination.content.ContentModificationPlugin;
-import de.mgpit.oracle.reports.plugin.destination.content.ContentModificationPlugin.PluginName;
+import de.mgpit.oracle.reports.plugin.destination.content.ContentTransformationPlugin;
+import de.mgpit.oracle.reports.plugin.destination.content.ContentTransformationPlugin.PluginName;
 import oracle.reports.RWException;
 import oracle.reports.utility.Utility;
 
@@ -30,28 +30,7 @@ public final class MQDestination extends MgpDestination {
     private String[] transformationChain = null;
 
     private static Map CONTENTMODIFIERS = new HashMap( 23 ); // instantiated for synchronization ...
-
-    protected static ContentModificationPlugin getNewPluginInstance( PluginName name ) throws RWException {
-        Class clazz = (Class) CONTENTMODIFIERS.get( name );
-        if ( clazz != null ) {
-            try {
-                Object newInstance = clazz.newInstance();
-                ContentModificationPlugin transformer = (ContentModificationPlugin) newInstance;
-                return transformer;
-            } catch ( InstantiationException cannotInstantiate ) {
-                LOG.error( "Cannot instantiate " + U.w( clazz.getName() ), cannotInstantiate );
-                throw Utility.newRWException( cannotInstantiate );
-            } catch ( Exception anyOther ) {
-                LOG.error( "Error during instantiation of ContentModificationPlugin!", anyOther );
-                throw Utility.newRWException( anyOther );
-            }
-        } else {
-            IllegalArgumentException illegalArgument = new IllegalArgumentException(
-                    "No transformer named " + U.w( name ) + " has been registered!" );
-            LOG.fatal( illegalArgument );
-            throw Utility.newRWException( illegalArgument );
-        }
-    }
+    private static Map ALIASES = new HashMap( 23 );
 
     /**
      * Stop the distribution cycle.
@@ -87,7 +66,7 @@ public final class MQDestination extends MgpDestination {
             short mainFormat ) throws RWException {
 
         boolean continueToSend = super.start( allProperties, targetName, totalNumberOfFiles, totalFileSize, mainFormat );
-        extractTransformationChain( allProperties );
+        getDeclaredTransformationChain( allProperties );
 
         if ( continueToSend ) {
             continueToSend = true;
@@ -97,7 +76,7 @@ public final class MQDestination extends MgpDestination {
         return continueToSend;
     }
 
-    private void extractTransformationChain( Properties allProperties ) {
+    private void getDeclaredTransformationChain( Properties allProperties ) {
         String transformationDeclaration = allProperties.getProperty( "transform" );
         if ( transformationDeclaration != null ) {
             this.transformationChain = transformationDeclaration.split( "::" );
@@ -122,13 +101,12 @@ public final class MQDestination extends MgpDestination {
     }
 
     protected void sendAdditionalFile( String cacheFileFilename, short fileFormat ) throws RWException {
-        // TODO Auto-generated method stub
         getLogger().info( "Sending Other file to " + getClass().getName() );
     }
 
     protected InputStream getContent( File file ) throws RWException {
         InputStream sourceInput = super.getContent( file );
-        if ( this.transformationChain != null ) {
+        if ( this.transformationChain != null && transformationChain.length > 0 ) {
             return applyTransformers( sourceInput );
         } else {
             return sourceInput;
@@ -137,14 +115,37 @@ public final class MQDestination extends MgpDestination {
 
     private InputStream applyTransformers( InputStream initialStream ) throws RWException {
         InputStream wrapped = initialStream;
+        final int numberOfTransformers = this.transformationChain.length;
         final Properties allProperties = getProperties();
-        for ( int runIndex = 0; runIndex < this.transformationChain.length; runIndex++ ) {
+        for ( int runIndex = 0; runIndex < numberOfTransformers; runIndex++ ) {
             String givenName = this.transformationChain[runIndex];
-            ContentModificationPlugin transformer = getNewPluginInstance( PluginName.of( givenName ) );
+            ContentTransformationPlugin transformer = getNewPluginInstance( PluginName.of( givenName ) );
             wrapped = transformer.wrap( wrapped, allProperties );
             getLogger().info( "Transformer for " + U.w( givenName ) + " has been applied successfully." );
         }
         return wrapped;
+    }
+
+    protected static ContentTransformationPlugin getNewPluginInstance( PluginName name ) throws RWException {
+        Class clazz = (Class) CONTENTMODIFIERS.get( name );
+        if ( clazz != null ) {
+            try {
+                Object newInstance = clazz.newInstance();
+                ContentTransformationPlugin transformer = (ContentTransformationPlugin) newInstance;
+                return transformer;
+            } catch ( InstantiationException cannotInstantiate ) {
+                LOG.error( "Cannot instantiate " + U.w( clazz.getName() ), cannotInstantiate );
+                throw Utility.newRWException( cannotInstantiate );
+            } catch ( Exception anyOther ) {
+                LOG.error( "Error during instantiation of ContentModificationPlugin!", anyOther );
+                throw Utility.newRWException( anyOther );
+            }
+        } else {
+            IllegalArgumentException illegalArgument = new IllegalArgumentException(
+                    "No transformer named " + U.w( name ) + " has been registered!" );
+            LOG.fatal( illegalArgument );
+            throw Utility.newRWException( illegalArgument );
+        }
     }
 
     /**
@@ -158,6 +159,7 @@ public final class MQDestination extends MgpDestination {
         initLogging( destinationsProperties, MQDestination.class );
         dumpProperties( destinationsProperties, LOG );
         registerContentModifiers( destinationsProperties );
+        registerAliases( destinationsProperties );
         LOG.info( "Destination " + U.w( MQDestination.class.getName() ) + " started." );
     }
 
@@ -199,7 +201,7 @@ public final class MQDestination extends MgpDestination {
     }
 
     private static boolean keyIsContentModificationPluginDefinition( String key ) {
-        return key.startsWith( ContentModificationPlugin.PREFIX );
+        return key.startsWith( ContentTransformationPlugin.PROPERTY_NAME_PREFIX );
     }
 
     private static PluginName extractContentModificationPluginName( String key ) {
@@ -211,6 +213,24 @@ public final class MQDestination extends MgpDestination {
         }
         int indexOfContentModificationPluginName = --numberOfElements;
         return PluginName.of( pathElements[indexOfContentModificationPluginName] );
+    }
+
+    private static void registerAliases( Properties destinationsProperties ) throws RWException {
+        Enumeration keys = destinationsProperties.keys();
+        synchronized (ALIASES) {
+            while ( keys.hasMoreElements() ) {
+                String key = (String) keys.nextElement();
+                if ( keyIsAliasDefintion( key ) ) {
+                    String value = destinationsProperties.getProperty( key );
+                    ALIASES.put( key, value );
+                    LOG.info( "Registered alias " + U.w( key ) + " for " + U.w( value ) );
+                }
+            }
+        }
+    }
+
+    private static boolean keyIsAliasDefintion( String key ) {
+        return key.startsWith( "alias." );
     }
 
     public static void shutdown() {

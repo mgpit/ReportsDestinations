@@ -24,9 +24,9 @@ import oracle.reports.RWException;
  *         </ul>
  *         i.e. tranformations or decorations of the report's resulting file.
  */
-public interface ContentModificationPlugin {
+public interface ContentTransformationPlugin {
 
-    public static String PREFIX = "transformer.";
+    public static String PROPERTY_NAME_PREFIX = "transformer.";
 
     /**
      * Wraps the input stream.

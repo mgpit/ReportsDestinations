@@ -6,10 +6,10 @@ import java.util.Properties;
 
 import org.apache.commons.codec.binary.Base64InputStream;
 
-import de.mgpit.oracle.reports.plugin.destination.content.ContentModificationPlugin;
+import de.mgpit.oracle.reports.plugin.destination.content.ContentTransformationPlugin;
 import oracle.reports.RWException;
 
-public class Base64Transformer implements ContentModificationPlugin {
+public class Base64Transformer implements ContentTransformationPlugin {
     private static final boolean AS_ENCODING_STREAM = true;
 
     public Base64Transformer() {

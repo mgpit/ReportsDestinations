@@ -181,7 +181,7 @@ public abstract class MgpDestination extends Destination {
      *            file size of the file to be distributed
      * 
      * 
-     *            TODO: Should I really make this final?
+     *            TODO: re-think if this should really be final?
      */
     protected final void sendFile( boolean isMainFile, String cacheFileFilename, short fileFormat, long fileSize )
             throws RWException {
