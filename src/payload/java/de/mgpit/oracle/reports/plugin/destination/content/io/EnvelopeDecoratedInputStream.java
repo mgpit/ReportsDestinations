@@ -6,20 +6,20 @@ import java.io.InputStream;
 
 import de.mgpit.oracle.reports.plugin.commons.Magic;
 import de.mgpit.oracle.reports.plugin.commons.U;
-import de.mgpit.oracle.reports.plugin.destination.content.EnvelopeInput;
+import de.mgpit.oracle.reports.plugin.destination.content.Envelope;
 
-public class EnvelopeWrappingInputStream extends InputStream {
+public class EnvelopeDecoratedInputStream extends InputStream {
 
     /**
      * Input to be wrapped.
      */
-    private InputStream input;
+    private final InputStream input;
     /**
      * Envelope for wrapping.
      */
-    private EnvelopeInput envelope;
+    private final Envelope envelope;
 
-    public EnvelopeWrappingInputStream( InputStream input, EnvelopeInput envelope ) {
+    public EnvelopeDecoratedInputStream( InputStream input, Envelope envelope ) {
         U.assertNotNull( input, "Cannot wrap a null InputStream!" );
         U.assertNotNull( envelope, "Cannot wrap with a null Envelope!" );
         this.input = input;
@@ -27,11 +27,11 @@ public class EnvelopeWrappingInputStream extends InputStream {
     }
 
     public int read() throws IOException {
-        int aByte;
+        final int aByte;
         if ( envelope.dataWanted() ) {
             aByte = input.read();
             if ( aByte == Magic.END_OF_STREAM ) {
-                envelope.dataFinished();
+                envelope.setDataFinished();
                 return this.read();
             }
         } else {
