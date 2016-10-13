@@ -1,4 +1,4 @@
-package de.mgpit.oracle.reports.plugin.destination.content;
+package de.mgpit.oracle.reports.plugin.destination.content.decorators;
 
 
 import java.io.InputStream;
@@ -24,20 +24,10 @@ import oracle.reports.RWException;
  *         </ul>
  *         i.e. tranformations or decorations of the report's resulting file.
  */
-public interface ContentTransformationPlugin {
+public interface Transformation {
 
     public static String PROPERTY_NAME_PREFIX = "transformer.";
 
-    /**
-     * Wraps the input stream.
-     * 
-     * @param in
-     *            InputStream to be wrapped.
-     * @param allProperties
-     *            Parameters for the plugin.
-     * @return InputStream wrapping the input stream given.
-     */
-    public InputStream wrap( final InputStream in, final Properties parameters ) throws RWException;
 
     public String mimetype();
 

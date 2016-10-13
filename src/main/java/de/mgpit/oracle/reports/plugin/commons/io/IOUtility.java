@@ -4,6 +4,9 @@ package de.mgpit.oracle.reports.plugin.commons.io;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -51,7 +54,7 @@ public class IOUtility {
 
     public static String asPlatformFilename( final String filename ) {
         try {
-            File f = new File( filename );
+            File f = asFile( filename );
             return f.getPath();
         } catch ( NullPointerException nex ) {
             return null;
@@ -133,6 +136,37 @@ public class IOUtility {
         final ByteArrayOutputStream temporary = new ByteArrayOutputStream();
         copyFromTo( new BufferedInputStream( in ), temporary );
         return temporary.toString();
+    }
+    
+    public static File asFile( String fileName ) {
+        return new File( fileName );
+    }
+    
+    public static File asFile( String directoryName, String fileName ) {
+        return new File( new File( directoryName ), fileName  );
+    }
+    
+    public static FileInputStream asFileInputStream( File file ) throws FileNotFoundException {
+        return new FileInputStream( file );
+    }
+    
+    public static FileInputStream asFileInputStream( String fileName ) throws FileNotFoundException {
+        return asFileInputStream( asFile( fileName ) );
+    }
+    
+    public static FileOutputStream asFileOutputStream( File file ) throws FileNotFoundException {
+        return new FileOutputStream( file );
+    }
+    
+    public static FileOutputStream asFileOutputStream( String fileName ) throws FileNotFoundException {
+        return asFileOutputStream( asFile( fileName ) );
+    }
+    
+    public static boolean exists( File file ) {
+        return file.exists();
+    }
+    public static boolean exists( String filename ) {
+        return exists( asFile( filename ) );
     }
 
 }

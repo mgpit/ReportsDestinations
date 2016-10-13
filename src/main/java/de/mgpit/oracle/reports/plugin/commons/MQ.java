@@ -29,16 +29,16 @@ public class MQ {
         /**
          * Scheme for wmq URIs (IRIs) is "wmq"
          */
-        private static String SCHEME = "wmq";
+        public static final String WMQ_SCHEME = "wmq";
         /**
          * path prefix for queue destinations.
          */
-        private static String WMQ_DEST = "/dest/queue/";
-        private static String NO_USER = null;
-        public static int MQ_DEFAULT_PORT = 1414;
+        private static final String WMQ_DEST = "/dest/queue/";
+        private static final String NO_USER = null;
+        public static final int MQ_DEFAULT_PORT = 1414;
 
-        private String hostName, queueManagerName, channelName, queueName;
-        private int port = MQ_DEFAULT_PORT;
+        private final String hostName, queueManagerName, channelName, queueName;
+        private final int port;
 
         /**
          * Creates a new Configuration instance
@@ -147,20 +147,20 @@ public class MQ {
         public static final Configuration fromURI( final URI uri ) {
             U.assertNotNull( uri, "You must provide a non null URI" );
             final String scheme = uri.getScheme();
-            U.assertTrue( SCHEME.equalsIgnoreCase( scheme ), uri.toString() + " is NOT a valid MQ URI" );
+            U.assertTrue( WMQ_SCHEME.equalsIgnoreCase( scheme ), uri.toString() + " is NOT a valid Websphere MQ URI" );
 
             {
                 final String host = uri.getHost();
                 final int port = uri.getPort();
 
                 final String path = getRelevantPath( uri.getPath() );
-                final String[] pathElements = splitPath( path );
+                final String[] pathElements = splitPathIntoElements( path );
                 final String queueName = pathElements[0];
                 String queueManagerName = pathElements[1];
 
                 final String query = uri.getQuery();
-                final Properties queryParameters = queryStringToProperties( query );
-                /* This implementation lets query parameter override queue manager specified via path */
+                final Properties queryParameters = queryStringAsProperties( query );
+                /* This implementation lets the query parameters override queue manager specified via path */
                 queueManagerName = queryParameters.getProperty( "connectQueueManager", queueManagerName );
                 final String channelName = queryParameters.getProperty( "channelName" );
 
@@ -190,12 +190,12 @@ public class MQ {
          *            relevant path part of the URI
          * @return a 2 element array with <code>wmq-queue</code> and <code>"@" wmq-qmgr</code> parts. If there is no<code>"@" wmq-qmgr</code> part the second element will be null.
          */
-        private static String[] splitPath( final String path ) {
+        private static String[] splitPathIntoElements( final String path ) {
             String[] splitted = path.split( "@" );
             /* Ensure that the caller gets (at least) 2 elements */
             if ( splitted.length == 1 ) {
                 // No Arrays.copyOf in Java 1.4
-                String[] temporary = new String[2];
+                final String[] temporary = new String[2];
                 temporary[0] = splitted[0];
                 temporary[1] = null;
                 splitted = temporary;
@@ -208,15 +208,15 @@ public class MQ {
          * @param query the query part of the URI
          * @return {@link Properties} containing the query parameters
          */
-        private static Properties queryStringToProperties( final String query ) {
-            Properties queryParameters = new Properties();
+        private static Properties queryStringAsProperties( final String query ) {
+            final Properties queryParameters = new Properties();
             if ( query != null ) {
-                String[] parameters = query.split( "&" );
+                final String[] parameters = query.split( "&" );
                 for ( int index = 0; index < parameters.length; index++ ) {
-                    String parameter = parameters[index];
-                    String[] keyValuePair = parameter.split( "=" );
-                    String key = keyValuePair[0];
-                    String value = (keyValuePair.length == 1) ? null : keyValuePair[1];
+                    final String parameter = parameters[index];
+                    final String[] keyValuePair = parameter.split( "=" );
+                    final String key = keyValuePair[0];
+                    final String value = (keyValuePair.length == 1) ? null : keyValuePair[1];
                     queryParameters.put( key, value );
                 }
             }
@@ -224,7 +224,7 @@ public class MQ {
         }
 
         public String toString() {
-            StringBuffer sb = new StringBuffer( 127 );
+            final StringBuffer sb = new StringBuffer( 127 );
             sb.append( "MQ Configuration Host: " ).append( U.w( this.hostName ) ).append( " Port: " ).append( U.w( this.port ) )
                     .append( " Queue Manager: " ).append( U.w( this.queueManagerName ) ).append( " Channel: " )
                     .append( U.w( this.channelName ) ).append( " Queue: " ).append( U.w( this.queueName ) );
@@ -236,10 +236,10 @@ public class MQ {
          * @return the {@link URI} representation of the Configuration
          */
         public URI toURI() {
-            String path = WMQ_DEST + this.queueName + (U.isEmpty( this.queueManagerName ) ? null : "@" + this.queueManagerName);
-            String query = U.isEmpty( this.channelName ) ? null : "channelName=" + this.channelName;
+            final String path = WMQ_DEST + this.queueName + (U.isEmpty( this.queueManagerName ) ? null : "@" + this.queueManagerName);
+            final String query = U.isEmpty( this.channelName ) ? null : "channelName=" + this.channelName;
             try {
-                URI uri = new URI( SCHEME, NO_USER, this.hostName, this.port, path, query, null );
+                URI uri = new URI( WMQ_SCHEME, NO_USER, this.hostName, this.port, path, query, null );
                 return uri;
             } catch ( URISyntaxException syntax ) {
                 return null;
@@ -257,7 +257,7 @@ public class MQ {
                 return false;
             }
 
-            Configuration another = (Configuration) obj;
+            final Configuration another = (Configuration) obj;
             return U.eq( this.hostName, another.hostName ) && this.port == another.port
                     && U.eq( this.queueManagerName, another.queueManagerName ) && U.eq( this.channelName, another.channelName )
                     && U.eq( this.queueName, another.queueName );
@@ -265,12 +265,12 @@ public class MQ {
 
         public int hashCode() {
             int hashCode = 11; // initial hash code - prime
-            int prime = 29;    // prime, not too big
+            final int prime = 29;    // prime, not too big
             hashCode = hashCode * prime + (null == this.hostName ? 0 : this.hostName.hashCode());
             hashCode = hashCode * prime + this.port;
-            hashCode = hashCode * prime + (null == this.hostName ? 0 : this.queueManagerName.hashCode());
-            hashCode = hashCode * prime + (null == this.hostName ? 0 : this.channelName.hashCode());
-            hashCode = hashCode * prime + (null == this.hostName ? 0 : this.queueName.hashCode());
+            hashCode = hashCode * prime + (null == this.queueManagerName ? 0 : this.queueManagerName.hashCode());
+            hashCode = hashCode * prime + (null == this.channelName ? 0 : this.channelName.hashCode());
+            hashCode = hashCode * prime + (null == this.queueName ? 0 : this.queueName.hashCode());
             return hashCode();
         }
 

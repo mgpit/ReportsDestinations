@@ -7,28 +7,29 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 import de.mgpit.oracle.reports.plugin.commons.Magic;
+import de.mgpit.oracle.reports.plugin.commons.U;
 import de.mgpit.oracle.reports.plugin.destination.content.Envelope;
 
 public class EnvelopeDecoratedOutputStream extends FilterOutputStream {
 
     private final Envelope envelope;
-
+    
     public EnvelopeDecoratedOutputStream( final OutputStream toWrap, final Envelope envelope ) {
         super( toWrap );
+        U.assertNotNull( toWrap, "Cannot prepend a null OutputStream!" );
+        U.assertNotNull( envelope, "Cannot instantiate without Envelope!" );
         this.envelope = envelope;
     }
 
     public void write( int b ) throws IOException {
+        if ( !envelope.dataWanted() ) {
+            envelope.writeToOut( out );
+        }
+
         if ( envelope.dataWanted() ) {
             out.write( b );
         } else {
-            while ( !envelope.dataWanted() ) {
-                final int nextByteFromEnvelope = envelope.read();
-                if ( nextByteFromEnvelope == Magic.END_OF_STREAM ) {
-                    throw new IOException( "Accessinbg envelope beyond end!" );
-                }
-                out.write( nextByteFromEnvelope );
-            }
+            throw new IOException( "Cannot write into an Envelope which is not in state \"data wanted\"!" );
         }
     }
 

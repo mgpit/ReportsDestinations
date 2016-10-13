@@ -78,11 +78,11 @@ public class DestinationsLoggingJUL {
     private static String getLogfileFilename( final String optionalFilename, final String loggerName ) {
         String filenameToStartWith = (optionalFilename != null) ? optionalFilename : IOUtility.asLogfileFilename( loggerName );
 
-        File dummy = new File( filenameToStartWith );
+        File dummy = IOUtility.asFile( filenameToStartWith );
         String directoryname = dummy.getPath();
         String filename = dummy.getName();
 
-        boolean mustCalculateDirectoryName = U.isEmpty( directoryname ) || !(new File( directoryname ).exists());
+        boolean mustCalculateDirectoryName = U.isEmpty( directoryname ) || !(IOUtility.exists( directoryname ));
         if ( mustCalculateDirectoryName ) {
             directoryname = Utility.getLogsDir();
             if ( U.isEmpty( directoryname ) ) {
@@ -93,7 +93,7 @@ public class DestinationsLoggingJUL {
             }
         }
 
-        File logfile = new File( new File( directoryname ), filename );
+        File logfile = IOUtility.asFile( directoryname, filename );
         return logfile.getPath();
     }
     

@@ -17,8 +17,9 @@ import de.mgpit.oracle.reports.plugin.commons.MQ;
 import de.mgpit.oracle.reports.plugin.commons.U;
 import de.mgpit.oracle.reports.plugin.commons.io.IOUtility;
 import de.mgpit.oracle.reports.plugin.destination.MgpDestination;
-import de.mgpit.oracle.reports.plugin.destination.content.ContentTransformationPlugin;
-import de.mgpit.oracle.reports.plugin.destination.content.ContentTransformationPlugin.PluginName;
+import de.mgpit.oracle.reports.plugin.destination.content.decorators.InputTransformation;
+import de.mgpit.oracle.reports.plugin.destination.content.decorators.Transformation;
+import de.mgpit.oracle.reports.plugin.destination.content.decorators.Transformation.PluginName;
 import oracle.reports.RWException;
 import oracle.reports.utility.Utility;
 
@@ -29,8 +30,9 @@ public final class MQDestination extends MgpDestination {
     private MQ mq;
     private String[] transformationChain = null;
 
-    private static Map CONTENTMODIFIERS = new HashMap( 23 ); // instantiated for synchronization ...
-    private static Map ALIASES = new HashMap( 23 );
+    private static final int SOME_PRIME = 23; 
+    private static Map CONTENTMODIFIERS = new HashMap( SOME_PRIME ); // instantiated for synchronization ...
+    private static Map ALIASES = new HashMap( SOME_PRIME );
 
     /**
      * Stop the distribution cycle.
@@ -66,7 +68,7 @@ public final class MQDestination extends MgpDestination {
             short mainFormat ) throws RWException {
 
         boolean continueToSend = super.start( allProperties, targetName, totalNumberOfFiles, totalFileSize, mainFormat );
-        getDeclaredTransformationChain( allProperties );
+        extractDeclaredTransformationChain( allProperties );
 
         if ( continueToSend ) {
             continueToSend = true;
@@ -76,7 +78,7 @@ public final class MQDestination extends MgpDestination {
         return continueToSend;
     }
 
-    private void getDeclaredTransformationChain( Properties allProperties ) {
+    private void extractDeclaredTransformationChain( Properties allProperties ) {
         String transformationDeclaration = allProperties.getProperty( "transform" );
         if ( transformationDeclaration != null ) {
             this.transformationChain = transformationDeclaration.split( "::" );
@@ -85,10 +87,10 @@ public final class MQDestination extends MgpDestination {
 
     protected void sendMainFile( String cacheFileFilename, short fileFormat ) throws RWException {
         getLogger().info( "Sending MAIN file to " + getClass().getName() );
-        InputStream source = getContent( new File( cacheFileFilename ) );
-        File targetFile = new File( new File( Utility.getLogsDir() ), IOUtility.fileNameOnly( getDesname() ) );
+        InputStream source = getContent( IOUtility.asLogfileFilename( cacheFileFilename ) );
+        File targetFile = IOUtility.asFile( Utility.getLogsDir(), IOUtility.fileNameOnly( getDesname() ) );
         try {
-            FileOutputStream fileOut = new FileOutputStream( targetFile );
+            FileOutputStream fileOut = IOUtility.asFileOutputStream( targetFile );
             IOUtility.copyFromTo( source, fileOut );
         } catch ( FileNotFoundException fileNotFound ) {
             getLogger().error( "Error during distribution! Could not find file to add!" );
@@ -119,19 +121,19 @@ public final class MQDestination extends MgpDestination {
         final Properties allProperties = getProperties();
         for ( int runIndex = 0; runIndex < numberOfTransformers; runIndex++ ) {
             String givenName = this.transformationChain[runIndex];
-            ContentTransformationPlugin transformer = getNewPluginInstance( PluginName.of( givenName ) );
-            wrapped = transformer.wrap( wrapped, allProperties );
+            InputTransformation transformer = getNewPluginInstance( PluginName.of( givenName ) );
+            wrapped = transformer.forInput( wrapped, allProperties );
             getLogger().info( "Transformer for " + U.w( givenName ) + " has been applied successfully." );
         }
         return wrapped;
     }
 
-    protected static ContentTransformationPlugin getNewPluginInstance( PluginName name ) throws RWException {
+    protected static InputTransformation getNewPluginInstance( PluginName name ) throws RWException {
         Class clazz = (Class) CONTENTMODIFIERS.get( name );
         if ( clazz != null ) {
             try {
                 Object newInstance = clazz.newInstance();
-                ContentTransformationPlugin transformer = (ContentTransformationPlugin) newInstance;
+                InputTransformation transformer = (InputTransformation) newInstance;
                 return transformer;
             } catch ( InstantiationException cannotInstantiate ) {
                 LOG.error( "Cannot instantiate " + U.w( clazz.getName() ), cannotInstantiate );
@@ -157,13 +159,15 @@ public final class MQDestination extends MgpDestination {
      */
     public static void init( Properties destinationsProperties ) throws RWException {
         initLogging( destinationsProperties, MQDestination.class );
-        dumpProperties( destinationsProperties, LOG );
-        registerContentModifiers( destinationsProperties );
-        registerAliases( destinationsProperties );
+        if ( LOG.isDebugEnabled() ) { 
+            dumpProperties( destinationsProperties, LOG );
+        }
+        registerConfiguredContentModifiers( destinationsProperties );
+        registerConfiguredAliases( destinationsProperties );
         LOG.info( "Destination " + U.w( MQDestination.class.getName() ) + " started." );
     }
 
-    private static void registerContentModifiers( Properties destinationsProperties ) throws RWException {
+    private static void registerConfiguredContentModifiers( Properties destinationsProperties ) throws RWException {
         Enumeration keys = destinationsProperties.keys();
         LOG.info( "About to search for and register virtual destinations ..." );
         boolean registrationErrorOccured = false;
@@ -171,10 +175,10 @@ public final class MQDestination extends MgpDestination {
         synchronized (CONTENTMODIFIERS) {
             while ( keys.hasMoreElements() ) {
                 String key = (String) keys.nextElement();
-                if ( keyIsContentModificationPluginDefinition( key ) ) {
+                if ( isContentModificationPluginDefinition( key ) ) {
                     PluginName name = extractContentModificationPluginName( key );
                     String virtualDestinationClassName = destinationsProperties.getProperty( key );
-                    boolean success = registerTransformer( name, virtualDestinationClassName );
+                    boolean success = registerContentModifier( name, virtualDestinationClassName );
                     if ( !success ) {
                         registrationErrorOccured = true;
                     }
@@ -186,7 +190,7 @@ public final class MQDestination extends MgpDestination {
         }
     }
 
-    private static boolean registerTransformer( PluginName name, String implementingClassName ) {
+    private static boolean registerContentModifier( PluginName name, String implementingClassName ) {
         LOG.info( " >>> About to register Content Transformer named " + U.w( name ) );
         Class clazz = null;
         try {
@@ -200,8 +204,8 @@ public final class MQDestination extends MgpDestination {
         return true;
     }
 
-    private static boolean keyIsContentModificationPluginDefinition( String key ) {
-        return key.startsWith( ContentTransformationPlugin.PROPERTY_NAME_PREFIX );
+    private static boolean isContentModificationPluginDefinition( String key ) {
+        return key.startsWith( Transformation.PROPERTY_NAME_PREFIX );
     }
 
     private static PluginName extractContentModificationPluginName( String key ) {
@@ -215,12 +219,12 @@ public final class MQDestination extends MgpDestination {
         return PluginName.of( pathElements[indexOfContentModificationPluginName] );
     }
 
-    private static void registerAliases( Properties destinationsProperties ) throws RWException {
+    private static void registerConfiguredAliases( Properties destinationsProperties ) throws RWException {
         Enumeration keys = destinationsProperties.keys();
         synchronized (ALIASES) {
             while ( keys.hasMoreElements() ) {
                 String key = (String) keys.nextElement();
-                if ( keyIsAliasDefintion( key ) ) {
+                if ( isAliasDefintion( key ) ) {
                     String value = destinationsProperties.getProperty( key );
                     ALIASES.put( key, value );
                     LOG.info( "Registered alias " + U.w( key ) + " for " + U.w( value ) );
@@ -229,7 +233,7 @@ public final class MQDestination extends MgpDestination {
         }
     }
 
-    private static boolean keyIsAliasDefintion( String key ) {
+    private static boolean isAliasDefintion( String key ) {
         return key.startsWith( "alias." );
     }
 

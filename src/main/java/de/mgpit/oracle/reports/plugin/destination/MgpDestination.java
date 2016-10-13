@@ -2,9 +2,10 @@ package de.mgpit.oracle.reports.plugin.destination;
 
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Iterator;
 import java.util.Properties;
 import java.util.Set;
@@ -12,14 +13,12 @@ import java.util.TreeSet;
 
 import org.apache.log4j.Logger;
 
-import HTTPClient.ParseException;
-import HTTPClient.URI;
 import de.mgpit.oracle.reports.plugin.commons.DestinationsLogging;
 import de.mgpit.oracle.reports.plugin.commons.U;
+import de.mgpit.oracle.reports.plugin.commons.io.IOUtility;
 import oracle.reports.RWException;
 import oracle.reports.plugin.destination.ftp.DesFTP;
 import oracle.reports.server.Destination;
-import oracle.reports.utility.ResourceManager;
 import oracle.reports.utility.Utility;
 
 /**
@@ -84,6 +83,32 @@ public abstract class MgpDestination extends Destination {
      */
     public static final boolean isEmpty( final String s ) {
         return U.isEmpty( s );
+    }
+    
+    /**
+     * Answer if the string given is a (syntactically correct) Destination URI.
+     * <p>
+     * <ul>
+     *  <li>Must be syntactically correckt</li>
+     *  <li>Must be <em>absolute</em></li>
+     *  <li>Must <strong>not</strong> be <em>opaque</em></li>
+     * </ul>
+     * @param str
+     * @return <code>true</code> if the string given is a Destination URI, else <code>false</code>
+     */
+    public static final boolean isDestinationURI( final String given, final String scheme ) {
+        if ( isEmpty( given ) ) {
+            return false;
+        }
+        try {
+            URI tmp = new URI( given );
+            return !tmp.isOpaque()
+                   && tmp.isAbsolute()
+                   && !isEmpty( tmp.getScheme() )
+                   && tmp.getScheme().equalsIgnoreCase( scheme );
+        } catch ( URISyntaxException syntax ) {
+            return false;
+        }
     }
 
     /**
@@ -161,7 +186,7 @@ public abstract class MgpDestination extends Destination {
             try {
                 URI uri = new URI( inspectedValue );
                 return uri.toString();
-            } catch ( ParseException parsex ) {
+            } catch ( URISyntaxException syntax ) {
                 return "<notparsable>. Got: " + inspectedValue;
             }
         }
@@ -234,7 +259,7 @@ public abstract class MgpDestination extends Destination {
     protected InputStream getContent( File sourceFile ) throws RWException {
         U.Rw.assertNotNull( sourceFile );
         try {
-            InputStream in = new FileInputStream( sourceFile );
+            InputStream in = IOUtility.asFileInputStream( sourceFile );
             return in;
         } catch ( FileNotFoundException fileNotFound ) {
             getLogger().error( "Error on getting content for distribution.!", fileNotFound );

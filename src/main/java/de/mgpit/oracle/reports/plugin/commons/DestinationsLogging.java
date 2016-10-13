@@ -67,14 +67,14 @@ public final class DestinationsLogging {
      */
     private static final List configuredDestinationLoggerNames = new LinkedList();
 
-//    private static class VerbosePatternLayout extends PatternLayout {
-//        public VerbosePatternLayout( String pattern ) {
-//            super( pattern );
-//        }
-//        public boolean ignoresThrowable() {
-//            return false;
-//        }
-//    }
+    // private static class VerbosePatternLayout extends PatternLayout {
+    // public VerbosePatternLayout( String pattern ) {
+    // super( pattern );
+    // }
+    // public boolean ignoresThrowable() {
+    // return false;
+    // }
+    // }
 
     private static final Layout DATE_LEVEL_MESSAGE_LAYOUT = new PatternLayout( "%d{ISO8601} [%-5p] :: %m%n" );
 
@@ -213,7 +213,7 @@ public final class DestinationsLogging {
     static final String givenOrFallbackFilenameFrom( final String optionalFilename, final String alternativeFilename ) {
         String filenameToStartWith = U.coalesce( optionalFilename, alternativeFilename );
 
-        File dummy = new File( filenameToStartWith );
+        File dummy = IOUtility.asFile( filenameToStartWith );
         String directoryname = dummy.getParent();
         String filename = U.coalesce( dummy.getName(), alternativeFilename );
 
@@ -228,7 +228,7 @@ public final class DestinationsLogging {
             }
         }
 
-        File logfile = new File( new File( directoryname ), filename );
+        File logfile = IOUtility.asFile( directoryname, filename );
         return logfile.getPath();
     }
 
@@ -248,7 +248,7 @@ public final class DestinationsLogging {
         if ( U.isEmpty( maybeDirectoryname ) ) {
             return false;
         }
-        File possibleDirectory = new File( maybeDirectoryname );
+        File possibleDirectory = IOUtility.asFile( maybeDirectoryname );
 
         boolean valid = possibleDirectory.isDirectory() && possibleDirectory.canRead() && possibleDirectory.canWrite();
         return valid;
@@ -277,7 +277,7 @@ public final class DestinationsLogging {
                 }
             }
 
-            File logFile = new File( new File( directoryname ), IOUtility.asLogfileFilename( MgpDestination.class.getName() ) );
+            File logFile = IOUtility.asFile( directoryname, IOUtility.asLogfileFilename( MgpDestination.class.getName() ) );
             try {
                 RollingFileAppender rootLog = new RollingFileAppender( VERBOSE_WIDE_LAYOUT, logFile.getPath(),
                         Magic.APPEND_MESSAGES_TO_LOGFILE );

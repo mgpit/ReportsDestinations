@@ -2,20 +2,28 @@ package de.mgpit.oracle.reports.plugin.destination.content.decorators;
 
 
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Properties;
 
-import de.mgpit.oracle.reports.plugin.destination.content.ContentTransformationPlugin;
-import de.mgpit.oracle.reports.plugin.destination.content.io.ChainingInputStream;
+import de.mgpit.oracle.reports.plugin.destination.content.Header;
+import de.mgpit.oracle.reports.plugin.destination.content.io.HeaderDecoratedInputStream;
+import de.mgpit.oracle.reports.plugin.destination.content.io.HeaderDecoratedOutputStream;
 import oracle.reports.RWException;
 
-public abstract class HeaderDecorator implements ContentTransformationPlugin {
+public abstract class HeaderDecorator implements InputTransformation, OutputTransformation {
 
     public HeaderDecorator() {
     }
 
-    public InputStream wrap( InputStream in, Properties parameters ) throws RWException {
-        return new ChainingInputStream( in, parameters );
+    public InputStream forInput( InputStream in, Properties parameters ) throws RWException {
+        return new HeaderDecoratedInputStream( in, getHeader( parameters ) );
     }
+
+    public OutputStream forOutput( OutputStream out, Properties parameters ) throws RWException {
+        return new HeaderDecoratedOutputStream( out, getHeader( parameters ) );
+    }
+    
+    protected abstract Header getHeader( Properties parameters );
 
     public String mimetype() {
         return "application/xml";

@@ -1,14 +1,15 @@
 package de.mgpit.oracle.reports.plugin.destination.cdm.schema;
 
 import java.io.ByteArrayInputStream;
+import java.io.OutputStream;
 
 import de.mgpit.oracle.reports.plugin.commons.Magic;
-import de.mgpit.oracle.reports.plugin.destination.content.EnvelopeInput;
+import de.mgpit.oracle.reports.plugin.destination.content.Envelope;
 
 public class TestHelper {
     
-    public static EnvelopeInput getCdm1() {
-        return new EnvelopeInput() {
+    public static Envelope getCdm1() {
+        return new Envelope() {
             private static final int IN_HEADER = 1;
             private static final int IN_DATA = 2;
             private static final int IN_FOOTER = 3;
@@ -63,11 +64,16 @@ public class TestHelper {
                 return header.read();
             }
 
-            public void dataFinished() {
+            public void setDataFinished() {
                 if ( currentBlock != IN_DATA ) {
                     throw new IllegalStateException( "dataFinished() not allowed when Cdm doesn't want data!" );
                 }
                 currentBlock = IN_FOOTER;
+            }
+
+            public void writeToOut( OutputStream out ) {
+                // TODO Auto-generated method stub
+                
             }
 
         }

@@ -7,37 +7,37 @@ import java.io.InputStream;
 
 import de.mgpit.oracle.reports.plugin.commons.Magic;
 import de.mgpit.oracle.reports.plugin.commons.U;
-import de.mgpit.oracle.reports.plugin.destination.content.Envelope;
+import de.mgpit.oracle.reports.plugin.destination.content.Header;
 
-public class EnvelopeDecoratedInputStream extends FilterInputStream {
+public class HeaderDecoratedInputStream extends FilterInputStream {
 
     /**
      * Envelope for wrapping.
      */
-    private final Envelope envelope;
+    private final Header header;
 
-    public EnvelopeDecoratedInputStream( InputStream toBeDecorated, Envelope envelope ) {
+    public HeaderDecoratedInputStream( InputStream toBeDecorated, Header header ) {
         super( toBeDecorated );
-        U.assertNotNull( toBeDecorated, "Cannot wrap a null InputStream!" );
-        U.assertNotNull( envelope, "Cannot wrap with a null Envelope!" );
-        this.envelope = envelope;
+        U.assertNotNull( toBeDecorated, "Cannot prepend a null InputStream!" );
+        U.assertNotNull( header, "Cannot instantiate without properties!" );
+        this.header = header;
     }
 
     public int read() throws IOException {
         final int aByte;
-        if ( envelope.dataWanted() ) {
+        if ( header.dataWanted() ) {
             aByte = in.read();
             if ( aByte == Magic.END_OF_STREAM ) {
-                envelope.setDataFinished();
+                header.setDataFinished();
                 return this.read();
             }
         } else {
-            aByte = envelope.read();
+            aByte = header.read();
         }
         return aByte;
     }
 
     public synchronized int available() throws IOException {
-        return envelope.dataWanted() ? in.available() : 0;
+        return header.dataWanted() ? in.available() : 0;
     }
 }

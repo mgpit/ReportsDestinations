@@ -2,23 +2,28 @@ package de.mgpit.oracle.reports.plugin.destination.content.decorators;
 
 
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Properties;
 
-import de.mgpit.oracle.reports.plugin.destination.content.ContentTransformationPlugin;
 import de.mgpit.oracle.reports.plugin.destination.content.Envelope;
 import de.mgpit.oracle.reports.plugin.destination.content.io.EnvelopeDecoratedInputStream;
+import de.mgpit.oracle.reports.plugin.destination.content.io.EnvelopeDecoratedOutputStream;
 import oracle.reports.RWException;
 
-public abstract class EnvelopeDecorator implements ContentTransformationPlugin {
+public abstract class EnvelopeDecorator implements InputTransformation, OutputTransformation {
 
     public EnvelopeDecorator() {
     }
 
-    public InputStream wrap( final InputStream in, final Properties parameters ) throws RWException {
-        return new EnvelopeDecoratedInputStream( in, getCdm( parameters ) );
+    public InputStream forInput( final InputStream in, final Properties parameters ) throws RWException {
+        return new EnvelopeDecoratedInputStream( in, getEnvelope( parameters ) );
+    }
+    
+    public OutputStream forOutput( final OutputStream out, final Properties parameters ) throws RWException {
+        return new EnvelopeDecoratedOutputStream( out, getEnvelope( parameters ) );
     }
 
-    protected abstract Envelope getCdm( Properties parameters );
+    protected abstract Envelope getEnvelope( Properties parameters );
 
     public String mimetype() {
         return "application/xml";

@@ -94,7 +94,7 @@ import oracle.reports.utility.Utility;
 public final class ZipDestination extends MgpDestination {
 
     private static final Logger LOG = Logger.getLogger( ZipDestination.class );
-
+    
     private ZipArchive zipArchive;
     // private String zipEntryName;
     // private boolean inAppendingMode;
@@ -126,7 +126,7 @@ public final class ZipDestination extends MgpDestination {
         String entryName = IOUtility.fileNameOnly( getDesname() );
         getLogger().info( "MAIN file " + U.w( cacheFileFilename ) + " of format " + humanReadable( fileFormat ) + " will be put as "
                 + U.w( entryName ) + " to " + U.w( getZipArchiveFileName() ) );
-        addFileToArchive( cacheFileFilename, entryName );
+        addFileToArchiveWithName( cacheFileFilename, entryName );
     }
 
     /**
@@ -142,11 +142,11 @@ public final class ZipDestination extends MgpDestination {
         String entryName = IOUtility.fileNameOnly( IOUtility.fileNameOnly( cacheFileFilename ) );
         getLogger().info( "Other file " + U.w( cacheFileFilename ) + " of format " + humanReadable( fileFormat )
                 + " will be put as " + U.w( entryName ) + " to " + U.w( getZipArchiveFileName() ) );
-        addFileToArchive( cacheFileFilename, entryName );
+        addFileToArchiveWithName( cacheFileFilename, entryName );
     }
 
     /**
-     * Put a file to the ZIP archive
+     * Put a file to the ZIP archive with given Entry name
      * 
      * @param sourceFileFilename
      *            name of the source file (i.e. cache file) to be put into the
@@ -155,11 +155,11 @@ public final class ZipDestination extends MgpDestination {
      *            name for the source in the ZIP file
      * @throws ArchivingException
      */
-    protected void addFileToArchive( final String sourceFileFilename, final String givenEntryName ) throws RWException {
+    protected void addFileToArchiveWithName( final String sourceFileFilename, final String givenEntryName ) throws RWException {
         String entryName = IOUtility.fileNameOnly( U.coalesce( givenEntryName, sourceFileFilename ) );
         try {
-            File sourceFile = new File( sourceFileFilename );
-            InputStream in = new FileInputStream( sourceFile );
+            File sourceFile = IOUtility.asFile( sourceFileFilename );
+            InputStream in = IOUtility.asFileInputStream( sourceFile );
             this.zipArchive.addFromStream( in, entryName, sourceFile.lastModified() );
         } catch ( FileNotFoundException fileNotFound ) {
             getLogger().error( "Error during distribution! Could not find file to add!" );

@@ -43,7 +43,9 @@ import de.mgpit.oracle.reports.plugin.commons.io.IOUtility;
 public class ZipArchive {
 
     private static final Logger LOG = Logger.getLogger( ZipArchive.class );
-
+    
+    public static final String ZIP_SCHEME="zip";
+    
     private String fileName;
     private boolean appending = false;
     private boolean open = false;
@@ -99,7 +101,7 @@ public class ZipArchive {
     }
 
     private ZipArchive createTemporaryFileFromName( final String fileName ) {
-        temporaryFile = new File( fileName + ".part" );
+        temporaryFile = IOUtility.asFile( fileName + ".part" );
         return this;
     }
 
@@ -120,7 +122,7 @@ public class ZipArchive {
         }
 
         try {
-            final File destinationFile = new File( getFileName() );
+            final File destinationFile = IOUtility.asFile( getFileName() );
             if ( destinationFile.exists() ) {
                 if ( isAppending() ) {
                     copyExistingEntries( destinationFile );
@@ -188,8 +190,8 @@ public class ZipArchive {
         U.assertNotEmpty( sourceFileFilename, "sourceFileName must not be null or empty string!" );
         U.assertNotEmpty( entryName, "entryName must not be null or empty string!" );
         try {
-            File sourceFile = new File( sourceFileFilename );
-            final FileInputStream fileInput = new FileInputStream( sourceFile );
+            File sourceFile = IOUtility.asFile( sourceFileFilename ); 
+            final FileInputStream fileInput = IOUtility.asFileInputStream( sourceFile );
             addFromStream( fileInput, entryName, sourceFile.lastModified() );
         } catch ( FileNotFoundException notfound ) {
             final String message = "Error when creating a new Entry from file!";
@@ -261,7 +263,7 @@ public class ZipArchive {
 
     private void openTemporaryZipArchive() throws ArchivingException {
         try {
-            this.zipper = new ZipOutputStream( new FileOutputStream( temporaryFile ) );
+            this.zipper = new ZipOutputStream( IOUtility.asFileOutputStream( temporaryFile ) );
         } catch ( FileNotFoundException fileNotFound ) {
             final String message = "Error when opening Zip Archive on " + getTemporaryFileName();
             LOG.error( message, fileNotFound );
