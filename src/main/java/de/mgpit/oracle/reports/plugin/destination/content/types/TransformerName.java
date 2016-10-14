@@ -11,7 +11,7 @@ public final class TransformerName extends TypedString {
     String name = "";
 
     private TransformerName( String name ) {
-        this.name = name;
+        this.name = name.trim();
     }
 
     protected String value() {

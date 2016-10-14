@@ -20,6 +20,7 @@ import de.mgpit.oracle.reports.plugin.commons.MQ;
 import de.mgpit.oracle.reports.plugin.commons.U;
 import de.mgpit.oracle.reports.plugin.commons.io.IOUtility;
 import de.mgpit.oracle.reports.plugin.destination.MgpDestination;
+import de.mgpit.oracle.reports.plugin.destination.TransformationChainDeclaration;
 import de.mgpit.oracle.reports.plugin.destination.content.types.InputTransformation;
 import de.mgpit.oracle.reports.plugin.destination.content.types.OutputTransformation;
 import de.mgpit.oracle.reports.plugin.destination.content.types.Transformation;
@@ -32,12 +33,13 @@ public final class MQDestination extends MgpDestination {
     private static final Logger LOG = Logger.getLogger( MQDestination.class );
 
     private MQ mq;
-    private OutputTransformation[] outputTransformationChain = null;
-    private InputTransformation[] inputTransformationChain = null;
 
     private static final int SOME_PRIME = 23;
     private static Map CONTENTMODIFIERS = new HashMap( SOME_PRIME ); // instantiated for synchronization ...
     private static Map ALIASES = new HashMap( SOME_PRIME );
+
+    private OutputTransformation[] outputTransformationChain = {};
+    private InputTransformation[] inputTransformationChain = {};
 
     /**
      * Stop the distribution cycle.
@@ -87,17 +89,15 @@ public final class MQDestination extends MgpDestination {
         String transformationDeclaration = allProperties.getProperty( "transform" );
 
         if ( transformationDeclaration != null ) {
-            String[] declaredTransformations = transformationDeclaration.split( ">>" );
+            TransformerName[] declaredTransformations = TransformationChainDeclaration.extractNames( transformationDeclaration );
             List declaredOutputTransformations = new ArrayList();
             List declaredInputTransformations = new ArrayList();
-            if ( !U.isEmpty( declaredTransformations ) ) {
-                for ( int runIndex = 0; runIndex < declaredTransformations.length; runIndex++ ) {
-                    TransformerName givenName = TransformerName.of( declaredTransformations[runIndex] );
-                    if ( Transformer.transformsOnOutput( givenName ) ) {
-                        declaredOutputTransformations.add( Transformer.Out.newInstance( givenName ) );
-                    } else if ( Transformer.transformsOnInput( givenName ) ) {
-                        declaredInputTransformations.add( Transformer.In.newInstance( givenName ) );
-                    }
+            for ( int runIndex = 0; runIndex < declaredTransformations.length; runIndex++ ) {
+                TransformerName givenName = declaredTransformations[runIndex];
+                if ( Transformer.transformsOnOutput( givenName ) ) {
+                    declaredOutputTransformations.add( Transformer.Out.newInstance( givenName ) );
+                } else if ( Transformer.transformsOnInput( givenName ) ) {
+                    declaredInputTransformations.add( Transformer.In.newInstance( givenName ) );
                 }
             }
         }
@@ -131,13 +131,14 @@ public final class MQDestination extends MgpDestination {
 
     /**
      * Apply the {@link OutputTransformation}s to the output.
+     * 
      * @param destinationStream
      * @return
      * @throws RWException
      */
     private OutputStream applyOutputTransformers( OutputStream destinationStream ) throws RWException {
         OutputStream wrapped = destinationStream;
-        final int startIndex = this.outputTransformationChain.length-1;
+        final int startIndex = this.outputTransformationChain.length - 1;
         final Properties allProperties = getProperties();
         for ( int runIndex = startIndex; runIndex > -1; --runIndex ) {
             OutputTransformation transformation = this.outputTransformationChain[runIndex];
@@ -149,6 +150,7 @@ public final class MQDestination extends MgpDestination {
 
     /**
      * Apply the {@link InputTransformation}s to the input.
+     * 
      * @param initialStream
      * @return
      * @throws RWException
@@ -164,7 +166,6 @@ public final class MQDestination extends MgpDestination {
         }
         return wrapped;
     }
-
 
     /**
      * Initialize the destination on Report Server startup. Will mainly
@@ -261,8 +262,7 @@ public final class MQDestination extends MgpDestination {
     protected Logger getLogger() {
         return LOG;
     }
-    
-    
+
     private static class Transformer {
 
         private static final class Out extends Transformer {
