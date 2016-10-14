@@ -1,4 +1,4 @@
-package de.mgpit.oracle.reports.plugin.destination.content.decorators;
+package de.mgpit.oracle.reports.plugin.destination.content.types;
 
 
 import java.io.InputStream;
@@ -33,20 +33,4 @@ public interface Transformation {
 
     public String fileExtension();
 
-    public static final class PluginName extends TypedString {
-        public static PluginName of( String name ) {
-            return new PluginName( name );
-        }
-
-        String name = "";
-
-        private PluginName( String name ) {
-            this.name = name;
-        }
-
-        protected String value() {
-            return this.name;
-        }
-
-    }
 }

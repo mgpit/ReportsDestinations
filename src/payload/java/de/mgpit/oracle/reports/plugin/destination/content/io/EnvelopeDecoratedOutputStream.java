@@ -8,12 +8,12 @@ import java.io.OutputStream;
 
 import de.mgpit.oracle.reports.plugin.commons.Magic;
 import de.mgpit.oracle.reports.plugin.commons.U;
-import de.mgpit.oracle.reports.plugin.destination.content.Envelope;
+import de.mgpit.oracle.reports.plugin.destination.content.types.Envelope;
 
 public class EnvelopeDecoratedOutputStream extends FilterOutputStream {
 
     private final Envelope envelope;
-    
+
     public EnvelopeDecoratedOutputStream( final OutputStream toWrap, final Envelope envelope ) {
         super( toWrap );
         U.assertNotNull( toWrap, "Cannot prepend a null OutputStream!" );
@@ -38,18 +38,15 @@ public class EnvelopeDecoratedOutputStream extends FilterOutputStream {
             throw new IOException( "Cannot flush an Envelope which is not in state \"data wanted\"!" );
         }
         envelope.setDataFinished();
-        for ( final int nextByteFromEnvelope = envelope.read(); nextByteFromEnvelope != Magic.END_OF_STREAM; ){
-           out.write( nextByteFromEnvelope ); 
-        }
+        envelope.writeToOut( out );
         out.flush();
     }
-    
 
     /*
      * The inherited close does the right thing ...
      * <ul>
-     *  <li>flushing...</li>
-     *  <li>and then closing the wrapped <code>out</code>
+     * <li>flushing...</li>
+     * <li>and then closing the wrapped <code>out</code>
      * </ul>
      */
 

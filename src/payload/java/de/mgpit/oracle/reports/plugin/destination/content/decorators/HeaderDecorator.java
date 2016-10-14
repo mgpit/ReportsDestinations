@@ -5,9 +5,11 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Properties;
 
-import de.mgpit.oracle.reports.plugin.destination.content.Header;
 import de.mgpit.oracle.reports.plugin.destination.content.io.HeaderDecoratedInputStream;
 import de.mgpit.oracle.reports.plugin.destination.content.io.HeaderDecoratedOutputStream;
+import de.mgpit.oracle.reports.plugin.destination.content.types.Header;
+import de.mgpit.oracle.reports.plugin.destination.content.types.InputTransformation;
+import de.mgpit.oracle.reports.plugin.destination.content.types.OutputTransformation;
 import oracle.reports.RWException;
 
 public abstract class HeaderDecorator implements InputTransformation, OutputTransformation {

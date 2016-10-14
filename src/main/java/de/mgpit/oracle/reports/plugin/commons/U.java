@@ -200,6 +200,10 @@ public final class U {
     public static boolean isEmpty( final String str ) {
         return (str == null) || "".equals( str );
     }
+    
+    public static boolean isEmpty( final String[] strings ) {
+        return (strings==null) || strings.length == 0;
+    }
 
     public static boolean eq( final String str1, final String str2 ) {
         if ( str1 == null ) {

@@ -290,7 +290,7 @@ public class ZipArchive {
     private void createEntry( ZipEntry zipEntry, InputStream contentSource ) throws IOException {
         try {
             this.zipper.putNextEntry( zipEntry );
-            IOUtility.copyFromTo( contentSource, this.zipper );
+            IOUtility.copyFromToAndThenClose( contentSource, this.zipper );
         } finally {
             this.zipper.closeEntry();
             contentSource.close();

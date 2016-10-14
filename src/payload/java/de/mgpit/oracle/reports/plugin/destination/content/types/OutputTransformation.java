@@ -1,4 +1,4 @@
-package de.mgpit.oracle.reports.plugin.destination.content.decorators;
+package de.mgpit.oracle.reports.plugin.destination.content.types;
 
 
 import java.io.OutputStream;

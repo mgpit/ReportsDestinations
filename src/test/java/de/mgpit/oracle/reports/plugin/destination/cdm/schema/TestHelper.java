@@ -1,13 +1,15 @@
 package de.mgpit.oracle.reports.plugin.destination.cdm.schema;
 
+
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.OutputStream;
 
 import de.mgpit.oracle.reports.plugin.commons.Magic;
-import de.mgpit.oracle.reports.plugin.destination.content.Envelope;
+import de.mgpit.oracle.reports.plugin.destination.content.types.Envelope;
 
 public class TestHelper {
-    
+
     public static Envelope getCdm1() {
         return new Envelope() {
             private static final int IN_HEADER = 1;
@@ -71,8 +73,24 @@ public class TestHelper {
                 currentBlock = IN_FOOTER;
             }
 
-            public void writeToOut( OutputStream out ) {
-                // TODO Auto-generated method stub
+            public void writeToOut( OutputStream out ) throws IOException {
+                switch ( currentBlock ) {
+                case IN_HEADER:
+                    for ( int nextByte = readHeader(); nextByte != Magic.END_OF_STREAM; nextByte = readHeader() ){
+                        out.write(  nextByte );
+                    }
+                    currentBlock = IN_DATA;
+                    break;
+                case IN_DATA:
+                    throw new IOException( "Cannot write Header if data wanted!" );
+                    
+                case IN_FOOTER:
+                    for ( int nextByte = readFooter(); nextByte != Magic.END_OF_STREAM; nextByte = readFooter() ){
+                        out.write( nextByte );
+                    }
+                    break;
+                }
+
                 
             }
 

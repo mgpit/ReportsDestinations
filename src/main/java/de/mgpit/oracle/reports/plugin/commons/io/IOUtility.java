@@ -105,6 +105,8 @@ public class IOUtility {
 
     /**
      * Copies the content from a source stream to a target stream.
+     * <p>
+     * <strong>Closes both source and destination!</strong>
      * 
      * @param source
      *            InputStream with the source data
@@ -112,29 +114,31 @@ public class IOUtility {
      *            OutputStream to copy to
      * @throws IOException
      */
-    public static void copyFromTo( final InputStream source, final OutputStream destination ) throws IOException {
+    public static void copyFromToAndThenClose( final InputStream source, final OutputStream destination ) throws IOException {
         final byte[] buffer = new byte[Units.SIXTYFOUR_KILOBYTE];
         int bytesRead;
         while ( (bytesRead = source.read( buffer )) >= 0 ) {
             destination.write( buffer, 0, bytesRead );
         }
+        destination.close();
+        source.close();
     }
 
     public static byte[] asByteArray( final InputStream in ) throws IOException {
         final ByteArrayOutputStream temporary = new ByteArrayOutputStream();
-        copyFromTo( new BufferedInputStream( in ), temporary );
+        copyFromToAndThenClose( new BufferedInputStream( in ), temporary );
         return temporary.toByteArray();
     }
 
     public static String inputAsUTF8String( final InputStream in ) throws IOException {
         final ByteArrayOutputStream temporary = new ByteArrayOutputStream();
-        copyFromTo( new BufferedInputStream( in ), temporary );
+        copyFromToAndThenClose( new BufferedInputStream( in ), temporary );
         return temporary.toString( "UTF-8" );
     }
 
     public static String inputAsPlatformString( final InputStream in ) throws IOException {
         final ByteArrayOutputStream temporary = new ByteArrayOutputStream();
-        copyFromTo( new BufferedInputStream( in ), temporary );
+        copyFromToAndThenClose( new BufferedInputStream( in ), temporary );
         return temporary.toString();
     }
     

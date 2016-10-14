@@ -7,7 +7,7 @@ import java.io.OutputStream;
 
 import de.mgpit.oracle.reports.plugin.commons.Magic;
 import de.mgpit.oracle.reports.plugin.commons.U;
-import de.mgpit.oracle.reports.plugin.destination.content.Header;
+import de.mgpit.oracle.reports.plugin.destination.content.types.Header;
 
 public class HeaderDecoratedOutputStream extends FilterOutputStream {
 

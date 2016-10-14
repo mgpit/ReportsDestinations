@@ -5,9 +5,11 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Properties;
 
-import de.mgpit.oracle.reports.plugin.destination.content.Envelope;
 import de.mgpit.oracle.reports.plugin.destination.content.io.EnvelopeDecoratedInputStream;
 import de.mgpit.oracle.reports.plugin.destination.content.io.EnvelopeDecoratedOutputStream;
+import de.mgpit.oracle.reports.plugin.destination.content.types.Envelope;
+import de.mgpit.oracle.reports.plugin.destination.content.types.InputTransformation;
+import de.mgpit.oracle.reports.plugin.destination.content.types.OutputTransformation;
 import oracle.reports.RWException;
 
 public abstract class EnvelopeDecorator implements InputTransformation, OutputTransformation {

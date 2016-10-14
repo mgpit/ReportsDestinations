@@ -84,5 +84,20 @@ public class UTest extends TestCase {
         assertTrue( noExceptionOccured );
 
     }
+    
+    public void testArrayIteration() {
+        String[] some = { "First", "Second", "Third", "Fourth", "Fifth" };
+        int count = some.length;
+        
+        /* Forward */
+        for ( int runIndex = 0; runIndex < count; runIndex++ ) {
+            System.out.println( some[runIndex] );
+        }
+        
+        /* Reverse */
+        for ( int runIndex = --count; runIndex >= 0; --runIndex  ) {
+            System.out.println( some[runIndex] );
+        }
+    }
 
 }

@@ -1,5 +1,6 @@
-package de.mgpit.oracle.reports.plugin.destination.content;
+package de.mgpit.oracle.reports.plugin.destination.content.types;
 
+import java.io.IOException;
 import java.io.OutputStream;
 
 public interface Header {
@@ -8,7 +9,7 @@ public interface Header {
 
     public int read();
     
-    public void writeToOut( OutputStream out );
+    public void writeToOut( OutputStream out ) throws IOException;
 
     public void setDataFinished();
 
