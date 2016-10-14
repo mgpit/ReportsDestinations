@@ -10,6 +10,7 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -74,48 +75,107 @@ public final class MQDestination extends MgpDestination {
     protected boolean start( Properties allProperties, String targetName, int totalNumberOfFiles, long totalFileSize,
             short mainFormat ) throws RWException {
 
-        boolean continueToSend = super.start( allProperties, targetName, totalNumberOfFiles, totalFileSize, mainFormat );
-        extractDeclaredTransformationChain( allProperties );
+        try {
+            boolean continueToSend = super.start( allProperties, targetName, totalNumberOfFiles, totalFileSize, mainFormat );
 
-        if ( continueToSend ) {
-            continueToSend = true;
-        } else {
-            getLogger().warn( "Cannot continue to send ..." );
+            if ( continueToSend ) {
+                getLogger().info( "Starting distribution to MQ" );
+                extractDeclaredTransformationChain( allProperties );
+                continueToSend = true;
+            } else {
+                getLogger().warn( "Cannot continue to send ..." );
+            }
+            return continueToSend;
+        } catch ( RWException forLogging ) {
+            getLogger().error( "Error during preparation of distribution!", forLogging );
+            throw forLogging;
         }
-        return continueToSend;
     }
 
-    protected static void extractDeclaredTransformationChain( Properties allProperties ) throws RWException {
+    protected void extractDeclaredTransformationChain( final Properties allProperties ) throws RWException {
         String transformationDeclaration = allProperties.getProperty( "transform" );
 
         if ( transformationDeclaration != null ) {
+            getLogger().info( "Extracting declared Transformation Chain" );
             TransformerName[] declaredTransformations = TransformationChainDeclaration.extractNames( transformationDeclaration );
-            List declaredOutputTransformations = new ArrayList();
-            List declaredInputTransformations = new ArrayList();
+            getLogger().info( "Declaration contains " + U.w( declaredTransformations.length ) + " items." );
+
+            ArrayList declaredOutputTransformations = new ArrayList();
+            ArrayList declaredInputTransformations = new ArrayList();
             for ( int runIndex = 0; runIndex < declaredTransformations.length; runIndex++ ) {
                 TransformerName givenName = declaredTransformations[runIndex];
+                getLogger().debug( U.w( U.lpad( runIndex, 2 ) ) + ": Extracting " + U.w( givenName.toString() ) );
                 if ( Transformer.transformsOnOutput( givenName ) ) {
+                    getLogger().info( U.w( givenName ) + " identified as Output transformation." );
                     declaredOutputTransformations.add( Transformer.Out.newInstance( givenName ) );
                 } else if ( Transformer.transformsOnInput( givenName ) ) {
+                    getLogger().info( U.w( givenName ) + " identified as Input transformation." );
                     declaredInputTransformations.add( Transformer.In.newInstance( givenName ) );
+                } else {
+                    getLogger().warn( U.w( givenName ) + " cannot be identified as Output nor Input transformation." );
                 }
+            }
+
+            try {
+                assignOutputTransformationChain( declaredOutputTransformations );
+                assignInputTransformationChain( declaredInputTransformations );
+            } catch ( Exception any ) {
+                LOG.fatal( "Fatal error on extracting transformations!", any );
+                throw Utility.newRWException( any );
+            }
+
+        } else {
+            getLogger().info( "No transformations declared." );
+        }
+    }
+
+    private void assignOutputTransformationChain( List extracted ) {
+        if ( extracted != null && extracted.size() > 0 ) {
+            this.outputTransformationChain = new OutputTransformation[extracted.size()];
+            int targetIndex = 0;
+            Iterator elements = extracted.iterator();
+            while ( elements.hasNext() ) {
+                OutputTransformation element = (OutputTransformation) elements.next();
+                this.outputTransformationChain[targetIndex++] = element;
+            }
+        }
+    }
+
+    private void assignInputTransformationChain( List extracted ) {
+        if ( extracted != null && extracted.size() > 0 ) {
+            this.outputTransformationChain = new OutputTransformation[extracted.size()];
+            int targetIndex = 0;
+            Iterator elements = extracted.iterator();
+            while ( elements.hasNext() ) {
+                InputTransformation element = (InputTransformation) elements.next();
+                this.inputTransformationChain[targetIndex++] = element;
             }
         }
     }
 
     protected void sendMainFile( String cacheFileFilename, short fileFormat ) throws RWException {
         getLogger().info( "Sending MAIN file to " + getClass().getName() );
-        InputStream source = getContent( IOUtility.asLogfileFilename( cacheFileFilename ) );
-        File targetFile = IOUtility.asFile( Utility.getLogsDir(), IOUtility.fileNameOnly( getDesname() ) );
+        InputStream source = getContent( IOUtility.asFile( cacheFileFilename ) );
         try {
+            String targetFileName = getDesname()+".mq";
+            // TODO: Hack Hack Hack 
+            if ( this.outputTransformationChain != null) {
+                final int namer = this.outputTransformationChain.length-1;
+                targetFileName = IOUtility.withExtension( targetFileName , this.outputTransformationChain[namer].fileExtension() );
+            }
+            File targetFile = IOUtility.asFile( targetFileName );
             FileOutputStream fileOut = IOUtility.asFileOutputStream( targetFile );
-            IOUtility.copyFromToAndThenClose( source, fileOut );
+            OutputStream target = wrapWithOutputTransformers( fileOut );
+            IOUtility.copyFromToAndThenClose( source, target );
         } catch ( FileNotFoundException fileNotFound ) {
             getLogger().error( "Error during distribution! Could not find file to add!" );
             throw Utility.newRWException( fileNotFound );
         } catch ( IOException ioex ) {
             getLogger().error( "Error during distribution! Could not copy file content!", ioex );
             throw Utility.newRWException( ioex );
+        } catch ( Throwable anyOther ) {
+            getLogger().fatal( "Fatal Error during sending main file " + U.w( cacheFileFilename ) + "!", anyOther );
+            throw Utility.newRWException( new Exception( anyOther ) );
         }
 
     }
@@ -126,50 +186,58 @@ public final class MQDestination extends MgpDestination {
 
     protected InputStream getContent( File file ) throws RWException {
         InputStream sourceInput = super.getContent( file );
-        return applyInputTransformers( sourceInput );
+        return wrapWithInputTransformers( sourceInput );
     }
 
     /**
-     * Apply the {@link OutputTransformation}s to the output.
+     * Wrap the output wiht {@link OutputTransformation}s.
      * 
      * @param destinationStream
      * @return
      * @throws RWException
      */
-    private OutputStream applyOutputTransformers( OutputStream destinationStream ) throws RWException {
+    private OutputStream wrapWithOutputTransformers( OutputStream destinationStream ) throws RWException {
         OutputStream wrapped = destinationStream;
-        final int startIndex = this.outputTransformationChain.length - 1;
-        final Properties allProperties = getProperties();
-        for ( int runIndex = startIndex; runIndex > -1; --runIndex ) {
-            OutputTransformation transformation = this.outputTransformationChain[runIndex];
-            wrapped = transformation.forOutput( wrapped, allProperties );
-            getLogger().info( "Transformer for " + U.w( transformation.toString() ) + " has been applied successfully." );
+        if ( this.outputTransformationChain != null ) {
+            final int startIndex = this.outputTransformationChain.length - 1;
+            final Properties allProperties = getProperties();
+            for ( int runIndex = startIndex; runIndex >= 0; --runIndex ) {
+                OutputTransformation transformation = this.outputTransformationChain[runIndex];
+                wrapped = transformation.forOutput( wrapped, allProperties );
+                getLogger().info( "Transformer for " + U.w( transformation.toString() ) + " has been applied successfully." );
+            }
         }
         return wrapped;
     }
 
     /**
-     * Apply the {@link InputTransformation}s to the input.
+     * Wrap the input with {@link InputTransformation}s.
      * 
      * @param initialStream
      * @return
      * @throws RWException
      */
-    private InputStream applyInputTransformers( InputStream initialStream ) throws RWException {
+    private InputStream wrapWithInputTransformers( InputStream initialStream ) throws RWException {
         InputStream wrapped = initialStream;
-        final int endIndex = this.inputTransformationChain.length;
-        final Properties allProperties = getProperties();
-        for ( int runIndex = 0; runIndex < endIndex; runIndex++ ) {
-            InputTransformation transformation = this.inputTransformationChain[runIndex];
-            wrapped = transformation.forInput( wrapped, allProperties );
-            getLogger().info( "Transformer for " + U.w( transformation.toString() ) + " has been applied successfully." );
+        if ( this.inputTransformationChain != null ) {
+            final int endIndex = this.inputTransformationChain.length;
+            final Properties allProperties = getProperties();
+            for ( int runIndex = 0; runIndex < endIndex; runIndex++ ) {
+                InputTransformation transformation = this.inputTransformationChain[runIndex];
+                wrapped = transformation.forInput( wrapped, allProperties );
+                getLogger().info( "Transformer " + U.w( transformation.toString() ) + " has been applied successfully." );
+            }
         }
         return wrapped;
     }
 
     /**
-     * Initialize the destination on Report Server startup. Will mainly
-     * initialize log4j Logging.
+     * Initialize the destination on Report Server startup.
+     * <ul>
+     *  <li>initialize log4j</li>
+     *  <li>register declared content modifiers</li>
+     *  <li>register declared aliases</li>
+     * </ul>
      * 
      * @param destinationsProperties
      * @throws RWException
@@ -267,13 +335,23 @@ public final class MQDestination extends MgpDestination {
 
         private static final class Out extends Transformer {
             protected static final OutputTransformation newInstance( TransformerName name ) throws RWException {
-                return (OutputTransformation) Transformer._newInstance( name );
+                try {
+                    return (OutputTransformation) Transformer._newInstance( name );
+                } catch ( Throwable any ) {
+                    LOG.fatal( "Cannot instantiate " + U.w( name ) + " (as OutputTransformation)", any );
+                    throw Utility.newRWException( new Exception( any ) );
+                }
             }
         }
 
         private static final class In extends Transformer {
             protected static final InputTransformation newInstance( TransformerName name ) throws RWException {
-                return (InputTransformation) Transformer._newInstance( name );
+                try {
+                    return (InputTransformation) Transformer._newInstance( name );
+                } catch ( Throwable any ) {
+                    LOG.fatal( "Cannot instantiate " + U.w( name ) + " (as InputTransformation)", any );
+                    throw Utility.newRWException( new Exception( any ) );
+                }
             }
         }
 
@@ -301,12 +379,20 @@ public final class MQDestination extends MgpDestination {
 
         protected static boolean transformsOnInput( TransformerName givenName ) {
             Class clazz = (Class) CONTENTMODIFIERS.get( givenName );
-            return clazz.isAssignableFrom( InputTransformation.class );
+            if ( clazz == null ) {
+                LOG.error( "No transformer named " + U.w( givenName ) + "has been registered!" );
+                return false;
+            }
+            return InputTransformation.class.isAssignableFrom( clazz );
         }
 
         protected static boolean transformsOnOutput( TransformerName givenName ) {
             Class clazz = (Class) CONTENTMODIFIERS.get( givenName );
-            return clazz.isAssignableFrom( OutputTransformation.class );
+            if ( clazz == null ) {
+                LOG.error( "No transformer named " + U.w( givenName ) + "has been registered!" );
+                return false;
+            }
+            return OutputTransformation.class.isAssignableFrom( clazz );
         }
     }
 

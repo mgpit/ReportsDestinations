@@ -3,15 +3,14 @@ package de.mgpit.oracle.reports.plugin.destination;
 
 import java.util.regex.Pattern;
 
+import org.apache.log4j.Logger;
+
 import de.mgpit.oracle.reports.plugin.commons.U;
-import de.mgpit.oracle.reports.plugin.destination.content.types.InputTransformation;
-import de.mgpit.oracle.reports.plugin.destination.content.types.OutputTransformation;
-import de.mgpit.oracle.reports.plugin.destination.content.types.Transformation;
 import de.mgpit.oracle.reports.plugin.destination.content.types.TransformerName;
-import oracle.reports.RWException;
-import oracle.reports.utility.Utility;
 
 public class TransformationChainDeclaration {
+    
+    private static final Logger LOG = Logger.getLogger( "de.mgpit.oracle.reports.plugin.destination.mq.MQDestination" );
 
     private final String FIRST_2_LAST_SEPARATOR = ">>";
     private final String FIRST_2_LAST_EXPRESSION = "^([^><]+>>)*([^><])+$";
@@ -51,14 +50,16 @@ public class TransformationChainDeclaration {
             definitions = new TransformerName[tokens.length];
             int targetIndex = 0;
             for ( int i = 0; i < tokens.length; i++ ) {
-                definitions[targetIndex++] = TransformerName.of( tokens[i] );
+                definitions[targetIndex] = TransformerName.of( tokens[i] );
+                targetIndex++;
             }
         } else {
             final String[] tokens = this.literal.split( LAST_2_FIRST_SEPARATOR );
             definitions = new TransformerName[tokens.length];
             int targetIndex = 0;
             for ( int i = tokens.length-1; i >= 0 ; --i ) {
-                definitions[targetIndex++] = TransformerName.of( tokens[i] );
+                definitions[targetIndex] = TransformerName.of( tokens[i] );
+                targetIndex++;
             }
         }
         return definitions;

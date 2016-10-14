@@ -257,7 +257,7 @@ public abstract class MgpDestination extends Destination {
      * @throws RWException
      */
     protected InputStream getContent( File sourceFile ) throws RWException {
-        U.Rw.assertNotNull( sourceFile );
+        U.Rw.assertNotNull(sourceFile, "Source file must not be null!" );
         try {
             InputStream in = IOUtility.asFileInputStream( sourceFile );
             return in;

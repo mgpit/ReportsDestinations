@@ -12,6 +12,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.security.AccessController;
 
+import de.mgpit.oracle.reports.plugin.commons.U;
 import de.mgpit.oracle.reports.plugin.commons.Units;
 import oracle.reports.utility.Utility;
 import sun.security.action.GetPropertyAction;
@@ -43,6 +44,7 @@ public class IOUtility {
      * <p>
      * Will replace all occurrences of <code>.</code> (dots) by <code>_</code> (underline) in the string given
      * and eventually add a <code>.log</code> file extension.
+     * 
      * @param str
      *            name string to convert
      * @return a log file name
@@ -68,16 +70,23 @@ public class IOUtility {
      *            to add the .zip extension to
      * @return fileName with extension .zip
      */
-    public static String withZipExtension( final String fileName ) {
-        String fileNameWithZipExtension;
-        int dotPosition = fileName.lastIndexOf( '.' );
-        if ( dotPosition > 0 ) {
-            String currentExtension = fileName.substring( dotPosition + 1 );
-            fileNameWithZipExtension = (currentExtension.equalsIgnoreCase( "zip" ) ? fileName : fileName + ".zip");
-        } else {
-            fileNameWithZipExtension = fileName + ".zip";
+    public static String withExtension( final String fileName, final String newExtension ) {
+        if ( !U.isEmpty( newExtension ) ) {
+            String fileNameWithExtension;
+            int dotPosition = fileName.lastIndexOf( '.' );
+            if ( dotPosition > 0 ) {
+                String currentExtension = fileName.substring( dotPosition + 1 );
+                fileNameWithExtension = (currentExtension.equalsIgnoreCase( newExtension ) ? fileName : fileName + "." + newExtension );
+            } else {
+                fileNameWithExtension = fileName + "." + newExtension;
+            }
+            return fileNameWithExtension;
         }
-        return fileNameWithZipExtension;
+        return fileName;
+    }
+
+    public static String withZipExtension( final String fileName ) {
+        return withExtension( fileName, "zip" );
     }
 
     /**
@@ -114,14 +123,39 @@ public class IOUtility {
      *            OutputStream to copy to
      * @throws IOException
      */
-    public static void copyFromToAndThenClose( final InputStream source, final OutputStream destination ) throws IOException {
+    public static void copyFromTo( final InputStream source, final OutputStream destination ) throws IOException {
         final byte[] buffer = new byte[Units.SIXTYFOUR_KILOBYTE];
         int bytesRead;
         while ( (bytesRead = source.read( buffer )) >= 0 ) {
             destination.write( buffer, 0, bytesRead );
         }
-        destination.close();
-        source.close();
+    }
+
+    /**
+     * Copies the content from a source stream to a target stream.
+     * <p>
+     * <strong>Closes both source and destination!</strong>
+     * 
+     * @param source
+     *            InputStream with the source data
+     * @param destination
+     *            OutputStream to copy to
+     * @throws IOException
+     */
+    public static void copyFromToAndThenClose( final InputStream source, final OutputStream destination ) throws IOException {
+        try {
+            copyFromTo( source, destination );
+        } finally {
+            try {
+                destination.close();
+            } catch ( Exception ignore ) {
+            }
+            try {
+                source.close();
+            } catch ( Exception ignore ) {
+            }
+        }
+
     }
 
     public static byte[] asByteArray( final InputStream in ) throws IOException {
@@ -141,34 +175,35 @@ public class IOUtility {
         copyFromToAndThenClose( new BufferedInputStream( in ), temporary );
         return temporary.toString();
     }
-    
+
     public static File asFile( String fileName ) {
         return new File( fileName );
     }
-    
+
     public static File asFile( String directoryName, String fileName ) {
-        return new File( new File( directoryName ), fileName  );
+        return new File( new File( directoryName ), fileName );
     }
-    
+
     public static FileInputStream asFileInputStream( File file ) throws FileNotFoundException {
         return new FileInputStream( file );
     }
-    
+
     public static FileInputStream asFileInputStream( String fileName ) throws FileNotFoundException {
         return asFileInputStream( asFile( fileName ) );
     }
-    
+
     public static FileOutputStream asFileOutputStream( File file ) throws FileNotFoundException {
         return new FileOutputStream( file );
     }
-    
+
     public static FileOutputStream asFileOutputStream( String fileName ) throws FileNotFoundException {
         return asFileOutputStream( asFile( fileName ) );
     }
-    
+
     public static boolean exists( File file ) {
         return file.exists();
     }
+
     public static boolean exists( String filename ) {
         return exists( asFile( filename ) );
     }

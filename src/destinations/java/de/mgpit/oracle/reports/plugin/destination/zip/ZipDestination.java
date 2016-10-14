@@ -126,7 +126,12 @@ public final class ZipDestination extends MgpDestination {
         String entryName = IOUtility.fileNameOnly( getDesname() );
         getLogger().info( "MAIN file " + U.w( cacheFileFilename ) + " of format " + humanReadable( fileFormat ) + " will be put as "
                 + U.w( entryName ) + " to " + U.w( getZipArchiveFileName() ) );
-        addFileToArchiveWithName( cacheFileFilename, entryName );
+        try {
+            addFileToArchiveWithName( cacheFileFilename, entryName );
+        } catch ( Throwable anyOther ) {
+            getLogger().fatal( "Fatal Error during sending main file " + U.w( cacheFileFilename ) + "!", anyOther );
+            throw Utility.newRWException( new Exception( anyOther ) );
+        }
     }
 
     /**
@@ -142,7 +147,12 @@ public final class ZipDestination extends MgpDestination {
         String entryName = IOUtility.fileNameOnly( IOUtility.fileNameOnly( cacheFileFilename ) );
         getLogger().info( "Other file " + U.w( cacheFileFilename ) + " of format " + humanReadable( fileFormat )
                 + " will be put as " + U.w( entryName ) + " to " + U.w( getZipArchiveFileName() ) );
-        addFileToArchiveWithName( cacheFileFilename, entryName );
+        try {
+            addFileToArchiveWithName( cacheFileFilename, entryName );
+        } catch ( Throwable anyOther ) {
+            getLogger().fatal( "Fatal Error during sending additional file " + U.w( cacheFileFilename ) + "!", anyOther );
+            throw Utility.newRWException( new Exception( anyOther ) );
+        }
     }
 
     /**
@@ -190,6 +200,8 @@ public final class ZipDestination extends MgpDestination {
      */
     protected boolean start( final Properties allProperties, final String targetName, final int totalNumberOfFiles,
             final long totalFileSize, short mainFormat ) throws RWException {
+        
+        try {
         boolean continueToSend = super.start( allProperties, targetName, totalNumberOfFiles, totalFileSize, mainFormat );
 
         if ( continueToSend ) {
@@ -205,6 +217,10 @@ public final class ZipDestination extends MgpDestination {
             getLogger().warn( "Cannot continue to send ..." );
         }
         return continueToSend;
+        } catch ( RWException forLogging ) {
+            getLogger().error( "Error during preparation of distribution!", forLogging );
+            throw forLogging;
+        }
     }
 
     /**

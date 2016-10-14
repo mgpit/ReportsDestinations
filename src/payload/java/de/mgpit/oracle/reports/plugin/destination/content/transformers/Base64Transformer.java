@@ -33,7 +33,7 @@ public class Base64Transformer implements InputTransformation, OutputTransformat
     }
 
     public String fileExtension() {
-        return null;
+        return "ascii";
     }
 
 }
