@@ -29,12 +29,12 @@ import de.mgpit.oracle.reports.plugin.commons.io.IOUtility;
  *         one of the classes factory methods named {@link #newOrExistingNamed(String)} or {@link #newNamed(String)}.
  *         <p>
  *         New entries will be added by providing a file name and an entry name to {@link #addFile(String, String)}.
- *         During one distribution entry names must be unique, i.e. each call {@link #addFile(String, String)} must provide different
- *         entry name.
+ *         During one packing cylce (i.e. opening the ZipArchive, adding files, closing the ZipArchive) entry names must be unique
+ *         meaning each call {@link #addFile(String, String)} must provide a different entry name.
  *         <p>
  *         At the end clients of ZipArchive have to {@link #close()} the ZIP archive.
  *         <p>
- *         When appending to an existing archive the ZipArchive will partially be able to handle duplicate entries, meaning that
+ *         When appending to an existing archive the ZipArchive will be able to handle duplicate entries, meaning that
  *         entries from the existing archive will be replaced by new entries with the same name.
  *         <p>
  *         Any errors during processing will be wrapped in a {@link ArchivingException}.
@@ -43,9 +43,9 @@ import de.mgpit.oracle.reports.plugin.commons.io.IOUtility;
 public class ZipArchive {
 
     private static final Logger LOG = Logger.getLogger( ZipArchive.class );
-    
-    public static final String ZIP_SCHEME="zip";
-    
+
+    public static final String ZIP_SCHEME = "zip";
+
     private String fileName;
     private boolean appending = false;
     private boolean open = false;
@@ -55,12 +55,12 @@ public class ZipArchive {
     private Map entriesCreated;
 
     /**
-     * Factory method for a new ZipArchive.
-     * Will replace an existing ZIP file with the same name.
+     * Gets a new ZipArchive - factory method.
+     * Will replace an existing ZIP archive with the same name.
      * 
      * @param fileName
      *            full file name of the ZIP archive to be created
-     * @return a ZipFile instance
+     * @return a ZipArchive instance
      * 
      * @throws Error
      *             if fileName is provided as null or empty String
@@ -72,11 +72,12 @@ public class ZipArchive {
     }
 
     /**
-     * Factory method for creating a new ZIP archive in appending mode.
+     * Gets a new ZipArchive in appending mode - factory method.
+     * Will replace any existing ZIP archive with the same name.
      * A ZIP archive in appending mode will add new entries to the archive and/or replace existing entries.
      * 
      * @param fileName
-     * @return a ZipFile instance
+     * @return a ZipArchive instance
      * 
      * @throws Error
      *             if fileName is provided as null or empty String
@@ -100,6 +101,13 @@ public class ZipArchive {
         createTemporaryFileFromName( fileName );
     }
 
+    /**
+     * Creates a temporary ZipArchived with its name based on the file name given.
+     * The archive is intended for temporary usage.
+     * 
+     * @param fileName
+     * @return a new ZipArchive
+     */
     private ZipArchive createTemporaryFileFromName( final String fileName ) {
         temporaryFile = IOUtility.asFile( fileName + ".part" );
         return this;
@@ -108,9 +116,9 @@ public class ZipArchive {
     /**
      * Closes the ZIP Archive.
      * <p>
-     * Until here the new entries/content have been written to a temporary file.
+     * <strong>Some notes:</strong>Until here the new entries/content have been written to a temporary file.
      * In Append mode the entries of an already existing file will now be copied to the temporary file.
-     * Finally the temporary file will be renamed to the destination file name.
+     * Finally the temporary file will be renamed to the final file name as provided by the destination.
      * 
      * @return the receiving ZipArchive instance
      * @throws ArchivingException
@@ -142,7 +150,7 @@ public class ZipArchive {
     }
 
     /**
-     * Called when the ZIP file already exists an we are in Append mode.
+     * 
      * Copies the entries from the existing archive to the temporary ZIP archive.
      * 
      * @param existingZipFile
@@ -190,7 +198,7 @@ public class ZipArchive {
         U.assertNotEmpty( sourceFileFilename, "sourceFileName must not be null or empty string!" );
         U.assertNotEmpty( entryName, "entryName must not be null or empty string!" );
         try {
-            File sourceFile = IOUtility.asFile( sourceFileFilename ); 
+            File sourceFile = IOUtility.asFile( sourceFileFilename );
             final FileInputStream fileInput = IOUtility.asFileInputStream( sourceFile );
             addFromStream( fileInput, entryName, sourceFile.lastModified() );
         } catch ( FileNotFoundException notfound ) {
@@ -246,6 +254,12 @@ public class ZipArchive {
         return this;
     }
 
+    /**
+     * Registers that this ZipArchive contains an entry with the name given
+     * 
+     * @param entryName
+     *            entrie's name to register
+     */
     private void registerEntry( final String entryName ) {
         if ( entriesCreated == null ) {
             entriesCreated = new HashMap();
@@ -257,10 +271,22 @@ public class ZipArchive {
         return hasEntry( entry.getName() );
     }
 
+    /**
+     * Checks if this ZipArchive contains an entry with the name given
+     * 
+     * @param entryName
+     *            entrie's name to check
+     * @return {@code true} if this archive contains an entry with the name, else {@code false}
+     */
     private boolean hasEntry( final String entryName ) {
         return (entriesCreated == null) ? false : entriesCreated.containsKey( entryName );
     }
 
+    /**
+     * Opens a new temporary ZipArchive
+     * 
+     * @throws ArchivingException
+     */
     private void openTemporaryZipArchive() throws ArchivingException {
         try {
             this.zipper = new ZipOutputStream( IOUtility.asFileOutputStream( temporaryFile ) );
@@ -272,10 +298,21 @@ public class ZipArchive {
         markOpened();
     }
 
+    /**
+     * Creates a named entry from an input stream with the timestamp provided.
+     * 
+     * @param source
+     *            input stream to add
+     * @param entryName
+     *            name of the new entry to create
+     * @param entrysTimestamp
+     *            timestamp to set for the new entry to create
+     * @throws ArchivingException
+     */
     private void createEntryFromInputStream( final InputStream source, final String entryName, long entrysTimestamp )
             throws ArchivingException {
         final ZipEntry zipEntry = new ZipEntry( entryName );
-        
+
         try {
             zipEntry.setTime( entrysTimestamp );
             zipEntry.setComment( "Created by ZipArchive" );
@@ -287,6 +324,15 @@ public class ZipArchive {
         }
     }
 
+    /**
+     * Creates a new entry in this archive.
+     * 
+     * @param zipEntry
+     *            the new entry
+     * @param contentSource
+     *            input stream on the source file
+     * @throws IOException
+     */
     private void createEntry( ZipEntry zipEntry, InputStream contentSource ) throws IOException {
         try {
             this.zipper.putNextEntry( zipEntry );
@@ -297,30 +343,64 @@ public class ZipArchive {
         }
     }
 
+    /**
+     * Gets the temporary file name of this ZipArchive
+     * 
+     * @return string with the temporary file name of this archive
+     */
     private String getTemporaryFileName() {
         return this.temporaryFile.getName();
     }
 
+    /**
+     * Gets the file name of this ZipArchive
+     * 
+     * @return string with the file name of this archive
+     */
     public String getFileName() {
         return this.fileName;
     }
 
+    /**
+     * Gets if this ZipArchive is in appending mode.
+     * 
+     * @return {@code true} if this archive is in appending mode, else {@code false}
+     */
     public boolean isAppending() {
         return this.appending;
     }
 
+    /**
+     * Marks this ZipArchive as openend.
+     */
     private void markOpened() {
         this.open = true;
     }
 
+    /**
+     * Marks this ZipArchive as closed.
+     */
     private void markClosed() {
         this.open = false;
     }
 
+    /**
+     * Gets if this ZipArchive is open
+     * 
+     * @return {@code true} if this archive is open, else {@code false}
+     */
     public boolean isOpen() {
         return this.open;
     }
 
+    /**
+     * 
+     * @author mgp
+     * 
+     *         Exception for wrapping other exceptions thrown during ZipArchive creation.
+     *         So clients of ZipArchive have to deal with one type of checked exception, only.
+     *
+     */
     public class ArchivingException extends Exception {
         private static final long serialVersionUID = -1831777826155115964L;
 

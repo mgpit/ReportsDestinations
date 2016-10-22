@@ -36,8 +36,8 @@ import oracle.reports.utility.Utility;
  * 
  * @author mgp
  *         <p>
- *         Implements an Oracle Reports&trade; {@link oracle.reports.server.Destination} that puts
- *         the files of its distribution process into a Websphere MQ&trade; (MQ Series) Queue.
+ *         Implements an Oracle Reports&trade; {@link oracle.reports.server.Destination} for distributing
+ *         the files of a distribution process into a Websphere MQ&trade; (MQ Series) Queue.
  *         The destination is able to modify / transform the data genearated report output. See below.
  * 
  *         <p>
@@ -94,20 +94,23 @@ import oracle.reports.utility.Utility;
  *         <li>{@code SET_REPORT_OBJECT_PROPERTY( }REPORT_OBJECT</em>
  *         {@code , REPORT_DESTYPE, CACHE }<sup>1)</sup> {@code );}</li>
  *         <li>If wanting to override the MQ set up in the <em>reportserver.conf</em><br/>
- *              {@code SET_REPORT_OBJECT_PROPERTY( }<em>REPORT_OBJECT</em>
- *              {@code , REPORT_DESNAME, 'wmq://localhost:1414/dest/queue/MY.QUEUE@MYQMGR?channelName=CHANNEL_1' );}
+ *         {@code SET_REPORT_OBJECT_PROPERTY( }<em>REPORT_OBJECT</em>
+ *         {@code , REPORT_DESNAME, 'wmq://localhost:1414/dest/queue/MY.QUEUE@MYQMGR?channelName=CHANNEL_1' );}
  *         </li>
  *         <li>code SET_REPORT_OBJECT_PROPERTY( }<em>REPORT_OBJECT</em>
- *              {@code , REPORT_OTHER, 'DESTYPE=MQ' );}
+ *         {@code , REPORT_OTHER, 'DESTYPE=MQ' );}
  *         </li>
- *         <li>If wanting to apply transformations: via Parameter List<pre>{@code 
+ *         <li>If wanting to apply transformations: via Parameter List
+ * 
+ *         <pre>
+ *         {@code 
  * distribution_parameters := CREATE_PARAMETER_LIST( 'SOME_UNIQUE_NAME' );  
  * ADD_PARAMETER( distribution_parameters, 'TRANSFORM', TEXT_PARAMETER, 'BASE64>>ENVELOPE(SOAP)' );
  * --
  * -- Pass the Parameter List on RUN_REPORT_OBJECT
  * --
  * RUN_REPORT_OBJECT( REPORT_OBJECT, distribution_parameters ); }
- *         </li>     
+ *         </li>
  *         </ul>
  *         <small>1) Any valid DESTYPE. {@code NULL} or {@code ''} not allowed.</small>
  *

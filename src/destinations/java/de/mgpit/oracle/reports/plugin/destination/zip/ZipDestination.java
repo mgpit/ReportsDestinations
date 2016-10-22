@@ -25,9 +25,9 @@ import oracle.reports.utility.Utility;
  * 
  * @author mgp
  *         <p>
- *         Implements an Oracle Reports&trade; {@link oracle.reports.server.Destination} that puts
- *         the files of its distribution process into a ZIP file. The destination is able to distribute files to an existing
- *         ZIP file with some limitations. See below.
+ *         Implements an Oracle Reports&trade; {@link oracle.reports.server.Destination} for distributing
+ *         the files of a distribution process to a ZIP file. The destination is able to append files to an existing
+ *         ZIP file with some limitations with respect to duplicates - see below.
  * 
  *         <p>
  *         <strong>Registering the destination in your <em>reportserver.conf</em>:</strong>
@@ -49,11 +49,12 @@ import oracle.reports.utility.Utility;
  *         <p>
  *         There are two ways to specify the zip file used as a distribution target.
  *         <ul>
- *              <li>passing separate parameters for file name and append mode</li>
- *              <li>passing an URI as {@code DESNAME}</li>
+ *         <li>passing separate parameters for file name and append mode</li>
+ *         <li>passing an URI as {@code DESNAME}</li>
  *         </ul>
  * 
- *         <p><strong>1) Using separate parameters</strong>
+ *         <p>
+ *         <strong>1) Using separate parameters</strong>
  *         <p>
  *         The full name ( path and file name ) must be provided as parameter {@code zipfilename}.
  *         <ul>
@@ -62,31 +63,35 @@ import oracle.reports.utility.Utility;
  *         <p>
  *         If you want to have several distributions put to the same ZIP file you add the parameter {@code append}.
  *         <ul>
- *          <li>{@code append=}[true|TRUE|yes|YES|on|ON|1]</li>
+ *         <li>{@code append=}[true|TRUE|yes|YES|on|ON|1]</li>
  *         </ul>
  *         When using parameters the entry name will be calculated from {@code DESNAME}
- *         
- *         <p><strong>2) Using an URI</strong>
+ * 
+ *         <p>
+ *         <strong>2) Using an URI</strong>
  *         <p>
  *         When using the URI approach you specify the ZIP file in the {@code DESNAME}
  *         <ul>
- *          <li>{@code zip:///}<em>full path and name to ZIP file</em>{@code ?append=}[true|TRUE|yes|YES|on|ON|1]{@code &entry=}<em>filename</em>
+ *         <li>{@code zip:///}<em>full path and name to ZIP file</em>{@code ?append=}[true|TRUE|yes|YES|on|ON|1]{@code &entry=}<em>filename</em>
  *         </ul>
  *         <strong>note: </strong>scheme must be <strong>zip</strong> (lowercase!)
  *         <p>
  *         When running from <strong>Oracle Forms</strong>&trade; using a <em>REPORT_OBJECT</em> you can pass the parameters as follows.
  *         <ul>
- *          <li>{@code SET_REPORT_OBJECT_PROPERTY( }REPORT_OBJECT</em>
- *              {@code , REPORT_DESTYPE, CACHE }<sup>1)</sup> {@code );}</li>
- *          <li>Parameter passsing style: 
- *              <ul>
- *                  <li>{@code SET_REPORT_OBJECT_PROPERTY( }<em>REPORT_OBJECT</em>
- *                      {@code , REPORT_DESNAME, 'foo.pdf' );}
- *                  </li>
- *                  <li>{@code SET_REPORT_OBJECT_PROPERTY( }<em>REPORT_OBJECT</em>
- *                      {@code , REPORT_OTHER, 'DESTYPE=ZIP' ); -- Cannot be set via PARAM_LIST}
- *                  </li>
- *                  <li>other parameters via Parameter List<pre>{@code 
+ *         <li>{@code SET_REPORT_OBJECT_PROPERTY( }REPORT_OBJECT</em>
+ *         {@code , REPORT_DESTYPE, CACHE }<sup>1)</sup> {@code );}</li>
+ *         <li>Parameter passsing style:
+ *         <ul>
+ *         <li>{@code SET_REPORT_OBJECT_PROPERTY( }<em>REPORT_OBJECT</em>
+ *         {@code , REPORT_DESNAME, 'foo.pdf' );}
+ *         </li>
+ *         <li>{@code SET_REPORT_OBJECT_PROPERTY( }<em>REPORT_OBJECT</em>
+ *         {@code , REPORT_OTHER, 'DESTYPE=ZIP' ); -- Cannot be set via PARAM_LIST}
+ *         </li>
+ *         <li>other parameters via Parameter List
+ * 
+ *         <pre>
+ * {@code 
  * distribution_parameters := CREATE_PARAMETER_LIST( 'SOME_UNIQUE_NAME' );  
  * -- NOT ALLOWED: ADD_PARAMETER( distribution_parameters, 'DESTYPE'    , TEXT_PARAMETER, 'zip' );
  * ADD_PARAMETER( distribution_parameters, 'ZIPFILENAME', TEXT_PARAMETER, 'bar.zip' );
@@ -96,19 +101,21 @@ import oracle.reports.utility.Utility;
  * -- Pass the Parameter List on RUN_REPORT_OBJECT
  * --
  * RUN_REPORT_OBJECT( REPORT_OBJECT, distribution_parameters ); }
- * </pre>           </li>
- *              </ul>
- *          </li>
- *          <li>URI passing style:
- *              <ul>
- *                  <li>{@code SET_REPORT_OBJECT_PROPERTY( }<em>REPORT_OBJECT</em>
- *                      {@code , REPORT_DESNAME, 'zip:///home/oracle/reports/bar.zip?append=false&entry=foo.pdf' );}
- *                  </li>
- *                  <li>{@code SET_REPORT_OBJECT_PROPERTY( }<em>REPORT_OBJECT</em>
- *                      {@code , REPORT_OTHER, 'DESTYPE=ZIP' );}
- *                  </li>
- *              </ul>
- *          </li>
+ *         </pre>
+ * 
+ *         </li>
+ *         </ul>
+ *         </li>
+ *         <li>URI passing style:
+ *         <ul>
+ *         <li>{@code SET_REPORT_OBJECT_PROPERTY( }<em>REPORT_OBJECT</em>
+ *         {@code , REPORT_DESNAME, 'zip:///home/oracle/reports/bar.zip?append=false&entry=foo.pdf' );}
+ *         </li>
+ *         <li>{@code SET_REPORT_OBJECT_PROPERTY( }<em>REPORT_OBJECT</em>
+ *         {@code , REPORT_OTHER, 'DESTYPE=ZIP' );}
+ *         </li>
+ *         </ul>
+ *         </li>
  *         </ul>
  *         <small>1) Any valid DESTYPE. {@code NULL} or {@code ''} not allowed.</small>
  *         <p>

@@ -58,26 +58,23 @@ import oracle.reports.utility.Utility;
 public final class DestinationsLogging {
 
     /**
-     * List of loggers (identified by their name) already configured ...
+     * Holds a list of loggers (identified by their name) already configured ...
      * <p>
      * If a logger is registered here it will not be configured again.
      * <p>
-     * Consequence: Subsequent MgpDestinations
-     * addressing the same logger will not override the logger with their configuration. This is "first come first serve"
+     * Consequence/goal: Subsequent MgpDestinations addressing the same logger will not override the logger with their configuration.
+     * This is "first come first serve"
      */
     private static final List configuredDestinationLoggerNames = new LinkedList();
 
-    // private static class VerbosePatternLayout extends PatternLayout {
-    // public VerbosePatternLayout( String pattern ) {
-    // super( pattern );
-    // }
-    // public boolean ignoresThrowable() {
-    // return false;
-    // }
-    // }
-
+    /**
+     * Holds the layout for a log message pattern made of ISO8601 date , level , and message
+     */
     private static final Layout DATE_LEVEL_MESSAGE_LAYOUT = new PatternLayout( "%d{ISO8601} [%-5p] :: %m%n" );
 
+    /**
+     * Holds the layout for a log message pattern made of ISO8601 date , class , thread , level , and message
+     */
     private static final Layout VERBOSE_WIDE_LAYOUT = new PatternLayout( "%d{ISO8601} | %-65C | %-25t | %-5p :: %m%n" );
 
     /**
@@ -170,7 +167,7 @@ public final class DestinationsLogging {
     }
 
     /**
-     * (Re)sets the loggers log level.
+     * Sets the loggers log level.
      * <p>
      * In contrast to {@link Level#toLevel(String)} the fallback level will be {@link Level#INFO}.
      * 
@@ -193,6 +190,16 @@ public final class DestinationsLogging {
         logger.setLevel( newLevel );
     }
 
+    /**
+     * Creates a FileAppender instance for the class given.
+     * 
+     * @param clazz
+     *            class for which the FileApender will be created
+     * @param optionalFilename
+     *            optional file name for the logfile
+     * @return a new RollingFileAppender
+     * @throws IOException
+     */
     private static final FileAppender buildFileAppender( final Class clazz, final String optionalFilename ) throws IOException {
         String filename = givenOrFallbackFilenameFrom( optionalFilename, clazz );
         RollingFileAppender newAppender = new RollingFileAppender( DATE_LEVEL_MESSAGE_LAYOUT, filename,
@@ -204,12 +211,37 @@ public final class DestinationsLogging {
     }
 
     /* Leave it package global for JUnit Tests ... */
+    /**
+     * Gets a filename usable for creating a log file.
+     * 
+     * @see #givenOrFallbackFilenameFrom(String, String)
+     * 
+     * @param optionalFilename
+     *            file name, maybe null
+     * @param clazz
+     *            class of which's name will be used as alternative file name
+     * @return string with full file name
+     */
     static final String givenOrFallbackFilenameFrom( final String optionalFilename, final Class clazz ) {
         String classNameAsFilename = IOUtility.asLogfileFilename( clazz.getName() );
         return givenOrFallbackFilenameFrom( optionalFilename, classNameAsFilename );
     }
 
     /* Leave it package global for JUnit Tests ... */
+    /**
+     * Gets a filename usable for creating a log file.
+     * <p>
+     * Goal is to return a valid file name, i.e. a filename located in an existing directory/path which the current process
+     * is allowed to access.
+     * Normally this should be the file name provided. If not, the report servers log directory is considered, if this won't work
+     * the report servers temp directory is considered and finally the "system"'s temp directory.
+     * 
+     * @param optionalFilename
+     *            file name, maybe null
+     * @param alternativeFilename
+     *            alternative file name to use if the optionalFilename is null
+     * @return string with full filename
+     */
     static final String givenOrFallbackFilenameFrom( final String optionalFilename, final String alternativeFilename ) {
         String filenameToStartWith = U.coalesce( optionalFilename, alternativeFilename );
 
@@ -254,12 +286,17 @@ public final class DestinationsLogging {
         return valid;
     }
 
+    /**
+     * Holds if the root Logger already has been set up.
+     */
     private static boolean rootLoggerIsSetUp = false;
 
     /*
-     * From observation the report server sets up all destinations sequentially
+     * Asserts that the root logger exists.
+     * <p>
+     * Deducting from observation the report server sets up all destinations sequentially
      * running the main thread. Yet ensure only one thread manipulates the {@see #rootLoggerIsSetUp}
-     * at the same time.
+     * at the same time by making this method synchronized.
      */
     public synchronized static void assertRootLoggerExists() {
         Logger root = Logger.getRootLogger();
