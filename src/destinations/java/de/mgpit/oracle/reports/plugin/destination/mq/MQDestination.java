@@ -32,22 +32,136 @@ import de.mgpit.oracle.reports.plugin.destination.content.types.TransformerName;
 import oracle.reports.RWException;
 import oracle.reports.utility.Utility;
 
+/**
+ * 
+ * @author mgp
+ *         <p>
+ *         Implements an Oracle Reports&trade; {@link oracle.reports.server.Destination} that puts
+ *         the files of its distribution process into a Websphere MQ&trade; (MQ Series) Queue.
+ *         The destination is able to modify / transform the data genearated report output. See below.
+ * 
+ *         <p>
+ *         <strong>Registering the destination in your <em>reportserver.conf</em>:</strong>
+ *         <p>
+ *         The {@code DESTYPE} for this destination is suggested to be {@code mq}.
+ *         Basic configuration example:
+ * 
+ *         <pre>
+ * {@code
+ *  <destination destype="mq" class="de.mgpit.oracle.reports.plugin.destination.zip.MQDestination">
+ *     <property name="loglevel" value="DEBUG"/> <!-- log4j message levels. Allow debug messages --> 
+ *     <property name="logfile"  value="/tmp/log/mqdestination.log"/> <!-- file to send the messages to -->
+ *     <property name="mq"       value="wmq://localhost:1414/dest/queue/MY.QUEUE@MYQMGR?channelName=CHANNEL_1/"/>
+ *  </destination>
+ *         }
+ *         </pre>
+ * 
+ *         The default MQ target is configured as property named {@code mq} in the form of an URI denoting
+ *         Queue Manager, Queue, and Channel name.
+ *         <ul>
+ *         <li>{@code wmq://}<em>host:mqport</em>{@code /dest/queue/}<em>queuename@qmgr</em>{@code ?channelName=}<em>channelname</em>
+ *         </ul>
+ *         <strong>note: </strong>scheme must be <strong>wmq</strong> (lowercase!)
+ *         <p>
+ *         One can also register transformation plugins.
+ * 
+ *         <pre>
+ * {@code
+ *  <destination destype="MQ" class="de.mgpit.oracle.reports.plugin.destination.zip.MQDestination">
+ *     <property name="loglevel" value="DEBUG"/> <!-- log4j message levels. Allow debug messages --> 
+ *     <property name="logfile"  value="/tmp/log/mqdestination.log"/> <!-- file to send the messages to -->
+ *     <property name="mq"       value="wmq://localhost:1414/dest/queue/MY.QUEUE@MYQMGR?channelName=CHANNEL_1/"/>
+ *     <!-- Transformers -->
+ *     <property name="transformer.BASE64"      value="de.mgpit.oracle.reports.plugin.destination.content.transformers.Base64Transformer"/>
+ *     <property name="transformer.Envelope"    value="de.mgpit.oracle.reports.plugin.destination.content.decorators.EnvelopeDecorator"/>
+ *     <property name="transformer.Header"      value="de.mgpit.oracle.reports.plugin.destination.content.decorators.HeaderDecorator"/>
+ *     <!-- Content Providers -->
+ *     <property name="content.Soap"            value="tld.foo.bar.batz.SoapEnvelope"/> <!-- Must implement de.mgpit.oracle.reports.plugin.destination.content.types.Content -->
+ *  </destination>
+ *         }
+ *         </pre>
+ *
+ *
+ *         <p>
+ *         <strong>Using the destination:</strong>
+ *         <p>
+ *         The default distribution target is configured as property in the <em>reportserver.conf</em> - see above.
+ *         On distribution one can pass a different target via {@code DESNAME} in the form of the above URI format.
+ *         <p>
+ *
+ *         When running from <strong>Oracle Forms</strong>&trade; using a <em>REPORT_OBJECT</em> you can pass the parameters as follows.
+ *         <ul>
+ *         <li>{@code SET_REPORT_OBJECT_PROPERTY( }REPORT_OBJECT</em>
+ *         {@code , REPORT_DESTYPE, CACHE }<sup>1)</sup> {@code );}</li>
+ *         <li>If wanting to override the MQ set up in the <em>reportserver.conf</em><br/>
+ *              {@code SET_REPORT_OBJECT_PROPERTY( }<em>REPORT_OBJECT</em>
+ *              {@code , REPORT_DESNAME, 'wmq://localhost:1414/dest/queue/MY.QUEUE@MYQMGR?channelName=CHANNEL_1' );}
+ *         </li>
+ *         <li>code SET_REPORT_OBJECT_PROPERTY( }<em>REPORT_OBJECT</em>
+ *              {@code , REPORT_OTHER, 'DESTYPE=MQ' );}
+ *         </li>
+ *         <li>If wanting to apply transformations: via Parameter List<pre>{@code 
+ * distribution_parameters := CREATE_PARAMETER_LIST( 'SOME_UNIQUE_NAME' );  
+ * ADD_PARAMETER( distribution_parameters, 'TRANSFORM', TEXT_PARAMETER, 'BASE64>>ENVELOPE(SOAP)' );
+ * --
+ * -- Pass the Parameter List on RUN_REPORT_OBJECT
+ * --
+ * RUN_REPORT_OBJECT( REPORT_OBJECT, distribution_parameters ); }
+ *         </li>     
+ *         </ul>
+ *         <small>1) Any valid DESTYPE. {@code NULL} or {@code ''} not allowed.</small>
+ *
+ */
 public final class MQDestination extends MgpDestination {
 
+    /*
+     * Me logger ... ;-)
+     */
     private static final Logger LOG = Logger.getLogger( MQDestination.class );
 
+    /**
+     * Holds the default MQ instance as defined in the {@code <reportservername>.conf} file
+     */
     private static MQ DEFAULT_MQ;
 
     private static final int SOME_PRIME = 23;
+
+    /**
+     * Holds the transformer plugins as defined in the {@code <reportservername>.conf} file
+     */
     private static Map CONTENTMODIFIERS = Collections.synchronizedMap( new HashMap( SOME_PRIME ) );
+
+    /**
+     * Holds the content providers as defined in the {@code <reportservername>.conf} file
+     */
     private static Map CONTENTPROVIDERS = Collections.synchronizedMap( new HashMap( SOME_PRIME ) );
 
+    /**
+     * Holds the transformation chain which will be applied to the output
+     * on the current distribution cycle - which is
+     * <br/>
+     * {@code start} &rarr; {@code sendFile}<sup>{1..n}</sup> &rarr; {@code stop()}
+     * 
+     */
     private OutputTransformation[] outputTransformationChain = {};
+    /**
+     * Holds the transformation chain which will be applied to the input
+     * on the current distribution cycle - which is
+     * <br/>
+     * {@code start} &rarr; {@code sendFile}<sup>{1..n}</sup> &rarr; {@code stop()}
+     */
     private InputTransformation[] inputTransformationChain = {};
+
+    /**
+     * Holds the MQ connection used for the current distribution cycle - which is
+     * <br/>
+     * {@code start} &rarr; {@code sendFile}<sup>{1..n}</sup> &rarr; {@code stop()}
+     *
+     */
     private MQ mq;
 
     /**
-     * Stop the distribution cycle.
+     * Stops the distribution cycle.
      */
     protected void stop() throws RWException {
         try {
@@ -60,7 +174,7 @@ public final class MQDestination extends MgpDestination {
     }
 
     /**
-     * Start a new distribution cycle for a report to this destination. Will
+     * Starts a new distribution cycle for a report to this destination. Will
      * distribute one or many files depending on the format.
      * 
      * @param allProperties
@@ -193,7 +307,7 @@ public final class MQDestination extends MgpDestination {
     }
 
     /**
-     * Wrap the output wiht {@link OutputTransformation}s.
+     * Wraps the output wiht {@link OutputTransformation}s.
      * 
      * @param destinationStream
      * @return
@@ -214,7 +328,7 @@ public final class MQDestination extends MgpDestination {
     }
 
     /**
-     * Wrap the input with {@link InputTransformation}s.
+     * Wraps the input with {@link InputTransformation}s.
      * 
      * @param initialStream
      * @return
@@ -235,7 +349,7 @@ public final class MQDestination extends MgpDestination {
     }
 
     /**
-     * Initialize the destination on Report Server startup.
+     * Initializes the destination on Report Server startup.
      * <ul>
      * <li>initialize log4j</li>
      * <li>register declared content modifiers</li>

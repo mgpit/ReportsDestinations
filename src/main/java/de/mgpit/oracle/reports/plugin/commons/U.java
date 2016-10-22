@@ -15,13 +15,14 @@ import oracle.reports.utility.Utility;
  * 
  * @author mgp
  *         <p>
- *         This class provides some static utility methods:
+ *         This class provides a bunch of utility methods for, e.g.
  *         <ul>
- *         <li>{@link #w(int)}, {@link #w(long}, {@link #w(Object)}, {@link #w(short)}, and {@link #w(String)}
- *         will return a String representation of their parameter wrapped in square brackets.</li>
- *         <li>{@link #isEmpty(String)} will check if the String provided is null or the empty String</li>
+ *          <li>handling class and package names</li>
+ *          <li>decorating strings and numbers with square brackets</li>
+ *          <li>padding strings and numbers</li>
+ *          <li>testing strings and arrays for emptiness</li>
+ *          <li>assertions</li>
  *         </ul>
- *
  */
 public final class U {
 

@@ -34,6 +34,19 @@ import oracle.reports.utility.Utility;
  *         configruation in the report server's conf file. If no specific file name is provided the name defaults to
  *         {@code destination.log} and can be found in the report server's log directory (or the temp directory if the server does
  *         not have a log directory).
+ *         <p>
+ *         The static part of a Destination holds the information configured in the {@code <servername>.cfg} file via
+ *         {@code //destination/property} elements.
+ *         <p>
+ *         The instance part holds the information needed for the current distribution. Assumption is that for each distribution
+ *         a new instance of the Destination will be created by the Oracle Reports&trade; server and that there is no caching or
+ *         destination pooling.
+ *         <p>
+ *         A distribution cylcle consists of the sequence {@code start} &rarr; {@code sendFile}<sup>{1..n}</sup> &rarr; {@code stop()}.
+ *         The number of {@code sendFile}s depends on the reports output format.
+ *         A {@code PDF} for example will produce one file whereas a {@code HTML} output will produce a main file containing the HTML and
+ *         several additional files for e.g. each image embedded in the current report.
+ * 
  */
 public abstract class MgpDestination extends Destination {
 
@@ -43,6 +56,7 @@ public abstract class MgpDestination extends Destination {
     private int indexOfCurrentlyDistributedFile = -1;
 
     /**
+     * Translates the numeric code for the file format into a human readable text like {@code application/pdf}
      * 
      * @param formatCode
      *            numeric format code
@@ -54,6 +68,7 @@ public abstract class MgpDestination extends Destination {
     }
 
     /**
+     * Gets the string representation for the format code given.
      * 
      * @param formatCode
      *            numeric format code
@@ -65,7 +80,7 @@ public abstract class MgpDestination extends Destination {
     }
 
     /**
-     * 
+     * Gets the mime type string representation for the format code given.
      * @param formatCode
      *            numeric format code
      * @return the numerically coded {@code format} in human readable format
@@ -76,23 +91,22 @@ public abstract class MgpDestination extends Destination {
     }
 
     /**
+     * @see U#isEmpty(String)
      * 
-     * @param s
-     *            a String
-     * @return {@code true} if the String s is null or them empty String "".
      */
     public static final boolean isEmpty( final String s ) {
         return U.isEmpty( s );
     }
-    
+
     /**
      * Answer if the string given is a (syntactically correct) Destination URI.
      * <p>
      * <ul>
-     *  <li>Must be syntactically correckt</li>
-     *  <li>Must be <em>absolute</em></li>
-     *  <li>Must <strong>not</strong> be <em>opaque</em></li>
+     * <li>Must be syntactically correckt</li>
+     * <li>Must be <em>absolute</em></li>
+     * <li>Must <strong>not</strong> be <em>opaque</em></li>
      * </ul>
+     * 
      * @param str
      * @return <code>true</code> if the string given is a Destination URI, else <code>false</code>
      */
@@ -102,24 +116,22 @@ public abstract class MgpDestination extends Destination {
         }
         try {
             URI tmp = new URI( given );
-            return !tmp.isOpaque()
-                   && tmp.isAbsolute()
-                   && !isEmpty( tmp.getScheme() )
-                   && tmp.getScheme().equalsIgnoreCase( scheme );
+            return !tmp.isOpaque() && tmp.isAbsolute() && !isEmpty( tmp.getScheme() ) && tmp.getScheme().equalsIgnoreCase( scheme );
         } catch ( URISyntaxException syntax ) {
             return false;
         }
     }
 
     /**
-     * Start a new distribution cycle for a report to this destination. Will
-     * distribute one or many files depending on the format.
+     * Starts a new distribution cycle for a report to this destination. Will
+     * distribute one or many files depending on the output format specified for the report execution.
      * <p>
-     * {@link Destination#setProperties()} and {@link Destination#getProperties()} indicate that the <code>allProperties</code>
-     * will already have been passed to the instance so passing them seems redundant.
+     * The existance of the {@link Destination#setProperties()} and {@link Destination#getProperties()} indicates that the {@code allProperties}
+     * will already have been passed to this instance so passing them seems redundant. Class Destination also has an instance
+     * level field named {@code mProps} set/read by these methods.
      * 
      * @param allProperties
-     *            all properties (parameters) passed to the report. 
+     *            all properties (parameters) passed to the report.
      *            For Oracle Forms&trade; this will include the parameters set via <code>SET_REPORT_OBJECT_PROPERTY</code>
      *            plus the parameters passed via a <code>ParamList</code>
      * @param targetName
@@ -149,10 +161,24 @@ public abstract class MgpDestination extends Destination {
         return true; // continue to send
     }
 
+    /**
+     * Dumps the properties given using this object's current logger.
+     * 
+     * @param allProperties
+     *            the properties to dump
+     */
     protected void dumpProperties( final Properties allProperties ) {
         dumpProperties( allProperties, getLogger() );
     }
 
+    /**
+     * Dumps the properties given using the specified logger.
+     * 
+     * @param givenProperties
+     *            the properties to dump
+     * @param logger
+     *            the logger to use
+     */
     static protected void dumpProperties( final Properties givenProperties, Logger logger ) {
         if ( logger.isDebugEnabled() ) {
             Set keys = new TreeSet(); // we want the keys sorted ...
@@ -194,7 +220,11 @@ public abstract class MgpDestination extends Destination {
     }
 
     /**
-     * Send a file from the current distribution to the destination.
+     * Sends a file from the cache to this destination.
+     * <p>
+     * A distribution forms a cylcle of
+     * <br/>
+     * {@code start} &rarr; {@code sendFile}<sup>{1..n}</sup> &rarr; {@code stop()}
      * 
      * @param isMainFile
      *            flag if the file to be distributed is the main file
@@ -203,7 +233,7 @@ public abstract class MgpDestination extends Destination {
      * @param fileFormat
      *            file format code of the file to be distributed
      * @param fileSize
-     *            file size of the file to be distributed
+     *            file size of the file to be distributed in bytes
      * 
      * 
      *            TODO: re-think if this should really be final?
@@ -257,7 +287,7 @@ public abstract class MgpDestination extends Destination {
      * @throws RWException
      */
     protected InputStream getContent( File sourceFile ) throws RWException {
-        U.Rw.assertNotNull(sourceFile, "Source file must not be null!" );
+        U.Rw.assertNotNull( sourceFile, "Source file must not be null!" );
         try {
             InputStream in = IOUtility.asFileInputStream( sourceFile );
             return in;
@@ -268,7 +298,7 @@ public abstract class MgpDestination extends Destination {
     }
 
     /**
-     * Stop the distribution cycle.
+     * Stops the distribution cycle.
      */
     protected void stop() throws RWException {
         try {
@@ -280,7 +310,7 @@ public abstract class MgpDestination extends Destination {
     }
 
     /**
-     * Initialize the destination on Report Server startup.
+     * Initializes the destination on Report Server startup.
      * <p>
      * All destinations seem to be set up by the <code>main</code> thread of the reports server so we
      * should not expect multithreading issues ...
