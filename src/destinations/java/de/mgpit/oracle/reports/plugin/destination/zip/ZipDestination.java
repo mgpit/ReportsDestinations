@@ -18,6 +18,7 @@ import de.mgpit.oracle.reports.plugin.commons.ZipArchive;
 import de.mgpit.oracle.reports.plugin.commons.ZipArchive.ArchivingException;
 import de.mgpit.oracle.reports.plugin.commons.io.IOUtility;
 import de.mgpit.oracle.reports.plugin.destination.MgpDestination;
+import de.mgpit.types.Filename;
 import oracle.reports.RWException;
 import oracle.reports.utility.Utility;
 
@@ -162,20 +163,20 @@ public final class ZipDestination extends MgpDestination {
     /**
      * Send the main file to the destination
      * 
-     * @param cacheFileFilename
+     * @param cacheFile
      *            full file name of the cache file to be distributed
      * @param fileFormat
      *            file format code
      * @throws RWException
      */
-    protected void sendMainFile( final String cacheFileFilename, final short fileFormat ) throws RWException {
-        String entryName = IOUtility.fileNameOnly( getDesname() );
-        getLogger().info( "MAIN file " + U.w( cacheFileFilename ) + " of format " + humanReadable( fileFormat ) + " will be put as "
+    protected void sendMainFile( final Filename cacheFile, final short fileFormat ) throws RWException {
+        Filename entryName = IOUtility.fileNameOnly( Filename.of( getDesname() ) );
+        getLogger().info( "MAIN file " + U.w( cacheFile ) + " of format " + humanReadable( fileFormat ) + " will be put as "
                 + U.w( entryName ) + " to " + U.w( getZipArchiveFileName() ) );
         try {
-            addFileToArchiveWithName( cacheFileFilename, entryName );
+            addFileToArchiveWithName( cacheFile, entryName );
         } catch ( Throwable anyOther ) {
-            getLogger().fatal( "Fatal Error during sending main file " + U.w( cacheFileFilename ) + "!", anyOther );
+            getLogger().fatal( "Fatal Error during sending main file " + U.w( cacheFile ) + "!", anyOther );
             throw Utility.newRWException( new Exception( anyOther ) );
         }
     }
@@ -183,20 +184,20 @@ public final class ZipDestination extends MgpDestination {
     /**
      * Send any subordinate file to the destination
      * 
-     * @param cacheFileFilename
+     * @param cacheFile
      *            full file name of the cache file to be distributed
      * @param fileFormat
      *            file format code
      * @throws RWException
      */
-    protected void sendAdditionalFile( final String cacheFileFilename, final short fileFormat ) throws RWException {
-        String entryName = IOUtility.fileNameOnly( IOUtility.fileNameOnly( cacheFileFilename ) );
-        getLogger().info( "Other file " + U.w( cacheFileFilename ) + " of format " + humanReadable( fileFormat )
-                + " will be put as " + U.w( entryName ) + " to " + U.w( getZipArchiveFileName() ) );
+    protected void sendAdditionalFile( final Filename cacheFile, final short fileFormat ) throws RWException {
+        Filename entryName = IOUtility.fileNameOnly( IOUtility.fileNameOnly( cacheFile ) );
+        getLogger().info( "Other file " + U.w( cacheFile ) + " of format " + humanReadable( fileFormat ) + " will be put as "
+                + U.w( entryName ) + " to " + U.w( getZipArchiveFileName() ) );
         try {
-            addFileToArchiveWithName( cacheFileFilename, entryName );
+            addFileToArchiveWithName( cacheFile, entryName );
         } catch ( Throwable anyOther ) {
-            getLogger().fatal( "Fatal Error during sending additional file " + U.w( cacheFileFilename ) + "!", anyOther );
+            getLogger().fatal( "Fatal Error during sending additional file " + U.w( cacheFile ) + "!", anyOther );
             throw Utility.newRWException( new Exception( anyOther ) );
         }
     }
@@ -211,8 +212,8 @@ public final class ZipDestination extends MgpDestination {
      *            name for the source in the ZIP file
      * @throws ArchivingException
      */
-    protected void addFileToArchiveWithName( final String sourceFileFilename, final String givenEntryName ) throws RWException {
-        String entryName = IOUtility.fileNameOnly( U.coalesce( givenEntryName, sourceFileFilename ) );
+    protected void addFileToArchiveWithName( final Filename sourceFileFilename, final Filename givenEntryName ) throws RWException {
+        Filename entryName = IOUtility.fileNameOnly( U.coalesce( givenEntryName, sourceFileFilename ) );
         try {
             File sourceFile = IOUtility.asFile( sourceFileFilename );
             InputStream in = IOUtility.asFileInputStream( sourceFile );
@@ -261,7 +262,7 @@ public final class ZipDestination extends MgpDestination {
                      * For debugging purposes it's more convenient to be able to simply copy and paste the
                      * file name from the logging message, though.
                      */
-                    String zipArchiveFileName = URIUtility.pathToPlatformPath( this.uri );
+                    Filename zipArchiveFileName = URIUtility.pathToPlatformFilename( this.uri );
                     Properties queryParameters = URIUtility.queryStringAsProperties( this.uri );
 
                     boolean inAppendingMode = false;
@@ -297,7 +298,7 @@ public final class ZipDestination extends MgpDestination {
      * @param zipArchiveFileName
      *            full file name of the ZIP file to be created / updated.
      */
-    private void createZipArchive( final String zipArchiveFileName, final boolean inAppendingMode ) {
+    private void createZipArchive( final Filename zipArchiveFileName, final boolean inAppendingMode ) {
         if ( inAppendingMode ) {
             this.zipArchive = ZipArchive.newOrExistingNamed( zipArchiveFileName );
         } else {
@@ -323,9 +324,9 @@ public final class ZipDestination extends MgpDestination {
      *            allProperties
      * @return
      */
-    private static String getZipArchiveNameFromCallParameters( final Properties allProperties, final String targetName ) {
-        String zipArchiveNameProvided = allProperties.getProperty( "zipfilename", targetName );
-        String calculatedZipArchiveName = IOUtility.withZipExtension( zipArchiveNameProvided );
+    private static Filename getZipArchiveNameFromCallParameters( final Properties allProperties, final String targetName ) {
+        Filename zipArchiveNameProvided = Filename.of( allProperties.getProperty( "zipfilename", targetName ) );
+        Filename calculatedZipArchiveName = IOUtility.withZipExtension( zipArchiveNameProvided );
         return calculatedZipArchiveName;
     }
 
@@ -356,10 +357,10 @@ public final class ZipDestination extends MgpDestination {
 
         if ( OK ) {
             if ( tmpURI == null ) {
-                final String zipFileFilename = getZipArchiveNameFromCallParameters( allProperties, targetName );
+                final Filename zipFileFilename = getZipArchiveNameFromCallParameters( allProperties, targetName );
                 final boolean inAppendingMode = getAppendFlagFromCallParameters( allProperties );
                 try {
-                    final String entryName = IOUtility.fileNameOnly( targetName );
+                    final Filename entryName = IOUtility.fileNameOnly( Filename.of( targetName ) );
                     final String scheme = "zip";
                     final String authority = "";
                     final String path = URIUtility.toUriPathString( zipFileFilename );
@@ -412,7 +413,7 @@ public final class ZipDestination extends MgpDestination {
     // return this.zipEntryName;
     // }
 
-    private String getZipArchiveFileName() {
+    private Filename getZipArchiveFileName() {
         return this.zipArchive.getFileName();
     }
 

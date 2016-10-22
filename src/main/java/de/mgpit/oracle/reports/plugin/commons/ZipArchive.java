@@ -4,7 +4,6 @@ package de.mgpit.oracle.reports.plugin.commons;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Enumeration;
@@ -17,6 +16,7 @@ import java.util.zip.ZipOutputStream;
 import org.apache.log4j.Logger;
 
 import de.mgpit.oracle.reports.plugin.commons.io.IOUtility;
+import de.mgpit.types.Filename;
 
 /**
  * 
@@ -46,7 +46,7 @@ public class ZipArchive {
 
     public static final String ZIP_SCHEME = "zip";
 
-    private String fileName;
+    private Filename fileName;
     private boolean appending = false;
     private boolean open = false;
     private ZipOutputStream zipper;
@@ -65,7 +65,7 @@ public class ZipArchive {
      * @throws Error
      *             if fileName is provided as null or empty String
      */
-    public static ZipArchive newNamed( final String fileName ) {
+    public static ZipArchive newNamed( final Filename fileName ) {
         U.assertNotEmpty( fileName, "fileName must not be null or empty string!" );
         ZipArchive archive = new ZipArchive( fileName );
         return archive;
@@ -82,8 +82,8 @@ public class ZipArchive {
      * @throws Error
      *             if fileName is provided as null or empty String
      */
-    public static ZipArchive newOrExistingNamed( final String fileName ) {
-        U.assertNotEmpty( fileName, "fileName must not be null or empty string!" );
+    public static ZipArchive newOrExistingNamed( final Filename fileName ) {
+        U.assertNotEmpty( fileName,  "fileName must not be null or empty string!" );
         ZipArchive archive = new ZipArchive( fileName ).forAppending();
         return archive;
     }
@@ -96,7 +96,7 @@ public class ZipArchive {
     private ZipArchive() {
     }
 
-    private ZipArchive( final String fileName ) {
+    private ZipArchive( final Filename fileName ) {
         this.fileName = fileName;
         createTemporaryFileFromName( fileName );
     }
@@ -108,8 +108,8 @@ public class ZipArchive {
      * @param fileName
      * @return a new ZipArchive
      */
-    private ZipArchive createTemporaryFileFromName( final String fileName ) {
-        temporaryFile = IOUtility.asFile( fileName + ".part" );
+    private ZipArchive createTemporaryFileFromName( final Filename fileName ) {
+        temporaryFile = IOUtility.asFile( fileName.concat( ".part" ) );
         return this;
     }
 
@@ -194,7 +194,7 @@ public class ZipArchive {
      * @throws Error
      *             if one of the parameters is provided as null or empty String.
      */
-    public ZipArchive addFile( final String sourceFileFilename, final String entryName ) throws ArchivingException {
+    public ZipArchive addFile( final Filename sourceFileFilename, final Filename entryName ) throws ArchivingException {
         U.assertNotEmpty( sourceFileFilename, "sourceFileName must not be null or empty string!" );
         U.assertNotEmpty( entryName, "entryName must not be null or empty string!" );
         try {
@@ -223,7 +223,7 @@ public class ZipArchive {
      * @throws Error
      *             if one of the parameters is provided as null or empty String.
      */
-    public ZipArchive addFromStream( final InputStream source, final String entryName ) throws ArchivingException {
+    public ZipArchive addFromStream( final InputStream source, final Filename entryName ) throws ArchivingException {
         return addFromStream( source, entryName, System.currentTimeMillis() );
     }
 
@@ -243,7 +243,7 @@ public class ZipArchive {
      * @throws Error
      *             if one of the parameters is provided as null or empty String.
      */
-    public ZipArchive addFromStream( final InputStream source, final String entryName, long time ) throws ArchivingException {
+    public ZipArchive addFromStream( final InputStream source, final Filename entryName, long time ) throws ArchivingException {
         U.assertNotNull( source, "Input stream must not be null!" );
         U.assertNotEmpty( entryName, "entryName must not be null or empty string!" );
         if ( !isOpen() ) {
@@ -260,7 +260,7 @@ public class ZipArchive {
      * @param entryName
      *            entrie's name to register
      */
-    private void registerEntry( final String entryName ) {
+    private void registerEntry( final Filename entryName ) {
         if ( entriesCreated == null ) {
             entriesCreated = new HashMap();
         }
@@ -309,9 +309,9 @@ public class ZipArchive {
      *            timestamp to set for the new entry to create
      * @throws ArchivingException
      */
-    private void createEntryFromInputStream( final InputStream source, final String entryName, long entrysTimestamp )
+    private void createEntryFromInputStream( final InputStream source, final Filename entryName, long entrysTimestamp )
             throws ArchivingException {
-        final ZipEntry zipEntry = new ZipEntry( entryName );
+        final ZipEntry zipEntry = new ZipEntry( entryName.toString() );
 
         try {
             zipEntry.setTime( entrysTimestamp );
@@ -357,10 +357,10 @@ public class ZipArchive {
      * 
      * @return string with the file name of this archive
      */
-    public String getFileName() {
+    public Filename getFileName() {
         return this.fileName;
     }
-
+    
     /**
      * Gets if this ZipArchive is in appending mode.
      * 

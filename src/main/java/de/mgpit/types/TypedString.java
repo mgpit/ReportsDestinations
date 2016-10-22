@@ -58,5 +58,13 @@ public abstract class TypedString {
             return 0;
         }
     }
+    
+    public boolean isEmpty() {
+        return this.value() != null && !"".equals( this.value() );
+    }
+    
+    public Filename concat( String str ) {
+        return Filename.of(  this.value().concat(str) );
+    }
 
 }

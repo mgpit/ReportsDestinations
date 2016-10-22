@@ -3,7 +3,6 @@ package de.mgpit.oracle.reports.plugin.destination.mq;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -28,7 +27,8 @@ import de.mgpit.oracle.reports.plugin.destination.content.types.Content;
 import de.mgpit.oracle.reports.plugin.destination.content.types.InputTransformation;
 import de.mgpit.oracle.reports.plugin.destination.content.types.OutputTransformation;
 import de.mgpit.oracle.reports.plugin.destination.content.types.Transformation;
-import de.mgpit.oracle.reports.plugin.destination.content.types.TransformerName;
+import de.mgpit.types.Filename;
+import de.mgpit.types.TransformerName;
 import oracle.reports.RWException;
 import oracle.reports.utility.Utility;
 
@@ -279,7 +279,7 @@ public final class MQDestination extends MgpDestination {
         }
     }
 
-    protected void sendMainFile( String cacheFileFilename, short fileFormat ) throws RWException {
+    protected void sendMainFile( Filename cacheFileFilename, short fileFormat ) throws RWException {
         getLogger().info( "Sending MAIN file to " + getClass().getName() );
         InputStream source = getContent( IOUtility.asFile( cacheFileFilename ) );
         try {
@@ -300,7 +300,7 @@ public final class MQDestination extends MgpDestination {
 
     }
 
-    protected void sendAdditionalFile( String cacheFileFilename, short fileFormat ) throws RWException {
+    protected void sendAdditionalFile( final Filename cacheFileFilename, short fileFormat ) throws RWException {
         getLogger().info( "Sending Other file to " + getClass().getName() );
     }
 

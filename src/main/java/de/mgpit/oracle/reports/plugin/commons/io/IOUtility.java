@@ -14,6 +14,8 @@ import java.security.AccessController;
 
 import de.mgpit.oracle.reports.plugin.commons.U;
 import de.mgpit.oracle.reports.plugin.commons.Units;
+import de.mgpit.types.Directoryname;
+import de.mgpit.types.Filename;
 import oracle.reports.utility.Utility;
 import sun.security.action.GetPropertyAction;
 
@@ -57,9 +59,9 @@ public class IOUtility {
      *            name string to convert
      * @return a log file name
      */
-    public static String asLogfileFilename( final String str ) {
+    public static Filename asLogfileFilename( final String str ) {
         String replaced = str.replace( '.', '_' );
-        return (replaced.endsWith( ".log" )) ? replaced : replaced + ".log";
+        return Filename.of( replaced ).withExtension( "log" );
     }
 
     /**
@@ -71,10 +73,10 @@ public class IOUtility {
      *            file name to be converted
      * @return a string with the file name according to the current platforms naming conventions
      */
-    public static String asPlatformFilename( final String filename ) {
+    public static Filename asPlatformFilename( final Filename filename ) {
         try {
             File f = asFile( filename );
-            return f.getPath();
+            return Filename.of( f.getPath() );
         } catch ( NullPointerException nex ) {
             return null;
         }
@@ -89,10 +91,10 @@ public class IOUtility {
      *            file name to be converted
      * @return a string with the file name according to the current platforms naming conventions
      */
-    public static String asPlatformAbsoluteFilename( final String filename ) {
+    public static Filename asPlatformAbsoluteFilename( final Filename filename ) {
         try {
             File f = asFile( filename );
-            return f.getAbsolutePath();
+            return Filename.of( f );
         } catch ( NullPointerException nex ) {
             return null;
         }
@@ -109,20 +111,8 @@ public class IOUtility {
      *            file name extension to set
      * @return string containing a filename ending with the extension given
      */
-    public static String withExtension( final String fileName, final String newExtension ) {
-        if ( !U.isEmpty( newExtension ) ) {
-            String fileNameWithExtension;
-            int dotPosition = fileName.lastIndexOf( '.' );
-            if ( dotPosition > 0 ) {
-                String currentExtension = fileName.substring( dotPosition + 1 );
-                fileNameWithExtension = (currentExtension.equalsIgnoreCase( newExtension ) ? fileName
-                        : fileName + "." + newExtension);
-            } else {
-                fileNameWithExtension = fileName + "." + newExtension;
-            }
-            return fileNameWithExtension;
-        }
-        return fileName;
+    public static Filename withExtension( final Filename fileName, final String newExtension ) {
+        return (fileName == null)?null:fileName.withExtension( newExtension );
     }
 
     /**
@@ -134,7 +124,7 @@ public class IOUtility {
      *            to add the extension to
      * @return string containing a filename ending with the extension {@code .zip}
      */
-    public static String withZipExtension( final String fileName ) {
+    public static Filename withZipExtension( final Filename fileName ) {
         return withExtension( fileName, "zip" );
     }
 
@@ -145,8 +135,8 @@ public class IOUtility {
      *            full file name
      * @return the file name part
      */
-    public static String fileNameOnly( final String fullFileName ) {
-        return (fullFileName == null) ? null : Utility.fileNameOnly( fullFileName );
+    public static Filename fileNameOnly( final Filename fullFileName ) {
+        return (fullFileName == null) ? null : Filename.of( Utility.fileNameOnly( fullFileName.toString() ) );
     }
 
     /**
@@ -261,8 +251,8 @@ public class IOUtility {
      *            file's name
      * @return file
      */
-    public static File asFile( String fileName ) {
-        return new File( fileName );
+    public static File asFile( Filename fileName ) {
+        return new File( fileName.toString() );
     }
 
     /**
@@ -274,8 +264,8 @@ public class IOUtility {
      *            file's name
      * @return file
      */
-    public static File asFile( String directoryName, String fileName ) {
-        return new File( new File( directoryName ), fileName );
+    public static File asFile( Directoryname directoryName, Filename fileName ) {
+        return new File( new File( directoryName.toString() ), fileName.toString() );
     }
 
     /**
@@ -299,7 +289,7 @@ public class IOUtility {
      * @return FileInputStream on the file
      * @throws FileNotFoundException
      */
-    public static FileInputStream asFileInputStream( String fileName ) throws FileNotFoundException {
+    public static FileInputStream asFileInputStream( Filename fileName ) throws FileNotFoundException {
         return asFileInputStream( asFile( fileName ) );
     }
 
@@ -311,7 +301,7 @@ public class IOUtility {
      * @return FileOutputStream on the file
      * @throws FileNotFoundException
      */
-    public static FileOutputStream asFileOutputStream( File file ) throws FileNotFoundException {
+    public static FileOutputStream asFileOutputStream( final File file ) throws FileNotFoundException {
         return new FileOutputStream( file );
     }
 
@@ -323,7 +313,7 @@ public class IOUtility {
      * @return FileOutputStream on the file
      * @throws FileNotFoundException
      */
-    public static FileOutputStream asFileOutputStream( String fileName ) throws FileNotFoundException {
+    public static FileOutputStream asFileOutputStream( final Filename fileName ) throws FileNotFoundException {
         return asFileOutputStream( asFile( fileName ) );
     }
 
@@ -345,7 +335,7 @@ public class IOUtility {
      *            file's name
      * @return {@code true} if the file exists {@code false} else
      */
-    public static boolean exists( String filename ) {
+    public static boolean exists( final Filename filename ) {
         return exists( asFile( filename ) );
     }
 

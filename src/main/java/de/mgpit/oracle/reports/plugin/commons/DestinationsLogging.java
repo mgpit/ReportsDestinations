@@ -16,7 +16,8 @@ import org.apache.log4j.RollingFileAppender;
 
 import de.mgpit.oracle.reports.plugin.commons.io.IOUtility;
 import de.mgpit.oracle.reports.plugin.destination.MgpDestination;
-import de.mgpit.types.TypedString;
+import de.mgpit.types.Directoryname;
+import de.mgpit.types.Filename;
 import oracle.reports.RWException;
 import oracle.reports.utility.Utility;
 
@@ -90,7 +91,7 @@ public final class DestinationsLogging {
      * 
      * @throws RWException
      */
-    public static final void createOrReplaceClassLevelLogger( final Class clazz, final String optionalFilename,
+    public static final void createOrReplaceClassLevelLogger( final Class clazz, final Filename optionalFilename,
             final String optionalLoglevelName ) throws RWException {
         setupLogger( clazz, U.classname( clazz ), optionalFilename, optionalLoglevelName );
     }
@@ -101,16 +102,16 @@ public final class DestinationsLogging {
      * 
      * @param clazz
      *            The class for which the logger will be set up. Will be used to derive the logger namespace. May be used for determining the log file name.
-     * @param optionalFilename
+     * @param optional
      *            A filename/path, maybe null
      * @param optionalLoglevelName
      *            Any String understood by log4j's {@link Level#toLevel} method. The log level for the logger, maybe null, defaults to <code>INFO</code>.
      * 
      * @throws RWException
      */
-    public static final void createOrReplacePackageLevelLogger( final Class clazz, final String optionalFilename,
+    public static final void createOrReplacePackageLevelLogger( final Class clazz, final Filename optional,
             final String optionalLoglevelName ) throws RWException {
-        setupLogger( clazz, U.packagename( clazz ), optionalFilename, optionalLoglevelName );
+        setupLogger( clazz, U.packagename( clazz ), optional, optionalLoglevelName );
     }
 
     /**
@@ -129,13 +130,12 @@ public final class DestinationsLogging {
      * 
      * @throws RWException
      */
-    static final void setupLogger( final Class clazz, String givenLoggerName, final String givenOptionalFilename,
+    static final void setupLogger( final Class clazz, String givenLoggerName, final Filename optional,
             final String optionalLoglevelName ) throws RWException {
 
         U.Rw.assertNotNull( givenLoggerName );
         String loggerName = givenLoggerName.trim();
-        String optionalFilename = (givenOptionalFilename == null) ? givenOptionalFilename : givenOptionalFilename.trim();
-
+        
         /*
          * From observation the report server sets up all destinations sequentially
          * running the main thread. Yet ensure only one thread manipulates the {@see #configuredDestinationLoggerNames}
@@ -150,7 +150,7 @@ public final class DestinationsLogging {
             logger.setAdditivity( Magic.ADD_MESSAGES_TO_ANCESTORS );
 
             try {
-                FileAppender newAppender = buildFileAppender( clazz, optionalFilename );
+                FileAppender newAppender = buildFileAppender( clazz, optional );
                 logger.addAppender( newAppender );
 
                 logger.info( "Logging to: " + newAppender.getFile() );
@@ -195,14 +195,14 @@ public final class DestinationsLogging {
      * 
      * @param clazz
      *            class for which the FileApender will be created
-     * @param optionalFilename
+     * @param optional
      *            optional file name for the logfile
      * @return a new RollingFileAppender
      * @throws IOException
      */
-    private static final FileAppender buildFileAppender( final Class clazz, final String optionalFilename ) throws IOException {
-        String filename = givenOrFallbackFilenameFrom( optionalFilename, clazz );
-        RollingFileAppender newAppender = new RollingFileAppender( DATE_LEVEL_MESSAGE_LAYOUT, filename,
+    private static final FileAppender buildFileAppender( final Class clazz, final Filename optional ) throws IOException {
+        Filename filename = givenOrFallbackFilenameFrom( optional, clazz );
+        RollingFileAppender newAppender = new RollingFileAppender( DATE_LEVEL_MESSAGE_LAYOUT, filename.toString(),
                 Magic.APPEND_MESSAGES_TO_LOGFILE );
         newAppender.setMaxFileSize( "1MB" );
         newAppender.setMaxBackupIndex( 5 ); // arbitrary - may be sufficient for 5 days ...
@@ -216,15 +216,15 @@ public final class DestinationsLogging {
      * 
      * @see #givenOrFallbackFilenameFrom(String, String)
      * 
-     * @param optionalFilename
+     * @param optional
      *            file name, maybe null
      * @param clazz
      *            class of which's name will be used as alternative file name
      * @return string with full file name
      */
-    static final String givenOrFallbackFilenameFrom( final String optionalFilename, final Class clazz ) {
-        String classNameAsFilename = IOUtility.asLogfileFilename( clazz.getName() );
-        return givenOrFallbackFilenameFrom( optionalFilename, classNameAsFilename );
+    static final Filename givenOrFallbackFilenameFrom( final Filename optional, final Class clazz ) {
+        Filename fallback = IOUtility.asLogfileFilename( clazz.getName() );
+        return givenOrFallbackFilenameFrom( optional, fallback );
     }
 
     /* Leave it package global for JUnit Tests ... */
@@ -236,18 +236,18 @@ public final class DestinationsLogging {
      * Normally this should be the file name provided. If not, the report servers log directory is considered, if this won't work
      * the report servers temp directory is considered and finally the "system"'s temp directory.
      * 
-     * @param optionalFilename
+     * @param optional
      *            file name, maybe null
-     * @param alternativeFilename
+     * @param fallback
      *            alternative file name to use if the optionalFilename is null
      * @return string with full filename
      */
-    static final String givenOrFallbackFilenameFrom( final String optionalFilename, final String alternativeFilename ) {
-        String filenameToStartWith = U.coalesce( optionalFilename, alternativeFilename );
+    static final Filename givenOrFallbackFilenameFrom( final Filename optional, final Filename fallback ) {
+        Filename filenameToStartWith = U.coalesce( optional, fallback );
 
         File dummy = IOUtility.asFile( filenameToStartWith );
         String directoryname = dummy.getParent();
-        String filename = U.coalesce( dummy.getName(), alternativeFilename );
+        Filename filename = U.coalesce( Filename.filenameOnlyOf( dummy ), fallback );
 
         if ( !isValidDirectory( directoryname ) ) {
             directoryname = Utility.getLogsDir();
@@ -260,8 +260,8 @@ public final class DestinationsLogging {
             }
         }
 
-        File logfile = IOUtility.asFile( directoryname, filename );
-        return logfile.getPath();
+        File logfile = IOUtility.asFile( Directoryname.of( directoryname ), filename );
+        return Filename.of( logfile );
     }
 
     /**
@@ -280,7 +280,7 @@ public final class DestinationsLogging {
         if ( U.isEmpty( maybeDirectoryname ) ) {
             return false;
         }
-        File possibleDirectory = IOUtility.asFile( maybeDirectoryname );
+        File possibleDirectory = IOUtility.asFile( Filename.of( maybeDirectoryname ) );
 
         boolean valid = possibleDirectory.isDirectory() && possibleDirectory.canRead() && possibleDirectory.canWrite();
         return valid;
@@ -314,7 +314,7 @@ public final class DestinationsLogging {
                 }
             }
 
-            File logFile = IOUtility.asFile( directoryname, IOUtility.asLogfileFilename( MgpDestination.class.getName() ) );
+            File logFile = IOUtility.asFile( Directoryname.of( directoryname ), IOUtility.asLogfileFilename( MgpDestination.class.getName() ) );
             try {
                 RollingFileAppender rootLog = new RollingFileAppender( VERBOSE_WIDE_LAYOUT, logFile.getPath(),
                         Magic.APPEND_MESSAGES_TO_LOGFILE );

@@ -6,6 +6,9 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.Properties;
 
+import de.mgpit.oracle.reports.plugin.commons.io.IOUtility;
+import de.mgpit.types.Filename;
+
 /**
  * 
  * @author mgp
@@ -84,8 +87,8 @@ public class URIUtility {
      * @param filename
      * @return path component of the file
      */
-    public static String toUriPathString( String filename ) throws IOException {
-        return toUriPathString( new File( filename ) );
+    public static String toUriPathString( final Filename filename ) throws IOException {
+        return toUriPathString( IOUtility.asFile( filename ) );
     }
     
     /**
@@ -96,9 +99,21 @@ public class URIUtility {
      * @param uri
      * @return URIs path as platform specific path 
      */
-    public static String pathToPlatformPath( URI uri ) {
+    public static String pathToPlatformPath( final URI uri ) {
         String path = uri.getPath();
         return new File( path ).getPath();
+    }
+    
+    /**
+     * Get the URI's path as platform specific Filename.
+     * <p>
+     * Makes sense for file URIs, only ...
+     * 
+     * @param uri
+     * @return URIs path as platform specific path 
+     */
+    public static Filename pathToPlatformFilename( final URI uri ) {
+        return Filename.of( pathToPlatformPath( uri ) );
     }
     
     /**
@@ -109,7 +124,7 @@ public class URIUtility {
      * @param uri
      * @return URIs path as platform specific path 
      */
-    public static String pathToAbsolutePlatformPath( URI uri ) {
+    public static String pathToAbsolutePlatformPath( final URI uri ) {
         String path = uri.getPath();
         return new File( path ).getAbsolutePath();
     }

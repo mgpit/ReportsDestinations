@@ -8,6 +8,7 @@ import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.binary.StringUtils;
 
 import de.mgpit.oracle.reports.plugin.commons.io.IOUtility;
+import de.mgpit.types.Filename;
 import oracle.reports.RWException;
 import oracle.reports.utility.Utility;
 
@@ -58,6 +59,10 @@ public final class U {
 
     public static final Object coalesce( Object optionalObject, Object defaultObject ) {
         return (optionalObject == null) ? defaultObject : optionalObject;
+    }
+    
+    public static final Filename coalesce( final Filename optionalFilename, final Filename defaultFilename ) {
+        return (optionalFilename == null) ? defaultFilename : optionalFilename;
     }
 
     public static final String coalesce( String optionalString, String defaultString ) {
@@ -376,6 +381,16 @@ public final class U {
     public static boolean isEmpty( final String str ) {
         return (str == null) || "".equals( str );
     }
+    
+    /**
+     * Checks for null or empty filenames.
+     * 
+     * @param fn the Filename to be checked.
+     * @return {@code true} if the String str is null or emptpy, {@code false} else
+     */
+    public static boolean isEmpty( final Filename fn ) {
+        return ( fn == null ) || isEmpty( fn.toString() );
+    }
 
     /**
      * Checks for null or empty string arrays.
@@ -471,6 +486,15 @@ public final class U {
             throw new AssertionError( new IllegalArgumentException( message ) );
         }
     }
+    
+    public static void assertNotEmpty( final Filename filename, final String message ) throws AssertionError {
+        assertNotNull( filename );
+        assertNotEmpty( filename.toString(), message );
+    }
+    
+    public static void assertNotEmpty( final Filename filename) throws AssertionError {
+        assertNotEmpty( filename, "Filename MUST NOT be null oder empty!" );
+    }
 
     /**
      * Assert that the given boolean is {@code true}.
@@ -491,12 +515,22 @@ public final class U {
      *             if the boolean given is {@code false}
      */
     public static void assertTrue( final boolean b ) throws AssertionError {
-        assertTrue( b, "Condition NOT met!" );
+        assertTrue( b, "Condition true NOT met!" );
     }
 
     public static void assertTrue( final boolean b, final String message ) throws AssertionError {
         if ( !b ) {
             throw new AssertionError( message, new Exception( "Expression or variable does not evaluate to true!" ) );
+        }
+    }
+    
+    public static void assertFalse( final boolean b ) throws AssertionError {
+        assertFalse( b, "Condition false NOT met!" );
+    }
+    
+    public static void assertFalse( final boolean b, final String message ) throws AssertionError {
+        if ( b ) {
+            throw new AssertionError( message, new Exception( "Expression or variable does not evaluate to false!" ) );
         }
     }
 

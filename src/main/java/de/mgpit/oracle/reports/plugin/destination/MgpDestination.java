@@ -16,6 +16,7 @@ import org.apache.log4j.Logger;
 import de.mgpit.oracle.reports.plugin.commons.DestinationsLogging;
 import de.mgpit.oracle.reports.plugin.commons.U;
 import de.mgpit.oracle.reports.plugin.commons.io.IOUtility;
+import de.mgpit.types.Filename;
 import oracle.reports.RWException;
 import oracle.reports.plugin.destination.ftp.DesFTP;
 import oracle.reports.server.Destination;
@@ -96,6 +97,10 @@ public abstract class MgpDestination extends Destination {
      */
     public static final boolean isEmpty( final String s ) {
         return U.isEmpty( s );
+    }
+    
+    public static final boolean isEmpty( final Filename fn ) {
+        return U.isEmpty( fn );
     }
 
     /**
@@ -246,9 +251,9 @@ public abstract class MgpDestination extends Destination {
             getLogger().info( "Sending file "
                     + U.w( U.lpad( indexOfCurrentlyDistributedFile, 2 ) + "/" + U.lpad( numberOfFilesInDistribution, 2 ) ) );
             if ( isMainFile ) {
-                sendMainFile( IOUtility.asPlatformFilename( cacheFileFilename ), fileFormat );
+                sendMainFile( IOUtility.asPlatformFilename( Filename.of( cacheFileFilename ) ), fileFormat );
             } else {
-                sendAdditionalFile( IOUtility.asPlatformFilename( cacheFileFilename ), fileFormat );
+                sendAdditionalFile( IOUtility.asPlatformFilename( Filename.of( cacheFileFilename ) ), fileFormat );
             }
         } catch ( Exception any ) {
             getLogger().error( "Error during sending file " + U.w( cacheFileFilename ) + ".", any );
@@ -267,7 +272,7 @@ public abstract class MgpDestination extends Destination {
      * @param fileFormat
      * @throws RWException
      */
-    protected abstract void sendMainFile( String cacheFileFilename, short fileFormat ) throws RWException;
+    protected abstract void sendMainFile( final Filename cacheFileFilename, final short fileFormat ) throws RWException;
 
     /**
      * Sends additional files from the distribution to the target.
@@ -276,7 +281,7 @@ public abstract class MgpDestination extends Destination {
      * @param fileFormat
      * @throws RWException
      */
-    protected abstract void sendAdditionalFile( String cacheFileFilename, short fileFormat ) throws RWException;
+    protected abstract void sendAdditionalFile( final Filename cacheFileFilename, final short fileFormat ) throws RWException;
 
     /**
      * Opens an InputStream on the file given.
@@ -345,11 +350,11 @@ public abstract class MgpDestination extends Destination {
     protected static void initLogging( final Properties destinationsProperties, Class clazz ) throws RWException {
 
         if ( destinationsProperties != null ) {
-            final String logfileFilenameGiven = destinationsProperties.getProperty( "logfile" );
+            final Filename given = Filename.of( destinationsProperties.getProperty( "logfile" ) );
             final String loglevelLevelnameGiven = destinationsProperties.getProperty( "loglevel", "INFO" );
 
             DestinationsLogging.assertRootLoggerExists();
-            DestinationsLogging.createOrReplacePackageLevelLogger( clazz, logfileFilenameGiven, loglevelLevelnameGiven );
+            DestinationsLogging.createOrReplacePackageLevelLogger( clazz, given, loglevelLevelnameGiven );
         }
     }
 
@@ -369,4 +374,6 @@ public abstract class MgpDestination extends Destination {
     public static boolean isBinaryFile( short formatCode ) {
         return new DesFTP().isBinaryFile( formatCode );
     }
+    
+
 }
