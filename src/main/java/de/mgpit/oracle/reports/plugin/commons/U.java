@@ -15,14 +15,14 @@ import oracle.reports.utility.Utility;
  * 
  * @author mgp
  *         <p>
- *         This class provides a bunch of utility methods for, e.g.
- *         <ul>
- *          <li>handling class and package names</li>
- *          <li>decorating strings and numbers with square brackets</li>
- *          <li>padding strings and numbers</li>
- *          <li>testing strings and arrays for emptiness</li>
- *          <li>assertions</li>
- *         </ul>
+ *         Provider of a bunch of of utility methods, for example methods for
+ *          <ul>
+ *              <li>handling class and package names</li>
+ *              <li>decorating strings and numbers with square brackets</li>
+ *              <li>padding strings and numbers</li>
+ *              <li>testing strings and arrays for emptiness</li>
+ *              <li>assertions</li>
+ *          </ul>
  */
 public final class U {
 

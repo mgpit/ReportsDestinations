@@ -3,6 +3,13 @@ package de.mgpit.oracle.reports.plugin.destination.content.types;
 
 import de.mgpit.types.TypedString;
 
+/**
+ * 
+ * @author mgp
+ *
+ * A transformer name.
+ * 
+ */
 public final class TransformerName extends TypedString {
     public static TransformerName of( String name ) {
         return new TransformerName( name );

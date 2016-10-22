@@ -21,14 +21,14 @@ import sun.security.action.GetPropertyAction;
  * 
  * @author mgp
  * 
- *         Utility methods for working with files and streams., e.g.
- *         <ul>
- *         <li>filename handling</li>
- *         <li>testing for file existence</li>
- *         <li>opening files as streams</li>
- *         <li>stream copying</li>
- *         <li>byte to string conversion</li>
- *         </ul>
+ *         Provider of methods for working with files and streams, for example methods for
+ *          <ul>
+ *              <li>filename handling</li>
+ *              <li>testing for file existence</li>
+ *              <li>opening files as streams</li>
+ *              <li>stream copying</li>
+ *              <li>byte to string conversion</li>
+ *          </ul>
  */
 public class IOUtility {
 

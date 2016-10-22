@@ -6,6 +6,13 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.Properties;
 
+/**
+ * 
+ * @author mgp
+ * 
+ * Provider of methods for working with {@link URI}s.
+ *
+ */
 public class URIUtility {
 
     /**
