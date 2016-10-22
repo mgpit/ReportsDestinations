@@ -2,17 +2,18 @@ package de.mgpit.oracle.reports.plugin.destination.zip;
 
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Properties;
 
-import org.apache.commons.codec.binary.Base64InputStream;
 import org.apache.log4j.Logger;
 
-import de.mgpit.oracle.reports.plugin.commons.Magic;
 import de.mgpit.oracle.reports.plugin.commons.StringCodedBoolean;
 import de.mgpit.oracle.reports.plugin.commons.U;
+import de.mgpit.oracle.reports.plugin.commons.URIUtility;
 import de.mgpit.oracle.reports.plugin.commons.ZipArchive;
 import de.mgpit.oracle.reports.plugin.commons.ZipArchive.ArchivingException;
 import de.mgpit.oracle.reports.plugin.commons.io.IOUtility;
@@ -94,8 +95,9 @@ import oracle.reports.utility.Utility;
 public final class ZipDestination extends MgpDestination {
 
     private static final Logger LOG = Logger.getLogger( ZipDestination.class );
-    
+
     private ZipArchive zipArchive;
+    private URI uri;
     // private String zipEntryName;
     // private boolean inAppendingMode;
 
@@ -185,7 +187,7 @@ public final class ZipDestination extends MgpDestination {
      * distribute one or many files depending on the format.
      * 
      * @param allProperties
-     *            all properties (parameters) passed to the report. 
+     *            all properties (parameters) passed to the report.
      *            For Oracle Forms&trade; this will include the parameters set via <code>SET_REPORT_OBJECT_PROPERTY</code>
      *            plus the parameters passed via a <code>ParamList</code>
      * @param targetName
@@ -200,23 +202,42 @@ public final class ZipDestination extends MgpDestination {
      */
     protected boolean start( final Properties allProperties, final String targetName, final int totalNumberOfFiles,
             final long totalFileSize, short mainFormat ) throws RWException {
-        
+
         try {
-        boolean continueToSend = super.start( allProperties, targetName, totalNumberOfFiles, totalFileSize, mainFormat );
+            boolean continueToSend = super.start( allProperties, targetName, totalNumberOfFiles, totalFileSize, mainFormat );
 
-        if ( continueToSend ) {
+            if ( continueToSend ) {
 
-            String zipArchiveFileName = getZipArchiveNameFromCallParameters( allProperties, targetName );
-            boolean inAppendingMode = getAppendFlagFromCallParameters( allProperties );
+                continueToSend = setURI( allProperties, targetName );
+                getLogger().info( "Distribution URI found to be " + this.uri.toString() );
 
-            createZipArchive( zipArchiveFileName, inAppendingMode );
+                if ( continueToSend ) {
+                    /* Could use the URI's path as the File class handles non-platform paths.
+                     * For debugging purposes it's more convenient to be able to simply copy and paste the
+                     * file name from the logging message, though.
+                     */
+                    String zipArchiveFileName = URIUtility.pathToPlatformPath( this.uri );
+                    Properties queryParameters = URIUtility.queryStringAsProperties( this.uri );
 
-            getLogger().info( "Starting distribution to " + U.w( zipArchiveFileName ) + ". " + modeMessage( inAppendingMode ) );
-            continueToSend = true;
-        } else {
-            getLogger().warn( "Cannot continue to send ..." );
-        }
-        return continueToSend;
+                    boolean inAppendingMode = false;
+                    if ( queryParameters != null ) {
+                        String desname = queryParameters.getProperty( "entry" );
+                        setDesname( desname );
+
+                        String appendParameterValue = allProperties.getProperty( "append", "FALSE" );
+                        inAppendingMode = StringCodedBoolean.valueOf( appendParameterValue );
+                    }
+                    createZipArchive( zipArchiveFileName, inAppendingMode );
+                    getLogger().info(
+                            "Starting distribution to " + U.w( zipArchiveFileName ) + ". " + modeMessage( inAppendingMode ) );
+                    continueToSend = true;
+                } else {
+                    getLogger().warn( "Cannot continue to send ..." );
+                }
+            } else {
+                getLogger().warn( "Cannot continue to send ..." );
+            }
+            return continueToSend;
         } catch ( RWException forLogging ) {
             getLogger().error( "Error during preparation of distribution!", forLogging );
             throw forLogging;
@@ -258,8 +279,7 @@ public final class ZipDestination extends MgpDestination {
      * @return
      */
     private static String getZipArchiveNameFromCallParameters( final Properties allProperties, final String targetName ) {
-        String zipArchiveNameProvided = allProperties.getProperty( "ZIPFILENAME",
-                allProperties.getProperty( "zipfilename", targetName ) );
+        String zipArchiveNameProvided = allProperties.getProperty( "zipfilename", targetName );
         String calculatedZipArchiveName = IOUtility.withZipExtension( zipArchiveNameProvided );
         return calculatedZipArchiveName;
     }
@@ -273,8 +293,48 @@ public final class ZipDestination extends MgpDestination {
      * @return
      */
     private static boolean getAppendFlagFromCallParameters( final Properties allProperties ) {
-        String appendParameterValue = allProperties.getProperty( "APPEND", allProperties.getProperty( "append", "FALSE" ) );
+        String appendParameterValue = allProperties.getProperty( "append", "FALSE" );
         return StringCodedBoolean.valueOf( appendParameterValue );
+    }
+
+    private boolean setURI( final Properties allProperties, final String targetName ) {
+        URI tmpURI = null;
+        boolean OK = true;
+        if ( !isEmpty( targetName ) && targetName.startsWith( "zip:" ) ) {
+            try {
+                tmpURI = new URI( targetName );
+            } catch ( URISyntaxException syntax ) {
+                getLogger().error( "URI provided for DESNAME is not a valid URI! " + U.w( targetName ), syntax );
+                OK = false;
+            }
+        }
+
+        if ( OK ) {
+            if ( tmpURI == null ) {
+                final String zipFileFilename = getZipArchiveNameFromCallParameters( allProperties, targetName );
+                final boolean inAppendingMode = getAppendFlagFromCallParameters( allProperties );
+                try {
+                    final String entryName = IOUtility.fileNameOnly( targetName );
+                    final String scheme = "zip";
+                    final String authority = "";
+                    final String path = URIUtility.toUriPathString( zipFileFilename );
+                    final String query = "entry=" + entryName + "&append=" + ((inAppendingMode) ? "true" : "false");
+                    final String fragment = null;
+
+                    tmpURI = new URI( scheme, authority, path, query, fragment );
+
+                } catch ( URISyntaxException syntax ) {
+                    getLogger().error( "Could not construct URI", syntax );
+                    OK = false;
+                } catch ( IOException io ) {
+                    getLogger().error( "Could not construct URI", io );
+                    OK = false;
+                }
+            }
+        }
+
+        this.uri = tmpURI;
+        return OK;
     }
 
     private static String modeMessage( boolean inAppendingMode ) {

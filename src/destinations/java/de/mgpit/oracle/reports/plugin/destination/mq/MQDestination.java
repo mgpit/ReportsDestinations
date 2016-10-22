@@ -7,7 +7,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -22,6 +24,7 @@ import de.mgpit.oracle.reports.plugin.commons.U;
 import de.mgpit.oracle.reports.plugin.commons.io.IOUtility;
 import de.mgpit.oracle.reports.plugin.destination.MgpDestination;
 import de.mgpit.oracle.reports.plugin.destination.TransformationChainDeclaration;
+import de.mgpit.oracle.reports.plugin.destination.content.types.Content;
 import de.mgpit.oracle.reports.plugin.destination.content.types.InputTransformation;
 import de.mgpit.oracle.reports.plugin.destination.content.types.OutputTransformation;
 import de.mgpit.oracle.reports.plugin.destination.content.types.Transformation;
@@ -33,14 +36,15 @@ public final class MQDestination extends MgpDestination {
 
     private static final Logger LOG = Logger.getLogger( MQDestination.class );
 
-    private MQ mq;
+    private static MQ DEFAULT_MQ;
 
     private static final int SOME_PRIME = 23;
-    private static Map CONTENTMODIFIERS = new HashMap( SOME_PRIME ); // instantiated for synchronization ...
-    private static Map ALIASES = new HashMap( SOME_PRIME );
+    private static Map CONTENTMODIFIERS = Collections.synchronizedMap( new HashMap( SOME_PRIME ) );
+    private static Map CONTENTPROVIDERS = Collections.synchronizedMap( new HashMap( SOME_PRIME ) );
 
     private OutputTransformation[] outputTransformationChain = {};
     private InputTransformation[] inputTransformationChain = {};
+    private MQ mq;
 
     /**
      * Stop the distribution cycle.
@@ -81,7 +85,12 @@ public final class MQDestination extends MgpDestination {
             if ( continueToSend ) {
                 getLogger().info( "Starting distribution to MQ" );
                 extractDeclaredTransformationChain( allProperties );
-                continueToSend = true;
+                this.mq = (MQ) U.coalesce( getDeclaredMQ( allProperties ), DEFAULT_MQ );
+
+                continueToSend = this.mq != null;
+                if ( !continueToSend ) {
+                    getLogger().warn( "Cannot continue to send! No MQ destination provided nor default MQ destination speficied!" );
+                }
             } else {
                 getLogger().warn( "Cannot continue to send ..." );
             }
@@ -157,15 +166,9 @@ public final class MQDestination extends MgpDestination {
         getLogger().info( "Sending MAIN file to " + getClass().getName() );
         InputStream source = getContent( IOUtility.asFile( cacheFileFilename ) );
         try {
-            String targetFileName = getDesname()+".mq";
-            // TODO: Hack Hack Hack 
-            if ( this.outputTransformationChain != null) {
-                final int namer = this.outputTransformationChain.length-1;
-                targetFileName = IOUtility.withExtension( targetFileName , this.outputTransformationChain[namer].fileExtension() );
-            }
-            File targetFile = IOUtility.asFile( targetFileName );
-            FileOutputStream fileOut = IOUtility.asFileOutputStream( targetFile );
-            OutputStream target = wrapWithOutputTransformers( fileOut );
+            U.assertNotNull( this.mq, "Cannot continue to send! No MQ destination provided nor default MQ destination speficied!" );
+            OutputStream mqOut = this.mq.newMessage();
+            OutputStream target = wrapWithOutputTransformers( mqOut );
             IOUtility.copyFromToAndThenClose( source, target );
         } catch ( FileNotFoundException fileNotFound ) {
             getLogger().error( "Error during distribution! Could not find file to add!" );
@@ -234,9 +237,9 @@ public final class MQDestination extends MgpDestination {
     /**
      * Initialize the destination on Report Server startup.
      * <ul>
-     *  <li>initialize log4j</li>
-     *  <li>register declared content modifiers</li>
-     *  <li>register declared aliases</li>
+     * <li>initialize log4j</li>
+     * <li>register declared content modifiers</li>
+     * <li>register declared aliases</li>
      * </ul>
      * 
      * @param destinationsProperties
@@ -248,7 +251,8 @@ public final class MQDestination extends MgpDestination {
             dumpProperties( destinationsProperties, LOG );
         }
         registerConfiguredContentModifiers( destinationsProperties );
-        registerConfiguredAliases( destinationsProperties );
+        registerConfiguredContentProvideres( destinationsProperties );
+        registerDefaultMQ( destinationsProperties );
         LOG.info( "Destination " + U.w( MQDestination.class.getName() ) + " started." );
     }
 
@@ -257,16 +261,14 @@ public final class MQDestination extends MgpDestination {
         LOG.info( "About to search for and register virtual destinations ..." );
         boolean registrationErrorOccured = false;
 
-        synchronized (CONTENTMODIFIERS) {
-            while ( keys.hasMoreElements() ) {
-                String key = (String) keys.nextElement();
-                if ( isContentModificationPluginDefinition( key ) ) {
-                    TransformerName name = extractContentModificationPluginName( key );
-                    String virtualDestinationClassName = destinationsProperties.getProperty( key );
-                    boolean success = registerContentModifier( name, virtualDestinationClassName );
-                    if ( !success ) {
-                        registrationErrorOccured = true;
-                    }
+        while ( keys.hasMoreElements() ) {
+            String key = (String) keys.nextElement();
+            if ( isContentModificationPluginDefinition( key ) ) {
+                TransformerName name = extractContentModificationPluginName( key );
+                String virtualDestinationClassName = destinationsProperties.getProperty( key );
+                boolean success = registerContentModifier( name, virtualDestinationClassName );
+                if ( !success ) {
+                    registrationErrorOccured = true;
                 }
             }
         }
@@ -304,22 +306,48 @@ public final class MQDestination extends MgpDestination {
         return TransformerName.of( pathElements[indexOfContentModificationPluginName] );
     }
 
-    private static void registerConfiguredAliases( Properties destinationsProperties ) throws RWException {
+    private static void registerConfiguredContentProvideres( Properties destinationsProperties ) throws RWException {
         Enumeration keys = destinationsProperties.keys();
-        synchronized (ALIASES) {
-            while ( keys.hasMoreElements() ) {
-                String key = (String) keys.nextElement();
-                if ( isAliasDefintion( key ) ) {
-                    String value = destinationsProperties.getProperty( key );
-                    ALIASES.put( key, value );
-                    LOG.info( "Registered alias " + U.w( key ) + " for " + U.w( value ) );
-                }
+        while ( keys.hasMoreElements() ) {
+            String key = (String) keys.nextElement();
+            if ( isContentProviderDefintion( key ) ) {
+                String value = destinationsProperties.getProperty( key );
+                CONTENTPROVIDERS.put( key, value );
+                LOG.info( "Registered alias " + U.w( key ) + " for " + U.w( value ) );
             }
         }
     }
 
-    private static boolean isAliasDefintion( String key ) {
-        return key.startsWith( "alias." );
+    private static boolean isContentProviderDefintion( String key ) {
+        return key.startsWith( Content.PROPERTY_NAME_PREFIX );
+    }
+
+    private static void registerDefaultMQ( Properties destinationsProperties ) {
+        DEFAULT_MQ = getDeclaredMQ( destinationsProperties );
+        if ( DEFAULT_MQ == null ) {
+            LOG.info(
+                    "No default MQ Connection specified. Destination may not work. Please specify a default Connection as <property name=\"mq\" value=\"wmq://<host>:<port>/dest/queue/<queuename>@<queuemanager>?channelName=<channelname>/\"/>" );
+        }
+    }
+
+    public static MQ getDeclaredMQ( Properties properties ) {
+        /*
+         * Cascading search for one of the three valid property names to specify a default MQ connection ...
+         */
+        String uriLiteral = properties.getProperty( "mq",
+                properties.getProperty( "uri", properties.getProperty( "connection", properties.getProperty( "desname" ) ) ) );
+        final String prefixWanted = MQ.Configuration.WMQ_SCHEME + ":";
+        if ( !U.isEmpty( uriLiteral ) && uriLiteral.startsWith( prefixWanted ) ) {
+
+            try {
+                return new MQ( MQ.Configuration.fromURILiteral( uriLiteral ) );
+            } catch ( URISyntaxException syntax ) {
+                LOG.error( "Invalid Connection URI! Cannot create MQ Connection!", syntax );
+            } catch ( Exception other ) {
+                LOG.error( "Cannot create MQ Connection!", other );
+            }
+        }
+        return null;
     }
 
     public static void shutdown() {

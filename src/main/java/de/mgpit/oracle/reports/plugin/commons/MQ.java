@@ -1,13 +1,13 @@
 package de.mgpit.oracle.reports.plugin.commons;
 
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Arrays;
 import java.util.Properties;
-
-import de.mgpit.oracle.reports.plugin.commons.U;
-import de.mgpit.oracle.reports.plugin.commons.MQ.Configuration;
 
 public class MQ {
 
@@ -154,18 +154,22 @@ public class MQ {
                 final int port = uri.getPort();
 
                 final String path = getRelevantPath( uri.getPath() );
-                final String[] pathElements = splitPathIntoElements( path );
+                final String[] pathElements = URIUtility.splitPathIntoElements( path );
                 final String queueName = pathElements[0];
                 String queueManagerName = pathElements[1];
 
                 final String query = uri.getQuery();
-                final Properties queryParameters = queryStringAsProperties( query );
+                final Properties queryParameters = URIUtility.queryStringAsProperties( query );
                 /* This implementation lets the query parameters override queue manager specified via path */
                 queueManagerName = queryParameters.getProperty( "connectQueueManager", queueManagerName );
                 final String channelName = queryParameters.getProperty( "channelName" );
 
                 return new MQ.Configuration( host, port, queueManagerName, channelName, queueName );
             }
+        }
+
+        public static final Configuration fromURILiteral( final String uriLiteral ) throws URISyntaxException {
+            return fromURI( new URI( uriLiteral ) );
         }
 
         /**
@@ -183,45 +187,6 @@ public class MQ {
             return relevantPath;
         }
 
-        /**
-         * Splits the relevant path into its <code>wmq-queue</code> and <code>"@" wmq-qmgr</code> parts
-         * 
-         * @param path
-         *            relevant path part of the URI
-         * @return a 2 element array with <code>wmq-queue</code> and <code>"@" wmq-qmgr</code> parts. If there is no<code>"@" wmq-qmgr</code> part the second element will be null.
-         */
-        private static String[] splitPathIntoElements( final String path ) {
-            String[] splitted = path.split( "@" );
-            /* Ensure that the caller gets (at least) 2 elements */
-            if ( splitted.length == 1 ) {
-                // No Arrays.copyOf in Java 1.4
-                final String[] temporary = new String[2];
-                temporary[0] = splitted[0];
-                temporary[1] = null;
-                splitted = temporary;
-            }
-            return splitted;
-        }
-
-        /**
-         * Converts the query part of an URI into {@link Properties}.
-         * @param query the query part of the URI
-         * @return {@link Properties} containing the query parameters
-         */
-        private static Properties queryStringAsProperties( final String query ) {
-            final Properties queryParameters = new Properties();
-            if ( query != null ) {
-                final String[] parameters = query.split( "&" );
-                for ( int index = 0; index < parameters.length; index++ ) {
-                    final String parameter = parameters[index];
-                    final String[] keyValuePair = parameter.split( "=" );
-                    final String key = keyValuePair[0];
-                    final String value = (keyValuePair.length == 1) ? null : keyValuePair[1];
-                    queryParameters.put( key, value );
-                }
-            }
-            return queryParameters;
-        }
 
         public String toString() {
             final StringBuffer sb = new StringBuffer( 127 );
@@ -236,7 +201,8 @@ public class MQ {
          * @return the {@link URI} representation of the Configuration
          */
         public URI toURI() {
-            final String path = WMQ_DEST + this.queueName + (U.isEmpty( this.queueManagerName ) ? null : "@" + this.queueManagerName);
+            final String path = WMQ_DEST + this.queueName
+                    + (U.isEmpty( this.queueManagerName ) ? null : "@" + this.queueManagerName);
             final String query = U.isEmpty( this.channelName ) ? null : "channelName=" + this.channelName;
             try {
                 URI uri = new URI( WMQ_SCHEME, NO_USER, this.hostName, this.port, path, query, null );
@@ -274,6 +240,48 @@ public class MQ {
             return hashCode();
         }
 
+    }
+
+    private final Configuration configuration;
+
+    public MQ( Configuration configuration ) {
+        this.configuration = configuration;
+    }
+
+    public void connect() {
+
+    }
+
+    public void disconnect() {
+
+    }
+
+    public OutputStream newMessage() {
+        return new OutputStream() {
+            private FileOutputStream file;
+
+            public void write( int b ) throws IOException {
+                if ( file != null ) {
+                    file.write( b );
+                }
+            }
+            
+            public void flush() throws IOException {
+                file.flush();
+            }
+            public void close() throws IOException {
+                file.close();
+            }
+
+            {
+                try {
+                    file = new FileOutputStream( File.createTempFile( "QMSALSAXP.IQ.DEVELOPMENT__", ".mq", new File( "O:\\tmp\\reports\\output" ) ) );
+                } catch ( IOException ignored ) {
+                    file = null;
+                }
+            }
+
+        };
     }
 
 }

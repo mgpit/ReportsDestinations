@@ -216,9 +216,9 @@ public abstract class MgpDestination extends Destination {
             getLogger().info( "Sending file "
                     + U.w( U.lpad( indexOfCurrentlyDistributedFile, 2 ) + "/" + U.lpad( numberOfFilesInDistribution, 2 ) ) );
             if ( isMainFile ) {
-                sendMainFile( cacheFileFilename, fileFormat );
+                sendMainFile( IOUtility.asPlatformFilename( cacheFileFilename ), fileFormat );
             } else {
-                sendAdditionalFile( cacheFileFilename, fileFormat );
+                sendAdditionalFile( IOUtility.asPlatformFilename( cacheFileFilename ), fileFormat );
             }
         } catch ( Exception any ) {
             getLogger().error( "Error during sending file " + U.w( cacheFileFilename ) + ".", any );
