@@ -11,7 +11,7 @@ package de.mgpit.types;
  * 
  */
 public abstract class TypedString {
-
+    
     public String toString() {
         return this.value();
     }
@@ -63,8 +63,12 @@ public abstract class TypedString {
         return this.value() != null && !"".equals( this.value() );
     }
     
-    public Filename concat( String str ) {
-        return Filename.of(  this.value().concat(str) );
+    public boolean isNull() {
+        return this.value() == null;
+    }
+    
+    public boolean isNotNull() {
+        return this.value() != null;
     }
 
 }
