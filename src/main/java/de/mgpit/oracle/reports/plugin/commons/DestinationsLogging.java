@@ -247,7 +247,7 @@ public final class DestinationsLogging {
 
         File dummy = IOUtility.asFile( filenameToStartWith );
         String directoryname = dummy.getParent();
-        Filename filename = U.coalesce( Filename.filenameOnlyOf( dummy ), fallback );
+        Filename filename = U.coalesce( Filename.filenameNameOnlyOf( dummy ), fallback );
 
         if ( !isValidDirectory( directoryname ) ) {
             directoryname = Utility.getLogsDir();
