@@ -1,4 +1,4 @@
-package de.mgpit.oracle.reports.plugin.commons;
+package de.mgpit.types;
 
 
 import java.util.HashMap;

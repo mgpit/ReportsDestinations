@@ -11,7 +11,6 @@ import java.util.Properties;
 
 import org.apache.log4j.Logger;
 
-import de.mgpit.oracle.reports.plugin.commons.StringCodedBoolean;
 import de.mgpit.oracle.reports.plugin.commons.U;
 import de.mgpit.oracle.reports.plugin.commons.URIUtility;
 import de.mgpit.oracle.reports.plugin.commons.ZipArchive;
@@ -19,6 +18,7 @@ import de.mgpit.oracle.reports.plugin.commons.ZipArchive.ArchivingException;
 import de.mgpit.oracle.reports.plugin.commons.io.IOUtility;
 import de.mgpit.oracle.reports.plugin.destination.MgpDestination;
 import de.mgpit.types.Filename;
+import de.mgpit.types.StringCodedBoolean;
 import oracle.reports.RWException;
 import oracle.reports.utility.Utility;
 
