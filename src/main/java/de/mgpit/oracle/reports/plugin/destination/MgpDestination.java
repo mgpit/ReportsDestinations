@@ -1,3 +1,22 @@
+/*
+ * Copyright 2016 Marco Pauls www.mgp-it.de
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
+/**
+ * @license APACHE-2.0
+ */
 package de.mgpit.oracle.reports.plugin.destination;
 
 
@@ -23,31 +42,31 @@ import oracle.reports.server.Destination;
 import oracle.reports.utility.Utility;
 
 /**
- * 
+ * Oracle Reports&trade; Destination with separate logging.
+ * <p>
+ * Abstract super class for {@code de.mgpit.oracle.reports.destination.*}-Report Destinations.
+ * <p>
+ * Provides logging setup during {@link #init(Properties)} of the destination and some handy utility methods.
+ * <p>
+ * {@code de.mgpit.oracle.reports.destination.*}-Report Destinations log to a separate file. You can set the log level
+ * via the {@code loglevel} property and the log file's name via the {@code logfile} property of the destination plugin
+ * configruation in the report server's conf file. If no specific file name is provided the name defaults to
+ * {@code destination.log} and can be found in the report server's log directory (or the temp directory if the server does
+ * not have a log directory).
+ * <p>
+ * The static part of a Destination holds the information configured in the {@code <servername>.cfg} file via
+ * {@code //destination/property} elements.
+ * <p>
+ * The instance part holds the information needed for the current distribution. Assumption is that for each distribution
+ * a new instance of the Destination will be created by the Oracle Reports&trade; server and that there is no caching or
+ * destination pooling.
+ * <p>
+ * A distribution cylcle consists of the sequence {@code start} &rarr; {@code sendFile}<sup>{1..n}</sup> &rarr; {@code stop()}.
+ * The number of {@code sendFile}s depends on the reports output format.
+ * A {@code PDF} for example will produce one file whereas a {@code HTML} output will produce a main file containing the HTML and
+ * several additional files for e.g. each image embedded in the current report.
+ *
  * @author mgp
- *         <p>
- *         Abstract super class for {@code de.mgpit.oracle.reports.destination.*}-Report Destinations.
- *         <p>
- *         Provides logging setup during {@link #init(Properties)} of the destination and some handy utility methods.
- *         <p>
- *         {@code de.mgpit.oracle.reports.destination.*}-Report Destinations log to a separate file. You can set the log level
- *         via the {@code loglevel} property and the log file's name via the {@code logfile} property of the destination plugin
- *         configruation in the report server's conf file. If no specific file name is provided the name defaults to
- *         {@code destination.log} and can be found in the report server's log directory (or the temp directory if the server does
- *         not have a log directory).
- *         <p>
- *         The static part of a Destination holds the information configured in the {@code <servername>.cfg} file via
- *         {@code //destination/property} elements.
- *         <p>
- *         The instance part holds the information needed for the current distribution. Assumption is that for each distribution
- *         a new instance of the Destination will be created by the Oracle Reports&trade; server and that there is no caching or
- *         destination pooling.
- *         <p>
- *         A distribution cylcle consists of the sequence {@code start} &rarr; {@code sendFile}<sup>{1..n}</sup> &rarr; {@code stop()}.
- *         The number of {@code sendFile}s depends on the reports output format.
- *         A {@code PDF} for example will produce one file whereas a {@code HTML} output will produce a main file containing the HTML and
- *         several additional files for e.g. each image embedded in the current report.
- * 
  */
 public abstract class MgpDestination extends Destination {
 
@@ -82,6 +101,7 @@ public abstract class MgpDestination extends Destination {
 
     /**
      * Gets the mime type string representation for the format code given.
+     * 
      * @param formatCode
      *            numeric format code
      * @return the numerically coded {@code format} in human readable format
@@ -98,7 +118,7 @@ public abstract class MgpDestination extends Destination {
     public static final boolean isEmpty( final String s ) {
         return U.isEmpty( s );
     }
-    
+
     public static final boolean isEmpty( final Filename fn ) {
         return U.isEmpty( fn );
     }
@@ -374,6 +394,5 @@ public abstract class MgpDestination extends Destination {
     public static boolean isBinaryFile( short formatCode ) {
         return new DesFTP().isBinaryFile( formatCode );
     }
-    
 
 }

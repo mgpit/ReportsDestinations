@@ -1,3 +1,22 @@
+/*
+ * Copyright 2016 Marco Pauls www.mgp-it.de
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
+/**
+ * @license APACHE-2.0
+ */
 package de.mgpit.oracle.reports.plugin.destination.zip;
 
 
@@ -24,74 +43,72 @@ import oracle.reports.utility.Utility;
 
 /**
  * 
- * @author mgp
- *         <p>
- *         Implements an Oracle Reports&trade; {@link oracle.reports.server.Destination} for distributing
- *         the files of a distribution process to a ZIP file. The destination is able to append files to an existing
- *         ZIP file with some limitations with respect to duplicates - see below.
+ * Implements an Oracle Reports&trade; {@link oracle.reports.server.Destination} for distributing
+ * the files of a distribution process to a ZIP file. The destination is able to append files to an existing
+ * ZIP file with some limitations with respect to duplicates - see below.
  * 
- *         <p>
- *         <strong>Registering the destination in your <em>reportserver.conf</em>:</strong>
- *         <p>
- *         The {@code DESTYPE} for this destination is suggested to be {@code zip}.
- *         Full configuration example:
+ * <p>
+ * <strong>Registering the destination in your <em>reportserver.conf</em>:</strong>
+ * <p>
+ * The {@code DESTYPE} for this destination is suggested to be {@code zip}.
+ * Full configuration example:
  * 
- *         <pre>
+ * <pre>
  * {@code
  *  <destination destype="zip" class="de.mgpit.oracle.reports.plugin.destination.zip.ZipDestination">
  *     <property name="loglevel" value="DEBUG"/> <!-- log4j message levels. Allow debug messages --> 
  *     <property name="logfile"  value="/tmp/log/zipdestination.log"/> <!-- file to send the messages to -->
  *  </destination>
  *         }
- *         </pre>
+ * </pre>
  *
- *         <p>
- *         <strong>Using the destination:</strong>
- *         <p>
- *         There are two ways to specify the zip file used as a distribution target.
- *         <ul>
- *         <li>passing separate parameters for file name and append mode</li>
- *         <li>passing an URI as {@code DESNAME}</li>
- *         </ul>
+ * <p>
+ * <strong>Using the destination:</strong>
+ * <p>
+ * There are two ways to specify the zip file used as a distribution target.
+ * <ul>
+ * <li>passing separate parameters for file name and append mode</li>
+ * <li>passing an URI as {@code DESNAME}</li>
+ * </ul>
  * 
- *         <p>
- *         <strong>1) Using separate parameters</strong>
- *         <p>
- *         The full name ( path and file name ) must be provided as parameter {@code zipfilename}.
- *         <ul>
- *         <li>{@code zipfilename=}<em>full path and name to ZIP file</em></li>
- *         </ul>
- *         <p>
- *         If you want to have several distributions put to the same ZIP file you add the parameter {@code append}.
- *         <ul>
- *         <li>{@code append=}[true|TRUE|yes|YES|on|ON|1]</li>
- *         </ul>
- *         When using parameters the entry name will be calculated from {@code DESNAME}
+ * <p>
+ * <strong>1) Using separate parameters</strong>
+ * <p>
+ * The full name ( path and file name ) must be provided as parameter {@code zipfilename}.
+ * <ul>
+ * <li>{@code zipfilename=}<em>full path and name to ZIP file</em></li>
+ * </ul>
+ * <p>
+ * If you want to have several distributions put to the same ZIP file you add the parameter {@code append}.
+ * <ul>
+ * <li>{@code append=}[true|TRUE|yes|YES|on|ON|1]</li>
+ * </ul>
+ * When using parameters the entry name will be calculated from {@code DESNAME}
  * 
- *         <p>
- *         <strong>2) Using an URI</strong>
- *         <p>
- *         When using the URI approach you specify the ZIP file in the {@code DESNAME}
- *         <ul>
- *         <li>{@code zip:///}<em>full path and name to ZIP file</em>{@code ?append=}[true|TRUE|yes|YES|on|ON|1]{@code &entry=}<em>filename</em>
- *         </ul>
- *         <strong>note: </strong>scheme must be <strong>zip</strong> (lowercase!)
- *         <p>
- *         When running from <strong>Oracle Forms</strong>&trade; using a <em>REPORT_OBJECT</em> you can pass the parameters as follows.
- *         <ul>
- *         <li>{@code SET_REPORT_OBJECT_PROPERTY( }REPORT_OBJECT</em>
- *         {@code , REPORT_DESTYPE, CACHE }<sup>1)</sup> {@code );}</li>
- *         <li>Parameter passsing style:
- *         <ul>
- *         <li>{@code SET_REPORT_OBJECT_PROPERTY( }<em>REPORT_OBJECT</em>
- *         {@code , REPORT_DESNAME, 'foo.pdf' );}
- *         </li>
- *         <li>{@code SET_REPORT_OBJECT_PROPERTY( }<em>REPORT_OBJECT</em>
- *         {@code , REPORT_OTHER, 'DESTYPE=ZIP' ); -- Cannot be set via PARAM_LIST}
- *         </li>
- *         <li>other parameters via Parameter List
+ * <p>
+ * <strong>2) Using an URI</strong>
+ * <p>
+ * When using the URI approach you specify the ZIP file in the {@code DESNAME}
+ * <ul>
+ * <li>{@code zip:///}<em>full path and name to ZIP file</em>{@code ?append=}[true|TRUE|yes|YES|on|ON|1]{@code &entry=}<em>filename</em>
+ * </ul>
+ * <strong>note: </strong>scheme must be <strong>zip</strong> (lowercase!)
+ * <p>
+ * When running from <strong>Oracle Forms</strong>&trade; using a <em>REPORT_OBJECT</em> you can pass the parameters as follows.
+ * <ul>
+ * <li>{@code SET_REPORT_OBJECT_PROPERTY( }REPORT_OBJECT</em>
+ * {@code , REPORT_DESTYPE, CACHE }<sup>1)</sup> {@code );}</li>
+ * <li>Parameter passsing style:
+ * <ul>
+ * <li>{@code SET_REPORT_OBJECT_PROPERTY( }<em>REPORT_OBJECT</em>
+ * {@code , REPORT_DESNAME, 'foo.pdf' );}
+ * </li>
+ * <li>{@code SET_REPORT_OBJECT_PROPERTY( }<em>REPORT_OBJECT</em>
+ * {@code , REPORT_OTHER, 'DESTYPE=ZIP' ); -- Cannot be set via PARAM_LIST}
+ * </li>
+ * <li>other parameters via Parameter List
  * 
- *         <pre>
+ * <pre>
  * {@code 
  * distribution_parameters := CREATE_PARAMETER_LIST( 'SOME_UNIQUE_NAME' );  
  * -- NOT ALLOWED: ADD_PARAMETER( distribution_parameters, 'DESTYPE'    , TEXT_PARAMETER, 'zip' );
@@ -102,40 +119,41 @@ import oracle.reports.utility.Utility;
  * -- Pass the Parameter List on RUN_REPORT_OBJECT
  * --
  * RUN_REPORT_OBJECT( REPORT_OBJECT, distribution_parameters ); }
- *         </pre>
+ * </pre>
  * 
- *         </li>
- *         </ul>
- *         </li>
- *         <li>URI passing style:
- *         <ul>
- *         <li>{@code SET_REPORT_OBJECT_PROPERTY( }<em>REPORT_OBJECT</em>
- *         {@code , REPORT_DESNAME, 'zip:///home/oracle/reports/bar.zip?append=false&entry=foo.pdf' );}
- *         </li>
- *         <li>{@code SET_REPORT_OBJECT_PROPERTY( }<em>REPORT_OBJECT</em>
- *         {@code , REPORT_OTHER, 'DESTYPE=ZIP' );}
- *         </li>
- *         </ul>
- *         </li>
- *         </ul>
- *         <small>1) Any valid DESTYPE. {@code NULL} or {@code ''} not allowed.</small>
- *         <p>
- *         <strong>Limitations</strong>
- *         <p>
- *         The ZIP destination has the following limitations:
- *         <ul>
- *         <li>Entry names during one distribution cycle must be unique - the receiving ZipArchive handles duplicates only partially.</li>
- *         <li>On re-distributing to the same ZIP archive ({@code APPEND=TRUE}) duplicates will be detected, i.e. previously added
- *         entries with the same name will be replaced by the content of the latest distribution.</li>
- *         <p>
- *         Depending on the {@code DESFORMAT} this will work only partially, though. For example re-running a distribution with
- *         {@code DESFORMAT=html} and a constant {@code DESNAME=}<em>some name</em> will include a new version for every non main
- *         file (e.g. image) as their name is constructed of <em>some name</em> and a generated numeric suffix.
- *         </ul>
+ * </li>
+ * </ul>
+ * </li>
+ * <li>URI passing style:
+ * <ul>
+ * <li>{@code SET_REPORT_OBJECT_PROPERTY( }<em>REPORT_OBJECT</em>
+ * {@code , REPORT_DESNAME, 'zip:///home/oracle/reports/bar.zip?append=false&entry=foo.pdf' );}
+ * </li>
+ * <li>{@code SET_REPORT_OBJECT_PROPERTY( }<em>REPORT_OBJECT</em>
+ * {@code , REPORT_OTHER, 'DESTYPE=ZIP' );}
+ * </li>
+ * </ul>
+ * </li>
+ * </ul>
+ * <small>1) Any valid DESTYPE. {@code NULL} or {@code ''} not allowed.</small>
+ * <p>
+ * <strong>Limitations</strong>
+ * <p>
+ * The ZIP destination has the following limitations:
+ * <ul>
+ * <li>Entry names during one distribution cycle must be unique - the receiving ZipArchive handles duplicates only partially.</li>
+ * <li>On re-distributing to the same ZIP archive ({@code APPEND=TRUE}) duplicates will be detected, i.e. previously added
+ * entries with the same name will be replaced by the content of the latest distribution.</li>
+ * <p>
+ * Depending on the {@code DESFORMAT} this will work only partially, though. For example re-running a distribution with
+ * {@code DESFORMAT=html} and a constant {@code DESNAME=}<em>some name</em> will include a new version for every non main
+ * file (e.g. image) as their name is constructed of <em>some name</em> and a generated numeric suffix.
+ * </ul>
  * 
  * @see ZipArchive
  * @see MgpDestination
- * 
+ *
+ * @author mgp
  */
 public final class ZipDestination extends MgpDestination {
 

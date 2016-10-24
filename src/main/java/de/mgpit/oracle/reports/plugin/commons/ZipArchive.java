@@ -1,3 +1,22 @@
+/*
+ * Copyright 2016 Marco Pauls www.mgp-it.de
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
+/**
+ * @license APACHE-2.0
+ */
 package de.mgpit.oracle.reports.plugin.commons;
 
 
@@ -20,25 +39,26 @@ import de.mgpit.types.Filename;
 
 /**
  * 
- * @author mgp
- *         <p>
- *         ZipArchive implements a flat ZIP file (i.e. no directory structure). The ZipArchive is used
- *         by the ZipDestination for storing the files of a distribution process.
- *         <p>
- *         The archive can be opened in appending or overwriting mode by calling
- *         one of the classes factory methods named {@link #newOrExistingNamed(String)} or {@link #newNamed(String)}.
- *         <p>
- *         New entries will be added by providing a file name and an entry name to {@link #addFile(String, String)}.
- *         During one packing cylce (i.e. opening the ZipArchive, adding files, closing the ZipArchive) entry names must be unique
- *         meaning each call {@link #addFile(String, String)} must provide a different entry name.
- *         <p>
- *         At the end clients of ZipArchive have to {@link #close()} the ZIP archive.
- *         <p>
- *         When appending to an existing archive the ZipArchive will be able to handle duplicate entries, meaning that
- *         entries from the existing archive will be replaced by new entries with the same name.
- *         <p>
- *         Any errors during processing will be wrapped in a {@link ArchivingException}.
+ * A flat ZIP file.
+ * <p>
+ * ZipArchive implements a flat ZIP file (i.e. no directory structure). The ZipArchive is used
+ * by the ZipDestination for storing the files of a distribution process.
+ * <p>
+ * The archive can be opened in appending or overwriting mode by calling
+ * one of the classes factory methods named {@link #newOrExistingNamed(String)} or {@link #newNamed(String)}.
+ * <p>
+ * New entries will be added by providing a file name and an entry name to {@link #addFile(String, String)}.
+ * During one packing cylce (i.e. opening the ZipArchive, adding files, closing the ZipArchive) entry names must be unique
+ * meaning each call {@link #addFile(String, String)} must provide a different entry name.
+ * <p>
+ * At the end clients of ZipArchive have to {@link #close()} the ZIP archive.
+ * <p>
+ * When appending to an existing archive the ZipArchive will be able to handle duplicate entries, meaning that
+ * entries from the existing archive will be replaced by new entries with the same name.
+ * <p>
+ * Any errors during processing will be wrapped in a {@link ArchivingException}.
  * 
+ * @author mgp
  */
 public class ZipArchive {
 
@@ -83,7 +103,7 @@ public class ZipArchive {
      *             if fileName is provided as null or empty String
      */
     public static ZipArchive newOrExistingNamed( final Filename fileName ) {
-        U.assertNotEmpty( fileName,  "fileName must not be null or empty string!" );
+        U.assertNotEmpty( fileName, "fileName must not be null or empty string!" );
         ZipArchive archive = new ZipArchive( fileName ).forAppending();
         return archive;
     }
@@ -360,7 +380,7 @@ public class ZipArchive {
     public Filename getFileName() {
         return this.fileName;
     }
-    
+
     /**
      * Gets if this ZipArchive is in appending mode.
      * 

@@ -1,3 +1,22 @@
+/*
+ * Copyright 2016 Marco Pauls www.mgp-it.de
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
+/**
+ * @license APACHE-2.0
+ */
 package de.mgpit.oracle.reports.plugin.commons;
 
 
@@ -14,16 +33,18 @@ import oracle.reports.utility.Utility;
 
 /**
  * 
+ * Provider of a bunch of of utility methods.
+ * <p>
+ * Has, for example methods for
+ * <ul>
+ * <li>handling class and package names</li>
+ * <li>decorating strings and numbers with square brackets</li>
+ * <li>padding strings and numbers</li>
+ * <li>testing strings and arrays for emptiness</li>
+ * <li>assertions</li>
+ * </ul>
+ * 
  * @author mgp
- *         <p>
- *         Provider of a bunch of of utility methods, for example methods for
- *          <ul>
- *              <li>handling class and package names</li>
- *              <li>decorating strings and numbers with square brackets</li>
- *              <li>padding strings and numbers</li>
- *              <li>testing strings and arrays for emptiness</li>
- *              <li>assertions</li>
- *          </ul>
  */
 public final class U {
 
@@ -60,7 +81,7 @@ public final class U {
     public static final Object coalesce( Object optionalObject, Object defaultObject ) {
         return (optionalObject == null) ? defaultObject : optionalObject;
     }
-    
+
     public static final Filename coalesce( final Filename optionalFilename, final Filename defaultFilename ) {
         return (optionalFilename == null) ? defaultFilename : optionalFilename;
     }
@@ -381,15 +402,16 @@ public final class U {
     public static boolean isEmpty( final String str ) {
         return (str == null) || "".equals( str );
     }
-    
+
     /**
      * Checks for null or empty filenames.
      * 
-     * @param fn the Filename to be checked.
+     * @param fn
+     *            the Filename to be checked.
      * @return {@code true} if the String str is null or emptpy, {@code false} else
      */
     public static boolean isEmpty( final Filename fn ) {
-        return ( fn == null ) || isEmpty( fn.toString() );
+        return (fn == null) || isEmpty( fn.toString() );
     }
 
     /**
@@ -486,13 +508,13 @@ public final class U {
             throw new AssertionError( new IllegalArgumentException( message ) );
         }
     }
-    
+
     public static void assertNotEmpty( final Filename filename, final String message ) throws AssertionError {
         assertNotNull( filename );
         assertNotEmpty( filename.toString(), message );
     }
-    
-    public static void assertNotEmpty( final Filename filename) throws AssertionError {
+
+    public static void assertNotEmpty( final Filename filename ) throws AssertionError {
         assertNotEmpty( filename, "Filename MUST NOT be null oder empty!" );
     }
 
@@ -500,14 +522,23 @@ public final class U {
      * Assert that the given boolean is {@code true}.
      * <p>
      * The use case for this is of course to make assertions on boolean expressions / methods returning a boolean value as in
-     * <pre>{@code
+     * 
+     * <pre>
+     * {@code
      *  U.assertTrue( employee.isASalesPerson() );
-     * }</pre> or <pre>{@code
+     * }
+     * </pre>
+     * 
+     * or
+     * 
+     * <pre>
+     * {@code
      *  private lookupSomebody( String name ) {
      *      U.assertTrue( !U.isEmpty( name ), "Must provide a non empty name!" );
      *      ...
      *  }
-     * }</pre>
+     * }
+     * </pre>
      * 
      * @param b
      *            boolean to be tested
@@ -523,11 +554,11 @@ public final class U {
             throw new AssertionError( message, new Exception( "Expression or variable does not evaluate to true!" ) );
         }
     }
-    
+
     public static void assertFalse( final boolean b ) throws AssertionError {
         assertFalse( b, "Condition false NOT met!" );
     }
-    
+
     public static void assertFalse( final boolean b, final String message ) throws AssertionError {
         if ( b ) {
             throw new AssertionError( message, new Exception( "Expression or variable does not evaluate to false!" ) );
@@ -538,13 +569,18 @@ public final class U {
      * This class implements {@link U}'s assertion methods which will wrap {@link AssertionError}s as {@link RWException}s.
      * <p>
      * This will avoid polluting your code with
-     * <pre>{@code
+     * 
+     * <pre>
+     * {@code
      * try {
      *     U.assertXXX( ... );
      * } catch ( AssertionError error ) {
      *     throw Utility.newRWException( error ); 
-     * }}</pre> snippets.
-     *  
+     * }}
+     * </pre>
+     * 
+     * snippets.
+     * 
      * @author mgp
      *
      */

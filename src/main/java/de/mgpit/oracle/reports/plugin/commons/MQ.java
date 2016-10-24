@@ -1,3 +1,22 @@
+/*
+ * Copyright 2016 Marco Pauls www.mgp-it.de
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
+/**
+ * @license APACHE-2.0
+ */
 package de.mgpit.oracle.reports.plugin.commons;
 
 
@@ -13,17 +32,16 @@ public class MQ {
 
     /**
      * 
-     * @author mgp
-     * 
-     *         Class representing a configuration for a Websphere MQ client connection.
-     *         <p>
-     *         This is still a very simple implementation as
-     *         <ol>
-     *         <li>only a few parameters are supported by now</li>
-     *         <li>none of the business rules as specified in <a href="ftp://public.dhe.ibm.com/software/integration/support/supportpacs/individual/ma93_wmqsvcdef1.0.pdf">Websphere MQ Service Defintion</a>
-     *         are implemented</li>
-     *         </ol>
+     * Class a configuration for a Websphere MQ client connection.
+     * <p>
+     * This is still a very simple implementation as
+     * <ol>
+     * <li>only a few parameters are supported by now</li>
+     * <li>none of the business rules as specified in <a href="ftp://public.dhe.ibm.com/software/integration/support/supportpacs/individual/ma93_wmqsvcdef1.0.pdf">Websphere MQ Service Defintion</a>
+     * are implemented</li>
+     * </ol>
      *
+     * @author mgp
      */
     public static class Configuration {
         /**
@@ -187,7 +205,6 @@ public class MQ {
             return relevantPath;
         }
 
-
         public String toString() {
             final StringBuffer sb = new StringBuffer( 127 );
             sb.append( "MQ Configuration Host: " ).append( U.w( this.hostName ) ).append( " Port: " ).append( U.w( this.port ) )
@@ -265,17 +282,19 @@ public class MQ {
                     file.write( b );
                 }
             }
-            
+
             public void flush() throws IOException {
                 file.flush();
             }
+
             public void close() throws IOException {
                 file.close();
             }
 
             {
                 try {
-                    file = new FileOutputStream( File.createTempFile( "QMSALSAXP.IQ.DEVELOPMENT__", ".mq", new File( "O:\\tmp\\reports\\output" ) ) );
+                    file = new FileOutputStream(
+                            File.createTempFile( "QMSALSAXP.IQ.DEVELOPMENT__", ".mq", new File( "O:\\tmp\\reports\\output" ) ) );
                 } catch ( IOException ignored ) {
                     file = null;
                 }

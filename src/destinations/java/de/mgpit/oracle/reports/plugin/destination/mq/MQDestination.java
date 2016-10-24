@@ -1,3 +1,22 @@
+/*
+ * Copyright 2016 Marco Pauls www.mgp-it.de
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
+/**
+ * @license APACHE-2.0
+ */
 package de.mgpit.oracle.reports.plugin.destination.mq;
 
 
@@ -34,19 +53,17 @@ import oracle.reports.utility.Utility;
 
 /**
  * 
- * @author mgp
- *         <p>
- *         Implements an Oracle Reports&trade; {@link oracle.reports.server.Destination} for distributing
- *         the files of a distribution process into a Websphere MQ&trade; (MQ Series) Queue.
- *         The destination is able to modify / transform the data genearated report output. See below.
+ * Implements an Oracle Reports&trade; {@link oracle.reports.server.Destination} for distributing
+ * the files of a distribution process into a Websphere MQ&trade; (MQ Series) Queue.
+ * The destination is able to modify / transform the data genearated report output. See below.
  * 
- *         <p>
- *         <strong>Registering the destination in your <em>reportserver.conf</em>:</strong>
- *         <p>
- *         The {@code DESTYPE} for this destination is suggested to be {@code mq}.
- *         Basic configuration example:
+ * <p>
+ * <strong>Registering the destination in your <em>reportserver.conf</em>:</strong>
+ * <p>
+ * The {@code DESTYPE} for this destination is suggested to be {@code mq}.
+ * Basic configuration example:
  * 
- *         <pre>
+ * <pre>
  * {@code
  *  <destination destype="mq" class="de.mgpit.oracle.reports.plugin.destination.zip.MQDestination">
  *     <property name="loglevel" value="DEBUG"/> <!-- log4j message levels. Allow debug messages --> 
@@ -54,18 +71,18 @@ import oracle.reports.utility.Utility;
  *     <property name="mq"       value="wmq://localhost:1414/dest/queue/MY.QUEUE@MYQMGR?channelName=CHANNEL_1/"/>
  *  </destination>
  *         }
- *         </pre>
+ * </pre>
  * 
- *         The default MQ target is configured as property named {@code mq} in the form of an URI denoting
- *         Queue Manager, Queue, and Channel name.
- *         <ul>
- *         <li>{@code wmq://}<em>host:mqport</em>{@code /dest/queue/}<em>queuename@qmgr</em>{@code ?channelName=}<em>channelname</em>
- *         </ul>
- *         <strong>note: </strong>scheme must be <strong>wmq</strong> (lowercase!)
- *         <p>
- *         One can also register transformation plugins.
+ * The default MQ target is configured as property named {@code mq} in the form of an URI denoting
+ * Queue Manager, Queue, and Channel name.
+ * <ul>
+ * <li>{@code wmq://}<em>host:mqport</em>{@code /dest/queue/}<em>queuename@qmgr</em>{@code ?channelName=}<em>channelname</em>
+ * </ul>
+ * <strong>note: </strong>scheme must be <strong>wmq</strong> (lowercase!)
+ * <p>
+ * One can also register transformation plugins.
  * 
- *         <pre>
+ * <pre>
  * {@code
  *  <destination destype="MQ" class="de.mgpit.oracle.reports.plugin.destination.zip.MQDestination">
  *     <property name="loglevel" value="DEBUG"/> <!-- log4j message levels. Allow debug messages --> 
@@ -79,41 +96,44 @@ import oracle.reports.utility.Utility;
  *     <property name="content.Soap"            value="tld.foo.bar.batz.SoapEnvelope"/> <!-- Must implement de.mgpit.oracle.reports.plugin.destination.content.types.Content -->
  *  </destination>
  *         }
- *         </pre>
+ * </pre>
  *
  *
- *         <p>
- *         <strong>Using the destination:</strong>
- *         <p>
- *         The default distribution target is configured as property in the <em>reportserver.conf</em> - see above.
- *         On distribution one can pass a different target via {@code DESNAME} in the form of the above URI format.
- *         <p>
+ * <p>
+ * <strong>Using the destination:</strong>
+ * <p>
+ * The default distribution target is configured as property in the <em>reportserver.conf</em> - see above.
+ * On distribution one can pass a different target via {@code DESNAME} in the form of the above URI format.
+ * <p>
  *
- *         When running from <strong>Oracle Forms</strong>&trade; using a <em>REPORT_OBJECT</em> you can pass the parameters as follows.
- *         <ul>
- *         <li>{@code SET_REPORT_OBJECT_PROPERTY( }REPORT_OBJECT</em>
- *         {@code , REPORT_DESTYPE, CACHE }<sup>1)</sup> {@code );}</li>
- *         <li>If wanting to override the MQ set up in the <em>reportserver.conf</em><br/>
- *         {@code SET_REPORT_OBJECT_PROPERTY( }<em>REPORT_OBJECT</em>
- *         {@code , REPORT_DESNAME, 'wmq://localhost:1414/dest/queue/MY.QUEUE@MYQMGR?channelName=CHANNEL_1' );}
- *         </li>
- *         <li>code SET_REPORT_OBJECT_PROPERTY( }<em>REPORT_OBJECT</em>
- *         {@code , REPORT_OTHER, 'DESTYPE=MQ' );}
- *         </li>
- *         <li>If wanting to apply transformations: via Parameter List
+ * When running from <strong>Oracle Forms</strong>&trade; using a <em>REPORT_OBJECT</em> you can pass the parameters as follows.
+ * <ul>
+ * <li>{@code SET_REPORT_OBJECT_PROPERTY( }REPORT_OBJECT</em>
+ * {@code , REPORT_DESTYPE, CACHE }<sup>1)</sup> {@code );}</li>
+ * <li>If wanting to override the MQ set up in the <em>reportserver.conf</em><br/>
+ * {@code SET_REPORT_OBJECT_PROPERTY( }<em>REPORT_OBJECT</em>
+ * {@code , REPORT_DESNAME, 'wmq://localhost:1414/dest/queue/MY.QUEUE@MYQMGR?channelName=CHANNEL_1' );}
+ * </li>
+ * <li>code SET_REPORT_OBJECT_PROPERTY( }<em>REPORT_OBJECT</em>
+ * {@code , REPORT_OTHER, 'DESTYPE=MQ' );}
+ * </li>
+ * <li>If wanting to apply transformations: via Parameter List
  * 
- *         <pre>
- *         {@code 
+ * <pre>
+ * {@code 
  * distribution_parameters := CREATE_PARAMETER_LIST( 'SOME_UNIQUE_NAME' );  
  * ADD_PARAMETER( distribution_parameters, 'TRANSFORM', TEXT_PARAMETER, 'BASE64>>ENVELOPE(SOAP)' );
  * --
  * -- Pass the Parameter List on RUN_REPORT_OBJECT
  * --
  * RUN_REPORT_OBJECT( REPORT_OBJECT, distribution_parameters ); }
- *         </li>
- *         </ul>
- *         <small>1) Any valid DESTYPE. {@code NULL} or {@code ''} not allowed.</small>
+ * </li>
+ * </ul>
+ * <small>1) Any valid DESTYPE. {@code NULL} or {@code ''} not allowed.</small>
  *
+ * @see MgpDestination
+ * 
+ * @author mgp
  */
 public final class MQDestination extends MgpDestination {
 

@@ -1,3 +1,22 @@
+/*
+ * Copyright 2016 Marco Pauls www.mgp-it.de
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
+/**
+ * @license APACHE-2.0
+ */
 package de.mgpit.oracle.reports.plugin.commons;
 
 
@@ -11,10 +30,9 @@ import de.mgpit.types.Filename;
 
 /**
  * 
- * @author mgp
- * 
  * Provider of methods for working with {@link URI}s.
- *
+ * 
+ * @author mgp
  */
 public class URIUtility {
 
@@ -90,44 +108,43 @@ public class URIUtility {
     public static String toUriPathString( final Filename filename ) throws IOException {
         return toUriPathString( IOUtility.asFile( filename ) );
     }
-    
+
     /**
      * Get the URI's path as platform specific path.
      * <p>
      * Makes sense for file URIs, only ...
      * 
      * @param uri
-     * @return URIs path as platform specific path 
+     * @return URIs path as platform specific path
      */
     public static String pathToPlatformPath( final URI uri ) {
         String path = uri.getPath();
         return new File( path ).getPath();
     }
-    
+
     /**
      * Get the URI's path as platform specific Filename.
      * <p>
      * Makes sense for file URIs, only ...
      * 
      * @param uri
-     * @return URIs path as platform specific path 
+     * @return URIs path as platform specific path
      */
     public static Filename pathToPlatformFilename( final URI uri ) {
         return Filename.of( pathToPlatformPath( uri ) );
     }
-    
+
     /**
      * Get the URI's path as platform specific absolute path.
      * <p>
      * Makes sense for file URIs, only ...
      * 
      * @param uri
-     * @return URIs path as platform specific path 
+     * @return URIs path as platform specific path
      */
     public static String pathToAbsolutePlatformPath( final URI uri ) {
         String path = uri.getPath();
         return new File( path ).getAbsolutePath();
     }
-    
 
 }

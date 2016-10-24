@@ -1,8 +1,28 @@
+/*
+ * Copyright 2016 Marco Pauls www.mgp-it.de
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
+/**
+ * @license APACHE-2.0
+ */
 package de.mgpit.oracle.reports.plugin.commons;
 
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -23,38 +43,39 @@ import oracle.reports.utility.Utility;
 
 /**
  * 
+ * Factory for setting up a log file for an Oracle Reports&trade; destination plugin.
+ * <p>
+ * There are two factory methods
+ * <ul>
+ * <li>{@link #createOrReplaceClassLevelLogger(Class, String, String)}</li>
+ * <li>{@link #createOrReplacePackageLevelLogger(Class, String, String)}</li>
+ * </ul>
+ * each taking three parameters
+ * <ul>
+ * <li>a Class for determining the logger's namespace</li>
+ * <li>an optional filename/path for setting the log file</li>
+ * <li>an optional String for setting the logger's log level</li>
+ * </ul>
+ * <h2>Determining the log file's file name</h2>
+ * <ul>
+ * <li>The simplest situation is where that the caller of one of the factory methods provides a full path for the
+ * log file's file name which points to a valid directory.</li>
+ * <li>If there's no file name provided the class' full name with all <code>.</code> (dots)
+ * replaced by <code>_</code> (underlines) and a file extension of <code>.log</code>. will be used as file name</li>
+ * <li>If the directory provided is <strong>not valid</strong> (meaning either it does not exist at all or there is no
+ * read/write access [for the Oracle Reports&trade; process] <sup>1</sup> ) the log file will be placed
+ * <ol>
+ * <li>in the Oracle Reports <code>logs directory</code>
+ * <li>or, if this is not valid, in the Oracle Reports <code>temp direcotry</code>
+ * <li>or, if this is not valid, in the <code>default temp direcotry</code>
+ * </ol>
+ * </ul>
+ * <p>
+ * <sup>1</sup> The "is valid" property is, of course, time dependent. Any changes made to the file system after creating
+ * the logger may have the effect that the directory given is not valid any more.
+ * 
  * @author mgp
  * 
- *         Factory for setting up a log file for an Oracle Reports destination plugin.
- *         <p>
- *         There are two factory methods
- *         <ul>
- *         <li>{@link #createOrReplaceClassLevelLogger(Class, String, String)}</li>
- *         <li>{@link #createOrReplacePackageLevelLogger(Class, String, String)}</li>
- *         </ul>
- *         each taking three parameters
- *         <ul>
- *         <li>a Class for determining the logger's namespace</li>
- *         <li>an optional filename/path for setting the log file</li>
- *         <li>an optional String for setting the logger's log level</li>
- *         </ul>
- *         <h2>Determining the log file's file name</h2>
- *         <ul>
- *         <li>The simplest situation is where that the caller of one of the factory methods provides a full path for the
- *         log file's file name and points to a valid directory.</li>
- *         <li>If there's no file name provided the class' full name will be used as file name with all <code>.</code> (dots)
- *         replaced by <code>_</code> (underlines) and an extension of <code>.log</code>.</li>
- *         <li>If there directory provides is <strong>not valid</strong> (i.e. does not exist or there is no read/write access [for the
- *         Oracle Reports process] <sup>1</sup> ) the log file will be placed
- *         <ol>
- *         <li>in the Oracle Reports <code>logs directory</code>
- *         <li>or, if this is not valid, in the Oracle Reports <code>temp direcotry</code>
- *         <li>or, if this is not valid, in the <code>default temp direcotry</code>
- *         </ol>
- *         </ul>
- *         <p>
- *         <sup>1</sup> The "is valid" property is of course time dependent. Any changes made to the file system after creating
- *         the logger may have the effect that the directory given is not valid any more.
  */
 public final class DestinationsLogging {
 
@@ -66,7 +87,7 @@ public final class DestinationsLogging {
      * Consequence/goal: Subsequent MgpDestinations addressing the same logger will not override the logger with their configuration.
      * This is "first come first serve"
      */
-    private static final List configuredDestinationLoggerNames = new LinkedList();
+    private static final List configuredDestinationLoggerNames = Collections.synchronizedList( new LinkedList() );
 
     /**
      * Holds the layout for a log message pattern made of ISO8601 date , level , and message
@@ -115,7 +136,7 @@ public final class DestinationsLogging {
     }
 
     /**
-     * Sets up a logger once. Subsequent calls for the same logger will have no effect.
+     * Sets up the logger as identified by its name. Subsequent calls for the same logger will have no effect.
      * <p>
      * The logger will be stripped of any existing appenders and given a RollingFileAppender.
      * 
@@ -135,11 +156,16 @@ public final class DestinationsLogging {
 
         U.Rw.assertNotNull( givenLoggerName );
         String loggerName = givenLoggerName.trim();
-        
+
         /*
          * From observation the report server sets up all destinations sequentially
-         * running the main thread. Yet ensure only one thread manipulates the {@see #configuredDestinationLoggerNames}
+         * running the main thread.
+         * Yet ensure only one thread manipulates the {@see #configuredDestinationLoggerNames}
          * at the same time.
+         *
+         * As stated in {@link Collections#synchronizedList} clients of a synchronized list still have to
+         * synchronize manually if not performing atomic calls (for example {@code add()}) on the list.
+         * Typical non atomic access would be iterating over the list.
          */
         synchronized (configuredDestinationLoggerNames) {
             if ( configuredDestinationLoggerNames.contains( loggerName ) ) return;
@@ -163,7 +189,6 @@ public final class DestinationsLogging {
                 configuredDestinationLoggerNames.add( loggerName );
             }
         }
-
     }
 
     /**
@@ -314,7 +339,8 @@ public final class DestinationsLogging {
                 }
             }
 
-            File logFile = IOUtility.asFile( Directoryname.of( directoryname ), IOUtility.asLogfileFilename( MgpDestination.class.getName() ) );
+            File logFile = IOUtility.asFile( Directoryname.of( directoryname ),
+                    IOUtility.asLogfileFilename( MgpDestination.class.getName() ) );
             try {
                 RollingFileAppender rootLog = new RollingFileAppender( VERBOSE_WIDE_LAYOUT, logFile.getPath(),
                         Magic.APPEND_MESSAGES_TO_LOGFILE );
