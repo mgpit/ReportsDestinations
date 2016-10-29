@@ -34,6 +34,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
 
@@ -42,13 +44,17 @@ import de.mgpit.oracle.reports.plugin.commons.U;
 import de.mgpit.oracle.reports.plugin.commons.io.IOUtility;
 import de.mgpit.oracle.reports.plugin.destination.MgpDestination;
 import de.mgpit.oracle.reports.plugin.destination.TransformationChainDeclaration;
+import de.mgpit.oracle.reports.plugin.destination.TransformingDestination;
 import de.mgpit.oracle.reports.plugin.destination.content.types.Content;
 import de.mgpit.oracle.reports.plugin.destination.content.types.InputTransformation;
 import de.mgpit.oracle.reports.plugin.destination.content.types.OutputTransformation;
 import de.mgpit.oracle.reports.plugin.destination.content.types.Transformation;
+import de.mgpit.types.ContentName;
 import de.mgpit.types.Filename;
 import de.mgpit.types.TransformerName;
+import de.mgpit.types.TransformerUnparsedName;
 import oracle.reports.RWException;
+import oracle.reports.server.Destination;
 import oracle.reports.utility.Utility;
 
 /**
@@ -135,7 +141,7 @@ import oracle.reports.utility.Utility;
  * 
  * @author mgp
  */
-public final class MQDestination extends MgpDestination {
+public final class MQDestination extends TransformingDestination {
 
     /*
      * Me logger ... ;-)
@@ -146,34 +152,6 @@ public final class MQDestination extends MgpDestination {
      * Holds the default MQ instance as defined in the {@code <reportservername>.conf} file
      */
     private static MQ DEFAULT_MQ;
-
-    private static final int SOME_PRIME = 23;
-
-    /**
-     * Holds the transformer plugins as defined in the {@code <reportservername>.conf} file
-     */
-    private static Map CONTENTMODIFIERS = Collections.synchronizedMap( new HashMap( SOME_PRIME ) );
-
-    /**
-     * Holds the content providers as defined in the {@code <reportservername>.conf} file
-     */
-    private static Map CONTENTPROVIDERS = Collections.synchronizedMap( new HashMap( SOME_PRIME ) );
-
-    /**
-     * Holds the transformation chain which will be applied to the output
-     * on the current distribution cycle - which is
-     * <br/>
-     * {@code start} &rarr; {@code sendFile}<sup>{1..n}</sup> &rarr; {@code stop()}
-     * 
-     */
-    private OutputTransformation[] outputTransformationChain = {};
-    /**
-     * Holds the transformation chain which will be applied to the input
-     * on the current distribution cycle - which is
-     * <br/>
-     * {@code start} &rarr; {@code sendFile}<sup>{1..n}</sup> &rarr; {@code stop()}
-     */
-    private InputTransformation[] inputTransformationChain = {};
 
     /**
      * Holds the MQ connection used for the current distribution cycle - which is
@@ -221,7 +199,6 @@ public final class MQDestination extends MgpDestination {
 
             if ( continueToSend ) {
                 getLogger().info( "Starting distribution to MQ" );
-                extractDeclaredTransformationChain( allProperties );
                 this.mq = (MQ) U.coalesce( getDeclaredMQ( allProperties ), DEFAULT_MQ );
 
                 continueToSend = this.mq != null;
@@ -238,81 +215,14 @@ public final class MQDestination extends MgpDestination {
         }
     }
 
-    protected void extractDeclaredTransformationChain( final Properties allProperties ) throws RWException {
-        String transformationDeclaration = allProperties.getProperty( "transform" );
-
-        if ( transformationDeclaration != null ) {
-            getLogger().info( "Extracting declared Transformation Chain" );
-            TransformerName[] declaredTransformations = TransformationChainDeclaration.extractNames( transformationDeclaration );
-            getLogger().info( "Declaration contains " + U.w( declaredTransformations.length ) + " items." );
-
-            ArrayList declaredOutputTransformations = new ArrayList();
-            ArrayList declaredInputTransformations = new ArrayList();
-            for ( int runIndex = 0; runIndex < declaredTransformations.length; runIndex++ ) {
-                TransformerName givenName = declaredTransformations[runIndex];
-                getLogger().debug( U.w( U.lpad( runIndex, 2 ) ) + ": Extracting " + U.w( givenName.toString() ) );
-                if ( Transformer.transformsOnOutput( givenName ) ) {
-                    getLogger().info( U.w( givenName ) + " identified as Output transformation." );
-                    declaredOutputTransformations.add( Transformer.Out.newInstance( givenName ) );
-                } else if ( Transformer.transformsOnInput( givenName ) ) {
-                    getLogger().info( U.w( givenName ) + " identified as Input transformation." );
-                    declaredInputTransformations.add( Transformer.In.newInstance( givenName ) );
-                } else {
-                    getLogger().warn( U.w( givenName ) + " cannot be identified as Output nor Input transformation." );
-                }
-            }
-
-            try {
-                assignOutputTransformationChain( declaredOutputTransformations );
-                assignInputTransformationChain( declaredInputTransformations );
-            } catch ( Exception any ) {
-                LOG.fatal( "Fatal error on extracting transformations!", any );
-                throw Utility.newRWException( any );
-            }
-
-        } else {
-            getLogger().info( "No transformations declared." );
-        }
-    }
-
-    private void assignOutputTransformationChain( List extracted ) {
-        if ( extracted != null && extracted.size() > 0 ) {
-            this.outputTransformationChain = new OutputTransformation[extracted.size()];
-            int targetIndex = 0;
-            Iterator elements = extracted.iterator();
-            while ( elements.hasNext() ) {
-                OutputTransformation element = (OutputTransformation) elements.next();
-                this.outputTransformationChain[targetIndex++] = element;
-            }
-        }
-    }
-
-    private void assignInputTransformationChain( List extracted ) {
-        if ( extracted != null && extracted.size() > 0 ) {
-            this.outputTransformationChain = new OutputTransformation[extracted.size()];
-            int targetIndex = 0;
-            Iterator elements = extracted.iterator();
-            while ( elements.hasNext() ) {
-                InputTransformation element = (InputTransformation) elements.next();
-                this.inputTransformationChain[targetIndex++] = element;
-            }
-        }
-    }
-
     protected void sendMainFile( Filename cacheFileFilename, short fileFormat ) throws RWException {
-        getLogger().info( "Sending MAIN file to " + getClass().getName() );
-        InputStream source = getContent( IOUtility.asFile( cacheFileFilename ) );
+        getLogger().info( "Sending MAIN file of format " + humanReadable( fileFormat ) + " to " + getClass().getName() );
+        InputStream source = getContent( IOUtility.fileFromName( cacheFileFilename ) );
         try {
             U.assertNotNull( this.mq, "Cannot continue to send! No MQ destination provided nor default MQ destination speficied!" );
             OutputStream mqOut = this.mq.newMessage();
             OutputStream target = wrapWithOutputTransformers( mqOut );
             IOUtility.copyFromToAndThenClose( source, target );
-        } catch ( FileNotFoundException fileNotFound ) {
-            getLogger().error( "Error during distribution! Could not find file to add!" );
-            throw Utility.newRWException( fileNotFound );
-        } catch ( IOException ioex ) {
-            getLogger().error( "Error during distribution! Could not copy file content!", ioex );
-            throw Utility.newRWException( ioex );
         } catch ( Throwable anyOther ) {
             getLogger().fatal( "Fatal Error during sending main file " + U.w( cacheFileFilename ) + "!", anyOther );
             throw Utility.newRWException( new Exception( anyOther ) );
@@ -324,62 +234,19 @@ public final class MQDestination extends MgpDestination {
         getLogger().info( "Sending Other file to " + getClass().getName() );
     }
 
-    protected InputStream getContent( File file ) throws RWException {
-        InputStream sourceInput = super.getContent( file );
-        return wrapWithInputTransformers( sourceInput );
-    }
-
-    /**
-     * Wraps the output wiht {@link OutputTransformation}s.
-     * 
-     * @param destinationStream
-     * @return
-     * @throws RWException
-     */
-    private OutputStream wrapWithOutputTransformers( OutputStream destinationStream ) throws RWException {
-        OutputStream wrapped = destinationStream;
-        if ( this.outputTransformationChain != null ) {
-            final int startIndex = this.outputTransformationChain.length - 1;
-            final Properties allProperties = getProperties();
-            for ( int runIndex = startIndex; runIndex >= 0; --runIndex ) {
-                OutputTransformation transformation = this.outputTransformationChain[runIndex];
-                wrapped = transformation.forOutput( wrapped, allProperties );
-                getLogger().info( "Transformer for " + U.w( transformation.toString() ) + " has been applied successfully." );
-            }
-        }
-        return wrapped;
-    }
-
-    /**
-     * Wraps the input with {@link InputTransformation}s.
-     * 
-     * @param initialStream
-     * @return
-     * @throws RWException
-     */
-    private InputStream wrapWithInputTransformers( InputStream initialStream ) throws RWException {
-        InputStream wrapped = initialStream;
-        if ( this.inputTransformationChain != null ) {
-            final int endIndex = this.inputTransformationChain.length;
-            final Properties allProperties = getProperties();
-            for ( int runIndex = 0; runIndex < endIndex; runIndex++ ) {
-                InputTransformation transformation = this.inputTransformationChain[runIndex];
-                wrapped = transformation.forInput( wrapped, allProperties );
-                getLogger().info( "Transformer " + U.w( transformation.toString() ) + " has been applied successfully." );
-            }
-        }
-        return wrapped;
-    }
 
     /**
      * Initializes the destination on Report Server startup.
+     * <p>
+     * Invoked by the Report Server.
      * <ul>
      * <li>initialize log4j</li>
-     * <li>register declared content modifiers</li>
-     * <li>register declared aliases</li>
+     * <li>register default Websphere MQ settings</li>
      * </ul>
      * 
      * @param destinationsProperties
+     *            the properties set in the report server's conf file within this
+     *            destination's configuration section ({@code //destination/property})
      * @throws RWException
      */
     public static void init( Properties destinationsProperties ) throws RWException {
@@ -387,76 +254,9 @@ public final class MQDestination extends MgpDestination {
         if ( LOG.isDebugEnabled() ) {
             dumpProperties( destinationsProperties, LOG );
         }
-        registerConfiguredContentModifiers( destinationsProperties );
-        registerConfiguredContentProvideres( destinationsProperties );
+        TransformingDestination.init( destinationsProperties );
         registerDefaultMQ( destinationsProperties );
         LOG.info( "Destination " + U.w( MQDestination.class.getName() ) + " started." );
-    }
-
-    private static void registerConfiguredContentModifiers( Properties destinationsProperties ) throws RWException {
-        Enumeration keys = destinationsProperties.keys();
-        LOG.info( "About to search for and register virtual destinations ..." );
-        boolean registrationErrorOccured = false;
-
-        while ( keys.hasMoreElements() ) {
-            String key = (String) keys.nextElement();
-            if ( isContentModificationPluginDefinition( key ) ) {
-                TransformerName name = extractContentModificationPluginName( key );
-                String virtualDestinationClassName = destinationsProperties.getProperty( key );
-                boolean success = registerContentModifier( name, virtualDestinationClassName );
-                if ( !success ) {
-                    registrationErrorOccured = true;
-                }
-            }
-        }
-        if ( registrationErrorOccured ) {
-            LOG.warn( "Could not register all Content Plugins!" );
-        }
-    }
-
-    private static boolean registerContentModifier( TransformerName name, String implementingClassName ) {
-        LOG.info( " >>> About to register Content Transformer named " + U.w( name ) );
-        Class clazz = null;
-        try {
-            clazz = Class.forName( implementingClassName );
-            LOG.info( U.w( implementingClassName ) + " registered successfully for " + U.w( name ) );
-        } catch ( ClassNotFoundException cnf ) {
-            LOG.warn( cnf );
-            return false;
-        }
-        CONTENTMODIFIERS.put( name, clazz );
-        return true;
-    }
-
-    private static boolean isContentModificationPluginDefinition( String key ) {
-        return key.startsWith( Transformation.PROPERTY_NAME_PREFIX );
-    }
-
-    private static TransformerName extractContentModificationPluginName( String key ) {
-        String[] pathElements = key.split( "\\." );
-        int numberOfElements = pathElements.length;
-        if ( numberOfElements < 2 ) {
-            LOG.warn( "Got invalid Content Transformername: " + U.w( key ) );
-            return null;
-        }
-        int indexOfContentModificationPluginName = --numberOfElements;
-        return TransformerName.of( pathElements[indexOfContentModificationPluginName] );
-    }
-
-    private static void registerConfiguredContentProvideres( Properties destinationsProperties ) throws RWException {
-        Enumeration keys = destinationsProperties.keys();
-        while ( keys.hasMoreElements() ) {
-            String key = (String) keys.nextElement();
-            if ( isContentProviderDefintion( key ) ) {
-                String value = destinationsProperties.getProperty( key );
-                CONTENTPROVIDERS.put( key, value );
-                LOG.info( "Registered alias " + U.w( key ) + " for " + U.w( value ) );
-            }
-        }
-    }
-
-    private static boolean isContentProviderDefintion( String key ) {
-        return key.startsWith( Content.PROPERTY_NAME_PREFIX );
     }
 
     private static void registerDefaultMQ( Properties destinationsProperties ) {
@@ -495,70 +295,4 @@ public final class MQDestination extends MgpDestination {
     protected Logger getLogger() {
         return LOG;
     }
-
-    private static class Transformer {
-
-        private static final class Out extends Transformer {
-            protected static final OutputTransformation newInstance( TransformerName name ) throws RWException {
-                try {
-                    return (OutputTransformation) Transformer._newInstance( name );
-                } catch ( Throwable any ) {
-                    LOG.fatal( "Cannot instantiate " + U.w( name ) + " (as OutputTransformation)", any );
-                    throw Utility.newRWException( new Exception( any ) );
-                }
-            }
-        }
-
-        private static final class In extends Transformer {
-            protected static final InputTransformation newInstance( TransformerName name ) throws RWException {
-                try {
-                    return (InputTransformation) Transformer._newInstance( name );
-                } catch ( Throwable any ) {
-                    LOG.fatal( "Cannot instantiate " + U.w( name ) + " (as InputTransformation)", any );
-                    throw Utility.newRWException( new Exception( any ) );
-                }
-            }
-        }
-
-        protected static Transformation _newInstance( TransformerName name ) throws RWException {
-            Class clazz = (Class) CONTENTMODIFIERS.get( name );
-            if ( clazz != null ) {
-                try {
-                    Object newInstance = clazz.newInstance();
-                    Transformation transformer = (Transformation) newInstance;
-                    return transformer;
-                } catch ( InstantiationException cannotInstantiate ) {
-                    LOG.error( "Cannot instantiate " + U.w( clazz.getName() ), cannotInstantiate );
-                    throw Utility.newRWException( cannotInstantiate );
-                } catch ( Exception anyOther ) {
-                    LOG.error( "Error during instantiation of ContentModificationPlugin!", anyOther );
-                    throw Utility.newRWException( anyOther );
-                }
-            } else {
-                IllegalArgumentException illegalArgument = new IllegalArgumentException(
-                        "No transformer named " + U.w( name ) + " has been registered!" );
-                LOG.fatal( illegalArgument );
-                throw Utility.newRWException( illegalArgument );
-            }
-        }
-
-        protected static boolean transformsOnInput( TransformerName givenName ) {
-            Class clazz = (Class) CONTENTMODIFIERS.get( givenName );
-            if ( clazz == null ) {
-                LOG.error( "No transformer named " + U.w( givenName ) + "has been registered!" );
-                return false;
-            }
-            return InputTransformation.class.isAssignableFrom( clazz );
-        }
-
-        protected static boolean transformsOnOutput( TransformerName givenName ) {
-            Class clazz = (Class) CONTENTMODIFIERS.get( givenName );
-            if ( clazz == null ) {
-                LOG.error( "No transformer named " + U.w( givenName ) + "has been registered!" );
-                return false;
-            }
-            return OutputTransformation.class.isAssignableFrom( clazz );
-        }
-    }
-
 }

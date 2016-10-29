@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2016 Marco Pauls www.mgp-it.de
  *
@@ -23,36 +22,39 @@ package de.mgpit.types;
 
 /**
  * 
- * A directory name.
+ * A transformer name.
+ * <p>
+ * The name is unparsed and unvalidated.
  *
  * @author mgp
  */
-public final class Directoryname extends TypedString {
-    public static Directoryname of( String name ) {
-        return new Directoryname( name );
+public final class ContentName extends TypedString {
+    
+    public static ContentName of( String name ) {
+        return new ContentName( name );
     }
 
     String name = "";
 
-    private Directoryname( String name ) {
-        this.name = cleaned( name );
+    private ContentName( String name ) {
+        this.name = name.trim();
     }
 
     protected String value() {
         return this.name;
     }
 
-    private static Directoryname NULL_VALUE = Directoryname.of( (String) null );
+    private static ContentName NULL_VALUE = ContentName.of( (String) null );
 
-    public Directoryname copy() {
-        return Directoryname.of( this.value() );
+    public ContentName copy() {
+        return ContentName.of( this.value() );
     }
 
-    public Directoryname concat( String str ) {
-        return (this.isNotNull()) ? Directoryname.of( this.value().concat( str ) ) : NULL_VALUE;
+    public ContentName concat( String str ) {
+        return (this.isNotNull()) ? ContentName.of( this.value().concat( str ) ) : NULL_VALUE;
     }
 
-    public Directoryname trim() {
-        return (this.isNotNull()) ? Directoryname.of( this.value().trim() ) : NULL_VALUE;
+    public ContentName trim() {
+        return (this.isNotNull()) ? ContentName.of( this.value().trim() ) : NULL_VALUE;
     }
 }

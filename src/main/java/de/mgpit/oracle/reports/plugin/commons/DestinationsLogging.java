@@ -270,7 +270,7 @@ public final class DestinationsLogging {
     static final Filename givenOrFallbackFilenameFrom( final Filename optional, final Filename fallback ) {
         Filename filenameToStartWith = U.coalesce( optional, fallback );
 
-        File dummy = IOUtility.asFile( filenameToStartWith );
+        File dummy = IOUtility.fileFromName( filenameToStartWith );
         String directoryname = dummy.getParent();
         Filename filename = U.coalesce( Filename.filenameNameOnlyOf( dummy ), fallback );
 
@@ -285,7 +285,7 @@ public final class DestinationsLogging {
             }
         }
 
-        File logfile = IOUtility.asFile( Directoryname.of( directoryname ), filename );
+        File logfile = IOUtility.fileFromNames( Directoryname.of( directoryname ), filename );
         return Filename.of( logfile );
     }
 
@@ -305,7 +305,7 @@ public final class DestinationsLogging {
         if ( U.isEmpty( maybeDirectoryname ) ) {
             return false;
         }
-        File possibleDirectory = IOUtility.asFile( Filename.of( maybeDirectoryname ) );
+        File possibleDirectory = IOUtility.fileFromName( Filename.of( maybeDirectoryname ) );
 
         boolean valid = possibleDirectory.isDirectory() && possibleDirectory.canRead() && possibleDirectory.canWrite();
         return valid;
@@ -339,7 +339,7 @@ public final class DestinationsLogging {
                 }
             }
 
-            File logFile = IOUtility.asFile( Directoryname.of( directoryname ),
+            File logFile = IOUtility.fileFromNames( Directoryname.of( directoryname ),
                     IOUtility.asLogfileFilename( MgpDestination.class.getName() ) );
             try {
                 RollingFileAppender rootLog = new RollingFileAppender( VERBOSE_WIDE_LAYOUT, logFile.getPath(),

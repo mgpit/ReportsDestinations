@@ -19,6 +19,7 @@
  */
 package de.mgpit.types;
 
+import de.mgpit.oracle.reports.plugin.commons.U;
 
 /**
  * A wrapper for types represented as {@code String}.
@@ -44,12 +45,22 @@ package de.mgpit.types;
  * @author mgp
  */
 public abstract class TypedString {
+    
+    protected final String NONE = "";
 
     public String toString() {
         return this.value();
     }
 
     protected abstract String value();
+    
+    protected String assertAtLeastNone( String str ) {
+        return U.isEmpty( str )?NONE:str;
+    }
+    
+    protected String cleaned( String str ){
+        return assertAtLeastNone( str ).trim();
+    }
 
     public final boolean equals( Object other ) {
         if ( this == other ) {

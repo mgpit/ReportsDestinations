@@ -129,7 +129,7 @@ public class ZipArchive {
      * @return a new ZipArchive
      */
     private ZipArchive createTemporaryFileFromName( final Filename fileName ) {
-        temporaryFile = IOUtility.asFile( fileName.concat( ".part" ) );
+        temporaryFile = IOUtility.fileFromName( fileName.concat( ".part" ) );
         return this;
     }
 
@@ -150,7 +150,7 @@ public class ZipArchive {
         }
 
         try {
-            final File destinationFile = IOUtility.asFile( getFileName() );
+            final File destinationFile = IOUtility.fileFromName( getFileName() );
             if ( destinationFile.exists() ) {
                 if ( isAppending() ) {
                     copyExistingEntries( destinationFile );
@@ -218,8 +218,8 @@ public class ZipArchive {
         U.assertNotEmpty( sourceFileFilename, "sourceFileName must not be null or empty string!" );
         U.assertNotEmpty( entryName, "entryName must not be null or empty string!" );
         try {
-            File sourceFile = IOUtility.asFile( sourceFileFilename );
-            final FileInputStream fileInput = IOUtility.asFileInputStream( sourceFile );
+            File sourceFile = IOUtility.fileFromName( sourceFileFilename );
+            final FileInputStream fileInput = IOUtility.inputStreamFromFile( sourceFile );
             addFromStream( fileInput, entryName, sourceFile.lastModified() );
         } catch ( FileNotFoundException notfound ) {
             final String message = "Error when creating a new Entry from file!";
@@ -309,7 +309,7 @@ public class ZipArchive {
      */
     private void openTemporaryZipArchive() throws ArchivingException {
         try {
-            this.zipper = new ZipOutputStream( IOUtility.asFileOutputStream( temporaryFile ) );
+            this.zipper = new ZipOutputStream( IOUtility.outputStreamFromFile( temporaryFile ) );
         } catch ( FileNotFoundException fileNotFound ) {
             final String message = "Error when opening Zip Archive on " + getTemporaryFileName();
             LOG.error( message, fileNotFound );

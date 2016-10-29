@@ -24,7 +24,7 @@ package de.mgpit.oracle.reports.plugin.destination;
 import java.util.regex.Pattern;
 
 import de.mgpit.oracle.reports.plugin.commons.U;
-import de.mgpit.types.TransformerName;
+import de.mgpit.types.TransformerUnparsedName;
 
 /**
  * 
@@ -73,7 +73,7 @@ public class TransformationChainDeclaration {
     private final String LAST_2_FIRST_EXPRESSION = "^([^><]+<<)*([^><])+$";
     private final Pattern LAST_2_FIRST = Pattern.compile( LAST_2_FIRST_EXPRESSION );
 
-    public static TransformerName[] extractNames( String literal ) {
+    public static TransformerUnparsedName[] extractNames( String literal ) {
         return new TransformationChainDeclaration( literal ).get();
     }
 
@@ -101,22 +101,22 @@ public class TransformationChainDeclaration {
      * 
      * @return list
      */
-    public TransformerName[] get() {
-        TransformerName[] definitions = {};
+    public TransformerUnparsedName[] get() {
+        TransformerUnparsedName[] definitions = {};
         if ( this.isFirstToLastDefinition() ) {
             final String[] tokens = this.literal.split( FIRST_2_LAST_SEPARATOR );
-            definitions = new TransformerName[tokens.length];
+            definitions = new TransformerUnparsedName[tokens.length];
             int targetIndex = 0;
             for ( int i = 0; i < tokens.length; i++ ) {
-                definitions[targetIndex] = TransformerName.of( tokens[i] );
+                definitions[targetIndex] = TransformerUnparsedName.of( tokens[i] );
                 targetIndex++;
             }
         } else {
             final String[] tokens = this.literal.split( LAST_2_FIRST_SEPARATOR );
-            definitions = new TransformerName[tokens.length];
+            definitions = new TransformerUnparsedName[tokens.length];
             int targetIndex = 0;
             for ( int i = tokens.length - 1; i >= 0; --i ) {
-                definitions[targetIndex] = TransformerName.of( tokens[i] );
+                definitions[targetIndex] = TransformerUnparsedName.of( tokens[i] );
                 targetIndex++;
             }
         }

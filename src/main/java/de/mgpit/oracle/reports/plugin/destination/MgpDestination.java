@@ -71,6 +71,8 @@ import oracle.reports.utility.Utility;
 public abstract class MgpDestination extends Destination {
 
     protected abstract Logger getLogger();
+    
+    protected static final int SOME_PRIME = 23;
 
     private int numberOfFilesInDistribution = -1;
     private int indexOfCurrentlyDistributedFile = -1;
@@ -314,7 +316,7 @@ public abstract class MgpDestination extends Destination {
     protected InputStream getContent( File sourceFile ) throws RWException {
         U.Rw.assertNotNull( sourceFile, "Source file must not be null!" );
         try {
-            InputStream in = IOUtility.asFileInputStream( sourceFile );
+            InputStream in = IOUtility.inputStreamFromFile( sourceFile );
             return in;
         } catch ( FileNotFoundException fileNotFound ) {
             getLogger().error( "Error on getting content for distribution.!", fileNotFound );
@@ -337,11 +339,12 @@ public abstract class MgpDestination extends Destination {
     /**
      * Initializes the destination on Report Server startup.
      * <p>
+     * <p>
      * All destinations seem to be set up by the <code>main</code> thread of the reports server so we
      * should not expect multithreading issues ...
      * 
      * @param destinationsProperties
-     *            the properties set in the report server's conf file within the
+     *            the properties set in the report server's conf file within this
      *            destination's configuration section ({@code //destination/property})
      * @throws RWException
      */
@@ -370,11 +373,11 @@ public abstract class MgpDestination extends Destination {
     protected static void initLogging( final Properties destinationsProperties, Class clazz ) throws RWException {
 
         if ( destinationsProperties != null ) {
-            final Filename given = Filename.of( destinationsProperties.getProperty( "logfile" ) );
-            final String loglevelLevelnameGiven = destinationsProperties.getProperty( "loglevel", "INFO" );
+            final Filename logfilename = Filename.of( destinationsProperties.getProperty( "logfile" ) );
+            final String loglevelname = destinationsProperties.getProperty( "loglevel", "INFO" );
 
             DestinationsLogging.assertRootLoggerExists();
-            DestinationsLogging.createOrReplacePackageLevelLogger( clazz, given, loglevelLevelnameGiven );
+            DestinationsLogging.createOrReplacePackageLevelLogger( clazz, logfilename, loglevelname );
         }
     }
 

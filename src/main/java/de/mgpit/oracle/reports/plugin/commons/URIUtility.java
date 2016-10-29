@@ -106,7 +106,7 @@ public class URIUtility {
      * @return path component of the file
      */
     public static String toUriPathString( final Filename filename ) throws IOException {
-        return toUriPathString( IOUtility.asFile( filename ) );
+        return toUriPathString( IOUtility.fileFromName( filename ) );
     }
 
     /**

@@ -23,18 +23,21 @@ package de.mgpit.types;
 /**
  * 
  * A transformer name.
+ * <p>
+ * The name is unparsed and unvalidated.
  *
  * @author mgp
  */
 public final class TransformerName extends TypedString {
+
     public static TransformerName of( String name ) {
         return new TransformerName( name );
     }
 
-    String name = "";
+    String name = NONE;
 
     private TransformerName( String name ) {
-        this.name = name.trim();
+        this.name = cleaned( name );
     }
 
     protected String value() {

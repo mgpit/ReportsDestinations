@@ -98,7 +98,7 @@ public class IOUtility {
      */
     public static Filename asPlatformFilename( final Filename filename ) {
         try {
-            File f = asFile( filename );
+            File f = fileFromName( filename );
             return Filename.of( f.getPath() );
         } catch ( NullPointerException nex ) {
             return null;
@@ -116,7 +116,7 @@ public class IOUtility {
      */
     public static Filename asPlatformAbsoluteFilename( final Filename filename ) {
         try {
-            File f = asFile( filename );
+            File f = fileFromName( filename );
             return Filename.of( f );
         } catch ( NullPointerException nex ) {
             return null;
@@ -274,7 +274,7 @@ public class IOUtility {
      *            file's name
      * @return file
      */
-    public static File asFile( Filename fileName ) {
+    public static File fileFromName( Filename fileName ) {
         return new File( fileName.toString() );
     }
 
@@ -287,7 +287,7 @@ public class IOUtility {
      *            file's name
      * @return file
      */
-    public static File asFile( Directoryname directoryName, Filename fileName ) {
+    public static File fileFromNames( Directoryname directoryName, Filename fileName ) {
         return new File( new File( directoryName.toString() ), fileName.toString() );
     }
 
@@ -300,7 +300,7 @@ public class IOUtility {
      * 
      * @throws FileNotFoundException
      */
-    public static FileInputStream asFileInputStream( File file ) throws FileNotFoundException {
+    public static FileInputStream inputStreamFromFile( File file ) throws FileNotFoundException {
         return new FileInputStream( file );
     }
 
@@ -312,8 +312,8 @@ public class IOUtility {
      * @return FileInputStream on the file
      * @throws FileNotFoundException
      */
-    public static FileInputStream asFileInputStream( Filename fileName ) throws FileNotFoundException {
-        return asFileInputStream( asFile( fileName ) );
+    public static FileInputStream inputStreamFromFilename( Filename fileName ) throws FileNotFoundException {
+        return inputStreamFromFile( fileFromName( fileName ) );
     }
 
     /**
@@ -324,7 +324,7 @@ public class IOUtility {
      * @return FileOutputStream on the file
      * @throws FileNotFoundException
      */
-    public static FileOutputStream asFileOutputStream( final File file ) throws FileNotFoundException {
+    public static FileOutputStream outputStreamFromFile( final File file ) throws FileNotFoundException {
         return new FileOutputStream( file );
     }
 
@@ -336,8 +336,8 @@ public class IOUtility {
      * @return FileOutputStream on the file
      * @throws FileNotFoundException
      */
-    public static FileOutputStream asFileOutputStream( final Filename fileName ) throws FileNotFoundException {
-        return asFileOutputStream( asFile( fileName ) );
+    public static FileOutputStream outputStreamFromFilename( final Filename fileName ) throws FileNotFoundException {
+        return outputStreamFromFile( fileFromName( fileName ) );
     }
 
     /**
@@ -359,7 +359,7 @@ public class IOUtility {
      * @return {@code true} if the file exists {@code false} else
      */
     public static boolean exists( final Filename filename ) {
-        return exists( asFile( filename ) );
+        return exists( fileFromName( filename ) );
     }
 
 }

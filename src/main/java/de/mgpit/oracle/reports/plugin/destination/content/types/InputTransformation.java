@@ -31,7 +31,7 @@ import oracle.reports.RWException;
  * @author mgp
  *
  */
-public interface InputTransformation {
+public interface InputTransformation extends Transformation {
 
     public InputStream forInput( final InputStream in, final Properties parameters ) throws RWException;
 }

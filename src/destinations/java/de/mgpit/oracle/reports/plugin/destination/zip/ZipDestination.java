@@ -223,18 +223,18 @@ public final class ZipDestination extends MgpDestination {
     /**
      * Put a file to the ZIP archive with given Entry name
      * 
-     * @param sourceFileFilename
+     * @param sourcefilename
      *            name of the source file (i.e. cache file) to be put into the
      *            archive
      * @param entryName
      *            name for the source in the ZIP file
      * @throws ArchivingException
      */
-    protected void addFileToArchiveWithName( final Filename sourceFileFilename, final Filename givenEntryName ) throws RWException {
-        Filename entryName = IOUtility.fileNameOnly( U.coalesce( givenEntryName, sourceFileFilename ) );
+    protected void addFileToArchiveWithName( final Filename sourcefilename, final Filename entryname ) throws RWException {
+        Filename entryName = IOUtility.fileNameOnly( U.coalesce( entryname, sourcefilename ) );
         try {
-            File sourceFile = IOUtility.asFile( sourceFileFilename );
-            InputStream in = IOUtility.asFileInputStream( sourceFile );
+            File sourceFile = IOUtility.fileFromName( sourcefilename );
+            InputStream in = IOUtility.inputStreamFromFile( sourceFile );
             this.zipArchive.addFromStream( in, entryName, sourceFile.lastModified() );
         } catch ( FileNotFoundException fileNotFound ) {
             getLogger().error( "Error during distribution! Could not find file to add!" );
@@ -406,10 +406,16 @@ public final class ZipDestination extends MgpDestination {
     }
 
     /**
-     * Initialize the destination on Report Server startup. Will mainly
-     * initialize log4j Logging.
+     * Initializes the destination on Report Server startup.
+     * <p>
+     * Invoked by the Report Server.
+     * <ul>
+     * <li>initialize log4j</li>
+     * </ul>
      * 
      * @param destinationsProperties
+     *            the properties set in the report server's conf file within this
+     *            destination's configuration section ({@code //destination/property})
      * @throws RWException
      */
     public static void init( final Properties destinationsProperties ) throws RWException {
@@ -422,14 +428,6 @@ public final class ZipDestination extends MgpDestination {
         MgpDestination.shutdown();
         LOG.info( "Destination " + U.w( ZipDestination.class.getName() ) + " shut down." );
     }
-
-    // private void setZipEntryName( final String zipEntryName ) {
-    // this.zipEntryName = zipEntryName;
-    // }
-    //
-    // private String getZipEntryName() {
-    // return this.zipEntryName;
-    // }
 
     private Filename getZipArchiveFileName() {
         return this.zipArchive.getFileName();

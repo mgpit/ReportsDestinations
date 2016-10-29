@@ -56,10 +56,10 @@ public final class Filename extends TypedString {
         }
     }
 
-    String name = "";
+    String name = NONE;
 
     private Filename( String name ) {
-        this.name = name.trim();
+        this.name = cleaned( name );
     }
 
     protected String value() {
