@@ -24,7 +24,7 @@ package de.mgpit.oracle.reports.plugin.destination;
 import java.util.regex.Pattern;
 
 import de.mgpit.oracle.reports.plugin.commons.U;
-import de.mgpit.types.TransformerUnparsedName;
+import de.mgpit.types.ModifyerUnparsedName;
 
 /**
  * 
@@ -63,7 +63,7 @@ import de.mgpit.types.TransformerUnparsedName;
  * @author mgp
  * 
  */
-public class TransformationChainDeclaration {
+public class ModifierChainDeclaration {
 
     private final String FIRST_2_LAST_SEPARATOR = ">>";
     private final String FIRST_2_LAST_EXPRESSION = "^([^><]+>>)*([^><])+$";
@@ -73,8 +73,8 @@ public class TransformationChainDeclaration {
     private final String LAST_2_FIRST_EXPRESSION = "^([^><]+<<)*([^><])+$";
     private final Pattern LAST_2_FIRST = Pattern.compile( LAST_2_FIRST_EXPRESSION );
 
-    public static TransformerUnparsedName[] extractNames( String literal ) {
-        return new TransformationChainDeclaration( literal ).get();
+    public static ModifyerUnparsedName[] extractNames( String literal ) {
+        return new ModifierChainDeclaration( literal ).get();
     }
 
     private final String literal;
@@ -87,7 +87,7 @@ public class TransformationChainDeclaration {
         return LAST_2_FIRST.matcher( this.literal ).matches();
     }
 
-    private TransformationChainDeclaration( String literal ) {
+    private ModifierChainDeclaration( String literal ) {
         this.literal = literal;
         if ( !U.isEmpty( literal ) ) {
             if ( !isFirstToLastDefinition() && !isLastToFirstDefinition() ) {
@@ -101,22 +101,22 @@ public class TransformationChainDeclaration {
      * 
      * @return list
      */
-    public TransformerUnparsedName[] get() {
-        TransformerUnparsedName[] definitions = {};
+    public ModifyerUnparsedName[] get() {
+        ModifyerUnparsedName[] definitions = {};
         if ( this.isFirstToLastDefinition() ) {
             final String[] tokens = this.literal.split( FIRST_2_LAST_SEPARATOR );
-            definitions = new TransformerUnparsedName[tokens.length];
+            definitions = new ModifyerUnparsedName[tokens.length];
             int targetIndex = 0;
             for ( int i = 0; i < tokens.length; i++ ) {
-                definitions[targetIndex] = TransformerUnparsedName.of( tokens[i] );
+                definitions[targetIndex] = ModifyerUnparsedName.of( tokens[i] );
                 targetIndex++;
             }
         } else {
             final String[] tokens = this.literal.split( LAST_2_FIRST_SEPARATOR );
-            definitions = new TransformerUnparsedName[tokens.length];
+            definitions = new ModifyerUnparsedName[tokens.length];
             int targetIndex = 0;
             for ( int i = tokens.length - 1; i >= 0; --i ) {
-                definitions[targetIndex] = TransformerUnparsedName.of( tokens[i] );
+                definitions[targetIndex] = ModifyerUnparsedName.of( tokens[i] );
                 targetIndex++;
             }
         }

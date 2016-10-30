@@ -5,7 +5,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import de.mgpit.oracle.reports.plugin.commons.U;
-import de.mgpit.types.TransformerUnparsedName;
+import de.mgpit.types.ModifyerUnparsedName;
 import junit.framework.TestCase;
 
 public class MQDestinationTest extends TestCase {
@@ -71,7 +71,7 @@ public class MQDestinationTest extends TestCase {
     }
 
     public void testRegexp2() {
-        final Pattern P = Pattern.compile( TransformerUnparsedName.PATTERN );
+        final Pattern P = Pattern.compile( ModifyerUnparsedName.PATTERN );
         
 
         Matcher m;

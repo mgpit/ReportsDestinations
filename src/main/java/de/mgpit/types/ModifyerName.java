@@ -28,15 +28,15 @@ package de.mgpit.types;
  *
  * @author mgp
  */
-public final class TransformerName extends TypedString {
+public final class ModifyerName extends TypedString {
 
-    public static TransformerName of( String name ) {
-        return new TransformerName( name );
+    public static ModifyerName of( String name ) {
+        return new ModifyerName( name );
     }
 
     String name = NONE;
 
-    private TransformerName( String name ) {
+    private ModifyerName( String name ) {
         this.name = cleaned( name );
     }
 
@@ -44,17 +44,17 @@ public final class TransformerName extends TypedString {
         return this.name;
     }
 
-    private static TransformerName NULL_VALUE = TransformerName.of( (String) null );
+    private static ModifyerName NULL_VALUE = ModifyerName.of( (String) null );
 
-    public TransformerName copy() {
-        return TransformerName.of( this.value() );
+    public ModifyerName copy() {
+        return ModifyerName.of( this.value() );
     }
 
-    public TransformerName concat( String str ) {
-        return (this.isNotNull()) ? TransformerName.of( this.value().concat( str ) ) : NULL_VALUE;
+    public ModifyerName concat( String str ) {
+        return (this.isNotNull()) ? ModifyerName.of( this.value().concat( str ) ) : NULL_VALUE;
     }
 
-    public TransformerName trim() {
-        return (this.isNotNull()) ? TransformerName.of( this.value().trim() ) : NULL_VALUE;
+    public ModifyerName trim() {
+        return (this.isNotNull()) ? ModifyerName.of( this.value().trim() ) : NULL_VALUE;
     }
 }

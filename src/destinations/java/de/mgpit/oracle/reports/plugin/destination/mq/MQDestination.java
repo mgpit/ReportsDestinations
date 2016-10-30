@@ -43,16 +43,16 @@ import de.mgpit.oracle.reports.plugin.commons.MQ;
 import de.mgpit.oracle.reports.plugin.commons.U;
 import de.mgpit.oracle.reports.plugin.commons.io.IOUtility;
 import de.mgpit.oracle.reports.plugin.destination.MgpDestination;
-import de.mgpit.oracle.reports.plugin.destination.TransformationChainDeclaration;
-import de.mgpit.oracle.reports.plugin.destination.TransformingDestination;
+import de.mgpit.oracle.reports.plugin.destination.ModifierChainDeclaration;
+import de.mgpit.oracle.reports.plugin.destination.ModifyingDestination;
 import de.mgpit.oracle.reports.plugin.destination.content.types.Content;
 import de.mgpit.oracle.reports.plugin.destination.content.types.InputTransformation;
 import de.mgpit.oracle.reports.plugin.destination.content.types.OutputTransformation;
 import de.mgpit.oracle.reports.plugin.destination.content.types.Transformation;
 import de.mgpit.types.ContentName;
 import de.mgpit.types.Filename;
-import de.mgpit.types.TransformerName;
-import de.mgpit.types.TransformerUnparsedName;
+import de.mgpit.types.ModifyerName;
+import de.mgpit.types.ModifyerUnparsedName;
 import oracle.reports.RWException;
 import oracle.reports.server.Destination;
 import oracle.reports.utility.Utility;
@@ -90,7 +90,7 @@ import oracle.reports.utility.Utility;
  * 
  * <pre>
  * {@code
- *  <destination destype="MQ" class="de.mgpit.oracle.reports.plugin.destination.zip.MQDestination">
+ *  <destination destype="MQ" class="de.mgpit.oracle.reports.plugin.destination.mq.MQDestination">
  *     <property name="loglevel" value="DEBUG"/> <!-- log4j message levels. Allow debug messages --> 
  *     <property name="logfile"  value="/tmp/log/mqdestination.log"/> <!-- file to send the messages to -->
  *     <property name="mq"       value="wmq://localhost:1414/dest/queue/MY.QUEUE@MYQMGR?channelName=CHANNEL_1/"/>
@@ -141,7 +141,7 @@ import oracle.reports.utility.Utility;
  * 
  * @author mgp
  */
-public final class MQDestination extends TransformingDestination {
+public final class MQDestination extends ModifyingDestination {
 
     /*
      * Me logger ... ;-)
@@ -254,7 +254,7 @@ public final class MQDestination extends TransformingDestination {
         if ( LOG.isDebugEnabled() ) {
             dumpProperties( destinationsProperties, LOG );
         }
-        TransformingDestination.init( destinationsProperties );
+        ModifyingDestination.init( destinationsProperties );
         registerDefaultMQ( destinationsProperties );
         LOG.info( "Destination " + U.w( MQDestination.class.getName() ) + " started." );
     }

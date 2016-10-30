@@ -341,25 +341,14 @@ public class IOUtility {
     }
 
     /**
-     * Checks if the file given exists.
-     * 
-     * @param file
-     *            the file
-     * @return {@code true} if the file exists {@code false} else
-     */
-    public static boolean exists( File file ) {
-        return file.exists();
-    }
-
-    /**
      * Checks if the file denoted by the file name exists.
      * 
      * @param filename
      *            file's name
      * @return {@code true} if the file exists {@code false} else
      */
-    public static boolean exists( final Filename filename ) {
-        return exists( fileFromName( filename ) );
+    public static boolean existsFileNamed( final Filename filename ) {
+        return fileFromName( filename ).exists();
     }
 
 }

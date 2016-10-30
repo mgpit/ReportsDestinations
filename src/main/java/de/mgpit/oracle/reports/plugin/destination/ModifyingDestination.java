@@ -23,13 +23,55 @@ import de.mgpit.oracle.reports.plugin.destination.content.types.InputTransformat
 import de.mgpit.oracle.reports.plugin.destination.content.types.OutputTransformation;
 import de.mgpit.oracle.reports.plugin.destination.content.types.Transformation;
 import de.mgpit.types.ContentName;
-import de.mgpit.types.TransformerName;
-import de.mgpit.types.TransformerUnparsedName;
+import de.mgpit.types.ModifyerName;
+import de.mgpit.types.ModifyerUnparsedName;
 import oracle.reports.RWException;
 import oracle.reports.server.Destination;
 import oracle.reports.utility.Utility;
 
-public abstract class TransformingDestination extends MgpDestination {
+/**
+ * A Destination which is able to transform the report's content on distribution.
+ * <p>
+ * This <em>abstract</em> class serves as super class for {@code oracle.reports.server.Destination}s which want to
+ * modify the data of the report being distributed by the Reports Server.
+ * Possible applications are 
+ *  <ul>
+ *      <li>encoding the data of a report with outout format {@code PDF} as {@code BASE64}</li>
+ *      <li>putting the data into an <em>Envelope</em></li>
+ *      <li>prepending the data with a <em>Header</em></li>
+ *      <li>or combinations of such transformations</li>
+ *  </ul>
+ * The modifiers to apply are specified on report execution, see below. For referencing a modifier on 
+ * report execution they have to be given an <em>alias</em>, which is done in the {@code <reportservername>.conf} file
+ * by specifying properties with <em>name</em> {@code transformer.<alias>}.
+ * <p>
+ * Modifiers can be divided into <em>Decorators</em> and <em>Transformers</em>. A <em>Decorator</em> applies additional
+ * content (like envelopes or headers), a <em>Transformer</em> changes the report's bytes. 
+ * <p>
+ * For <em>Decorartor</em>s one can also specify <em>content provider</em>s which then can be used by the decorator for
+ * generating the additional content. So one can choose between implementing a class for each kind of decoration or
+ * implementing a generic decoration (a generic envelope, for example) and then provide the content separately.
+ * <p>
+ * Here is an example configuration excerpt for a {@code <reportservername>.conf} file on how to specify transformers and
+ * content providers. 
+ * <pre>
+ * {@code
+ *  <destination destype="..." class="...">
+ *     ...
+ *     <!-- Transformers -->
+ *     <property name="transformer.BASE64"      value="de.mgpit.oracle.reports.plugin.destination.content.transformers.Base64Transformer"/>
+ *     <property name="transformer.Envelope"    value="de.mgpit.oracle.reports.plugin.destination.content.decorators.EnvelopeDecorator"/>
+ *     <property name="transformer.Header"      value="de.mgpit.oracle.reports.plugin.destination.content.decorators.HeaderDecorator"/>
+ *     <!-- Content Providers -->
+ *     <property name="content.Soap_1_1"        value="tld.foo.bar.batz.SoapV0101Envelope"/> <!-- Must implement de.mgpit.oracle.reports.plugin.destination.content.types.Content -->
+ *     <property name="content.Soap_1_2"        value="tld.foo.bar.batz.SoapV0102Envelope"/> <!-- Must implement de.mgpit.oracle.reports.plugin.destination.content.types.Content -->
+ *  </destination>
+ *         }
+ * </pre>
+ * @author mgp
+ *
+ */
+public abstract class ModifyingDestination extends MgpDestination {
 
     private static final Logger LOG = Logger.getLogger( MgpDestination.class );
 
@@ -74,7 +116,7 @@ public abstract class TransformingDestination extends MgpDestination {
         while ( keys.hasMoreElements() ) {
             String key = (String) keys.nextElement();
             if ( isContentModificationPluginDefinition( key ) ) {
-                TransformerUnparsedName name = extractContentModificationPluginName( key );
+                ModifyerUnparsedName name = extractContentModificationPluginName( key );
                 String virtualDestinationClassName = destinationsProperties.getProperty( key );
                 boolean success = registerContentModifier( name, virtualDestinationClassName );
                 if ( !success ) {
@@ -87,7 +129,7 @@ public abstract class TransformingDestination extends MgpDestination {
         }
     }
 
-    private static boolean registerContentModifier( TransformerUnparsedName name, String implementingClassName ) {
+    private static boolean registerContentModifier( ModifyerUnparsedName name, String implementingClassName ) {
         LOG.info( " >>> About to register Content Transformer named " + U.w( name ) );
         Class clazz = null;
         try {
@@ -105,7 +147,7 @@ public abstract class TransformingDestination extends MgpDestination {
         return key.startsWith( Transformation.PROPERTY_NAME_PREFIX );
     }
 
-    private static TransformerUnparsedName extractContentModificationPluginName( String key ) {
+    private static ModifyerUnparsedName extractContentModificationPluginName( String key ) {
         String[] pathElements = key.split( "\\." );
         int numberOfElements = pathElements.length;
         if ( numberOfElements < 2 ) {
@@ -113,7 +155,7 @@ public abstract class TransformingDestination extends MgpDestination {
             return null;
         }
         int indexOfContentModificationPluginName = --numberOfElements;
-        return TransformerUnparsedName.of( pathElements[indexOfContentModificationPluginName] );
+        return ModifyerUnparsedName.of( pathElements[indexOfContentModificationPluginName] );
     }
 
     private static void registerConfiguredContentProvideres( Properties destinationsProperties ) throws RWException {
@@ -137,14 +179,14 @@ public abstract class TransformingDestination extends MgpDestination {
 
         if ( transformationDeclaration != null ) {
             getLogger().info( "Extracting declared Transformation Chain" );
-            TransformerUnparsedName[] declaredTransformations = TransformationChainDeclaration
+            ModifyerUnparsedName[] declaredTransformations = ModifierChainDeclaration
                     .extractNames( transformationDeclaration );
             getLogger().info( "Declaration contains " + U.w( declaredTransformations.length ) + " items." );
 
             ArrayList declaredOutputTransformations = new ArrayList();
             ArrayList declaredInputTransformations = new ArrayList();
             for ( int runIndex = 0; runIndex < declaredTransformations.length; runIndex++ ) {
-                TransformerUnparsedName givenName = declaredTransformations[runIndex];
+                ModifyerUnparsedName givenName = declaredTransformations[runIndex];
                 getLogger().debug( U.w( U.lpad( runIndex, 2 ) ) + ": Extracting " + U.w( givenName.toString() ) );
                 Transformer transformer = new Transformer();
                 if ( transformer.transformsOnOutput( givenName ) ) {
@@ -285,11 +327,11 @@ public abstract class TransformingDestination extends MgpDestination {
     protected class Transformer {
         private final Logger outerLog = getLogger();
 
-        protected TransformerDeclaration getContentDeclaration( TransformerUnparsedName name ) {
+        protected TransformerDeclaration getContentDeclaration( ModifyerUnparsedName name ) {
             return new TransformerDeclaration( name );
         }
 
-        protected Transformation createTransformationInstance( TransformerUnparsedName name ) throws RWException {
+        protected Transformation createTransformationInstance( ModifyerUnparsedName name ) throws RWException {
             Class clazz = (Class) CONTENTMODIFIERS.get( name );
             if ( clazz != null ) {
                 try {
@@ -311,7 +353,7 @@ public abstract class TransformingDestination extends MgpDestination {
             }
         }
 
-        protected Transformation buildTransformation( TransformerUnparsedName name, Destination requesting ) throws RWException {
+        protected Transformation buildTransformation( ModifyerUnparsedName name, Destination requesting ) throws RWException {
             try {
                 TransformerDeclaration declaredContent = getContentDeclaration( name );
                 return this.createTransformationInstance( name );
@@ -329,7 +371,7 @@ public abstract class TransformingDestination extends MgpDestination {
          *
          */
         private final class Out extends Transformer {
-            protected final OutputTransformation createTransformation( TransformerUnparsedName name, Destination requesting )
+            protected final OutputTransformation createTransformation( ModifyerUnparsedName name, Destination requesting )
                     throws RWException {
                 return (OutputTransformation) new Out().createTransformation( name, requesting );
             }
@@ -342,7 +384,7 @@ public abstract class TransformingDestination extends MgpDestination {
          *
          */
         private final class In extends Transformer {
-            protected final InputTransformation createTransformation( TransformerUnparsedName name, Destination requesting )
+            protected final InputTransformation createTransformation( ModifyerUnparsedName name, Destination requesting )
                     throws RWException {
                 return (InputTransformation) new In().createTransformation( name, requesting );
             }
@@ -358,17 +400,17 @@ public abstract class TransformingDestination extends MgpDestination {
             /**
              * Holds the TransformerName
              */
-            private final Pattern PARSE_PATTERN = Pattern.compile( TransformerUnparsedName.PATTERN );
+            private final Pattern PARSE_PATTERN = Pattern.compile( ModifyerUnparsedName.PATTERN );
 
-            private TransformerName transformerName = null;
+            private ModifyerName transformerName = null;
             private ContentName contentName = null;
 
-            protected TransformerDeclaration( TransformerUnparsedName givenName ) {
+            protected TransformerDeclaration( ModifyerUnparsedName givenName ) {
                 Matcher test = PARSE_PATTERN.matcher( givenName.toString() );
                 if ( test.matches() ) {
                     String transformerDefinition = test.group( 2 );
                     String contentDefinition = test.group( 4 );
-                    this.transformerName = TransformerName.of( transformerDefinition );
+                    this.transformerName = ModifyerName.of( transformerDefinition );
                     this.contentName = ContentName.of( contentDefinition );
                 }
             }
@@ -377,7 +419,7 @@ public abstract class TransformingDestination extends MgpDestination {
                 return !this.contentName.isEmpty();
             }
 
-            public TransformerName getTransformerName() {
+            public ModifyerName getTransformerName() {
                 return this.transformerName;
             }
 
@@ -386,7 +428,7 @@ public abstract class TransformingDestination extends MgpDestination {
             }
         }
 
-        protected boolean transformsOnInput( TransformerUnparsedName givenName ) {
+        protected boolean transformsOnInput( ModifyerUnparsedName givenName ) {
             Class clazz = (Class) CONTENTMODIFIERS.get( givenName );
             if ( clazz == null ) {
                 outerLog.error( "No transformer named " + U.w( givenName ) + "has been registered!" );
@@ -395,7 +437,7 @@ public abstract class TransformingDestination extends MgpDestination {
             return InputTransformation.class.isAssignableFrom( clazz );
         }
 
-        protected boolean transformsOnOutput( TransformerUnparsedName givenName ) {
+        protected boolean transformsOnOutput( ModifyerUnparsedName givenName ) {
             Class clazz = (Class) CONTENTMODIFIERS.get( givenName );
             if ( clazz == null ) {
                 outerLog.error( "No transformer named " + U.w( givenName ) + "has been registered!" );

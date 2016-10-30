@@ -28,7 +28,7 @@ package de.mgpit.types;
  *
  * @author mgp
  */
-public final class TransformerUnparsedName extends TypedString {
+public final class ModifyerUnparsedName extends TypedString {
     /**
      * Holds the string representation of the RegExp describing a valid TransformerName declaration.
      * <p>
@@ -55,13 +55,13 @@ public final class TransformerUnparsedName extends TypedString {
      */
     public static final String PATTERN = "^\\s*((\\p{Alpha}[\\p{Alnum}:_\\-.$]*\\s*)([(]\\s*(\\p{Alpha}[\\p{Alnum}:_\\-.$]*)\\s*[)])?)\\s*$";
 
-    public static TransformerUnparsedName of( String name ) {
-        return new TransformerUnparsedName( name );
+    public static ModifyerUnparsedName of( String name ) {
+        return new ModifyerUnparsedName( name );
     }
 
     String name = "";
 
-    private TransformerUnparsedName( String name ) {
+    private ModifyerUnparsedName( String name ) {
         this.name = cleaned( name );
     }
 
@@ -69,17 +69,17 @@ public final class TransformerUnparsedName extends TypedString {
         return this.name;
     }
 
-    private static TransformerUnparsedName NULL_VALUE = TransformerUnparsedName.of( (String) null );
+    private static ModifyerUnparsedName NULL_VALUE = ModifyerUnparsedName.of( (String) null );
 
-    public TransformerUnparsedName copy() {
-        return TransformerUnparsedName.of( this.value() );
+    public ModifyerUnparsedName copy() {
+        return ModifyerUnparsedName.of( this.value() );
     }
 
-    public TransformerUnparsedName concat( String str ) {
-        return (this.isNotNull()) ? TransformerUnparsedName.of( this.value().concat( str ) ) : NULL_VALUE;
+    public ModifyerUnparsedName concat( String str ) {
+        return (this.isNotNull()) ? ModifyerUnparsedName.of( this.value().concat( str ) ) : NULL_VALUE;
     }
 
-    public TransformerUnparsedName trim() {
-        return (this.isNotNull()) ? TransformerUnparsedName.of( this.value().trim() ) : NULL_VALUE;
+    public ModifyerUnparsedName trim() {
+        return (this.isNotNull()) ? ModifyerUnparsedName.of( this.value().trim() ) : NULL_VALUE;
     }
 }
