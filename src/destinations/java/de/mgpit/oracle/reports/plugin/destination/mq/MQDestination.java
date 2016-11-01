@@ -41,27 +41,28 @@ import org.apache.log4j.Logger;
 
 import de.mgpit.oracle.reports.plugin.commons.MQ;
 import de.mgpit.oracle.reports.plugin.commons.U;
+import de.mgpit.oracle.reports.plugin.commons.ZipArchive;
 import de.mgpit.oracle.reports.plugin.commons.io.IOUtility;
 import de.mgpit.oracle.reports.plugin.destination.MgpDestination;
 import de.mgpit.oracle.reports.plugin.destination.ModifierChainDeclaration;
 import de.mgpit.oracle.reports.plugin.destination.ModifyingDestination;
 import de.mgpit.oracle.reports.plugin.destination.content.types.Content;
-import de.mgpit.oracle.reports.plugin.destination.content.types.InputTransformation;
-import de.mgpit.oracle.reports.plugin.destination.content.types.OutputTransformation;
-import de.mgpit.oracle.reports.plugin.destination.content.types.Transformation;
-import de.mgpit.types.ContentName;
+import de.mgpit.oracle.reports.plugin.destination.content.types.InputModifier;
+import de.mgpit.oracle.reports.plugin.destination.content.types.Modifier;
+import de.mgpit.oracle.reports.plugin.destination.content.types.OutputModifier;
+import de.mgpit.types.ContentAlias;
 import de.mgpit.types.Filename;
-import de.mgpit.types.ModifyerName;
-import de.mgpit.types.ModifyerUnparsedName;
+import de.mgpit.types.ModifierAlias;
+import de.mgpit.types.ModifierRawDeclaration;
 import oracle.reports.RWException;
 import oracle.reports.server.Destination;
 import oracle.reports.utility.Utility;
 
 /**
  * 
- * Implements an Oracle Reports&trade; {@link oracle.reports.server.Destination} for distributing
- * the files of a distribution process into a Websphere MQ&trade; (MQ Series) Queue.
- * The destination is able to modify / transform the data genearated report output. See below.
+ * Implements an Oracle&reg; Reports {@link oracle.reports.server.Destination} for distributing
+ * the files of a distribution process into a IBM<sup>&reg;</sup> Websphere MQ<sup>&reg;</sup> (MQ Series<sup>&reg;</sup>) Queue.
+ * The destination is able to modify / transform the data generated report output. See below.
  * 
  * <p>
  * <strong>Registering the destination in your <em>reportserver.conf</em>:</strong>
@@ -85,8 +86,9 @@ import oracle.reports.utility.Utility;
  * <li>{@code wmq://}<em>host:mqport</em>{@code /dest/queue/}<em>queuename@qmgr</em>{@code ?channelName=}<em>channelname</em>
  * </ul>
  * <strong>note: </strong>scheme must be <strong>wmq</strong> (lowercase!)
+ * 
  * <p>
- * One can also register transformation plugins.
+ * One can also register modifier plugins.
  * 
  * <pre>
  * {@code
@@ -94,16 +96,15 @@ import oracle.reports.utility.Utility;
  *     <property name="loglevel" value="DEBUG"/> <!-- log4j message levels. Allow debug messages --> 
  *     <property name="logfile"  value="/tmp/log/mqdestination.log"/> <!-- file to send the messages to -->
  *     <property name="mq"       value="wmq://localhost:1414/dest/queue/MY.QUEUE@MYQMGR?channelName=CHANNEL_1/"/>
- *     <!-- Transformers -->
- *     <property name="transformer.BASE64"      value="de.mgpit.oracle.reports.plugin.destination.content.transformers.Base64Transformer"/>
- *     <property name="transformer.Envelope"    value="de.mgpit.oracle.reports.plugin.destination.content.decorators.EnvelopeDecorator"/>
- *     <property name="transformer.Header"      value="de.mgpit.oracle.reports.plugin.destination.content.decorators.HeaderDecorator"/>
+ *     <!-- Modifiers -->
+ *     <property name="modifier.BASE64"      value="de.mgpit.oracle.reports.plugin.destination.content.transformers.Base64Transformer"/>
+ *     <property name="modifier.Envelope"    value="de.mgpit.oracle.reports.plugin.destination.content.decorators.EnvelopeDecorator"/>
+ *     <property name="modifier.Header"      value="de.mgpit.oracle.reports.plugin.destination.content.decorators.HeaderDecorator"/>
  *     <!-- Content Providers -->
- *     <property name="content.Soap"            value="tld.foo.bar.batz.SoapEnvelope"/> <!-- Must implement de.mgpit.oracle.reports.plugin.destination.content.types.Content -->
+ *     <property name="content.Soap_1_1"     value="tld.foo.bar.batz.SoapV0101Envelope"/> <!-- Must implement de.mgpit.oracle.reports.plugin.destination.content.types.Content -->
  *  </destination>
  *         }
  * </pre>
- *
  *
  * <p>
  * <strong>Using the destination:</strong>
@@ -112,7 +113,7 @@ import oracle.reports.utility.Utility;
  * On distribution one can pass a different target via {@code DESNAME} in the form of the above URI format.
  * <p>
  *
- * When running from <strong>Oracle Forms</strong>&trade; using a <em>REPORT_OBJECT</em> you can pass the parameters as follows.
+ * When running from <strong>Oracle&reg; Forms</strong>&trade; using a <em>REPORT_OBJECT</em> you can pass the parameters as follows.
  * <ul>
  * <li>{@code SET_REPORT_OBJECT_PROPERTY( }REPORT_OBJECT</em>
  * {@code , REPORT_DESTYPE, CACHE }<sup>1)</sup> {@code );}</li>
@@ -123,12 +124,12 @@ import oracle.reports.utility.Utility;
  * <li>code SET_REPORT_OBJECT_PROPERTY( }<em>REPORT_OBJECT</em>
  * {@code , REPORT_OTHER, 'DESTYPE=MQ' );}
  * </li>
- * <li>If wanting to apply transformations: via Parameter List
+ * <li>If wanting to apply modifiers: via Parameter List
  * 
  * <pre>
  * {@code 
  * distribution_parameters := CREATE_PARAMETER_LIST( 'SOME_UNIQUE_NAME' );  
- * ADD_PARAMETER( distribution_parameters, 'TRANSFORM', TEXT_PARAMETER, 'BASE64>>ENVELOPE(SOAP)' );
+ * ADD_PARAMETER( distribution_parameters, 'APPLY', TEXT_PARAMETER, 'BASE64>>ENVELOPE(SOAP_1_1)' );
  * --
  * -- Pass the Parameter List on RUN_REPORT_OBJECT
  * --
@@ -175,21 +176,22 @@ public final class MQDestination extends ModifyingDestination {
     }
 
     /**
-     * Starts a new distribution cycle for a report to this destination. Will
-     * distribute one or many files depending on the format.
-     * 
+     * Starts a new distribution cycle for a report to a Websphere MQ&req; queue.
+     *  
      * @param allProperties
-     *            all properties (parameters) passed to the report.
-     *            For Oracle Forms&trade; this will include the parameters set via <code>SET_REPORT_OBJECT_PROPERTY</code>
-     *            plus the parameters passed via a <code>ParamList</code>
+     *            parameters for this distribution passed as {@code Properties}
+     *            <br><em>Remark:</em> For Oracle&reg; Forms this will include the parameters set via {@code SET_REPORT_OBJECT_PROPERTY}
+     *            plus the parameters passed via a {@code ParamList}
      * @param targetName
-     *            target name of the distribution.
+     *            target name of the distribution
      * @param totalNumberOfFiles
-     *            total number of files to be distributed.
+     *            total number of files being distributed
      * @param totalFileSize
-     *            total file size of all files distributed.
+     *            total file size of all files being distributed
      * @param mainFormat
-     *            the output format of the main file.
+     *            the output format of the main file being distributed
+     *            
+     * @throws RWException if there is a failure during distribution setup. The RWException normally will wrap the original Exception.
      */
     protected boolean start( Properties allProperties, String targetName, int totalNumberOfFiles, long totalFileSize,
             short mainFormat ) throws RWException {
@@ -221,7 +223,7 @@ public final class MQDestination extends ModifyingDestination {
         try {
             U.assertNotNull( this.mq, "Cannot continue to send! No MQ destination provided nor default MQ destination speficied!" );
             OutputStream mqOut = this.mq.newMessage();
-            OutputStream target = wrapWithOutputTransformers( mqOut );
+            OutputStream target = wrapWithOutputModifiers( mqOut );
             IOUtility.copyFromToAndThenClose( source, target );
         } catch ( Throwable anyOther ) {
             getLogger().fatal( "Fatal Error during sending main file " + U.w( cacheFileFilename ) + "!", anyOther );
@@ -233,7 +235,6 @@ public final class MQDestination extends ModifyingDestination {
     protected void sendAdditionalFile( final Filename cacheFileFilename, short fileFormat ) throws RWException {
         getLogger().info( "Sending Other file to " + getClass().getName() );
     }
-
 
     /**
      * Initializes the destination on Report Server startup.
@@ -250,11 +251,11 @@ public final class MQDestination extends ModifyingDestination {
      * @throws RWException
      */
     public static void init( Properties destinationsProperties ) throws RWException {
+        ModifyingDestination.init( destinationsProperties );
         initLogging( destinationsProperties, MQDestination.class );
         if ( LOG.isDebugEnabled() ) {
             dumpProperties( destinationsProperties, LOG );
         }
-        ModifyingDestination.init( destinationsProperties );
         registerDefaultMQ( destinationsProperties );
         LOG.info( "Destination " + U.w( MQDestination.class.getName() ) + " started." );
     }

@@ -43,7 +43,10 @@ import oracle.reports.utility.Utility;
 
 /**
  * 
- * Factory for setting up a log file for an Oracle Reports&trade; destination plugin.
+ * Factory for setting up a log file for an Oracle&reg; Reports destination plugin.
+ * <p>
+ * Used by {@link de.mgpit.oracle.reports.plugin.destination.MgpDestination MgpDestination} for setting up
+ * a destination specific log file.
  * <p>
  * There are two factory methods
  * <ul>
@@ -56,18 +59,19 @@ import oracle.reports.utility.Utility;
  * <li>an optional filename/path for setting the log file</li>
  * <li>an optional String for setting the logger's log level</li>
  * </ul>
- * <h2>Determining the log file's file name</h2>
+ * <strong>Determining the log file's file name</strong>
+ * {@code DestinationsLogging} is tolerant considering the file name provided for the log file.
  * <ul>
  * <li>The simplest situation is where that the caller of one of the factory methods provides a full path for the
  * log file's file name which points to a valid directory.</li>
- * <li>If there's no file name provided the class' full name with all <code>.</code> (dots)
- * replaced by <code>_</code> (underlines) and a file extension of <code>.log</code>. will be used as file name</li>
- * <li>If the directory provided is <strong>not valid</strong> (meaning either it does not exist at all or there is no
- * read/write access [for the Oracle Reports&trade; process] <sup>1</sup> ) the log file will be placed
+ * <li>If there's no file name provided at all, the file name will be constructed from the class' full name with
+ * all <code>.</code> (dots) replaced by <code>_</code> (underlines) and a file extension <code>.log</code>.</li>
+ * <li>If the directory provided is <strong>not valid</strong> (meaning either not specified, or it does not exist at all,
+ * or there is no read/write access [for the Oracle&reg; Reports process] <sup>1</sup> ) the log file will be placed
  * <ol>
- * <li>in the Oracle Reports <code>logs directory</code>
- * <li>or, if this is not valid, in the Oracle Reports <code>temp direcotry</code>
- * <li>or, if this is not valid, in the <code>default temp direcotry</code>
+ * <li>in the Oracle&reg; Reports <code>logs directory</code>
+ * <li>or, if this is not valid, in the Oracle&reg; Reports <code>temp directory</code>
+ * <li>or, if this is not valid, in the <code>default temp directory</code>
  * </ol>
  * </ul>
  * <p>
@@ -154,6 +158,8 @@ public final class DestinationsLogging {
     static final void setupLogger( final Class clazz, String givenLoggerName, final Filename optional,
             final String optionalLoglevelName ) throws RWException {
 
+        assertRootLoggerExists();
+
         U.Rw.assertNotNull( givenLoggerName );
         String loggerName = givenLoggerName.trim();
 
@@ -168,7 +174,11 @@ public final class DestinationsLogging {
          * Typical non atomic access would be iterating over the list.
          */
         synchronized (configuredDestinationLoggerNames) {
-            if ( configuredDestinationLoggerNames.contains( loggerName ) ) return;
+            if ( configuredDestinationLoggerNames.contains( loggerName ) ) {
+                return;
+            }
+
+            Logger.getRootLogger().info( "Setting up logger for " + U.w( loggerName ) );
 
             final Logger logger = Logger.getLogger( loggerName );
             logger.removeAllAppenders();
@@ -266,49 +276,28 @@ public final class DestinationsLogging {
      * @param fallback
      *            alternative file name to use if the optionalFilename is null
      * @return string with full filename
+     * 
      */
     static final Filename givenOrFallbackFilenameFrom( final Filename optional, final Filename fallback ) {
         Filename filenameToStartWith = U.coalesce( optional, fallback );
 
         File dummy = IOUtility.fileFromName( filenameToStartWith );
-        String directoryname = dummy.getParent();
-        Filename filename = U.coalesce( Filename.filenameNameOnlyOf( dummy ), fallback );
+        Directoryname directoryname = Directoryname.of( dummy.getParent() );
+        Filename filenameOnly = U.coalesce( Filename.filenameNameOnlyOf( dummy ), fallback );
 
-        if ( !isValidDirectory( directoryname ) ) {
-            directoryname = Utility.getLogsDir();
-            if ( !isValidDirectory( directoryname ) ) {
-                directoryname = Utility.getTempDir();
-                if ( !isValidDirectory( directoryname ) ) {
-                    directoryname = IOUtility.getTempDir();
+        if ( !directoryname.isValidDirectory() ) {
+            directoryname = Directoryname.of( Utility.getLogsDir() );
+            if ( !directoryname.isValidDirectory() ) {
+                directoryname = Directoryname.of( Utility.getTempDir() );
+                if ( !directoryname.isValidDirectory() ) {
+                    directoryname = Directoryname.of( IOUtility.getTempDir() );
                     // Assumption: tempdir will always exist and be valid
                 }
             }
         }
 
-        File logfile = IOUtility.fileFromNames( Directoryname.of( directoryname ), filename );
+        File logfile = IOUtility.fileFromNames( directoryname, filenameOnly );
         return Filename.of( logfile );
-    }
-
-    /**
-     * Checks if the pathname is a valid directory, i.e. must be
-     * <ul>
-     * <li>an existing directory</li>
-     * <li>readable</li>
-     * <li>writable</li>
-     * </ul>
-     * 
-     * @param maybeDirectoryname
-     *            pathname to test
-     * @return <code>true</code> if the pathname is a valid directory, <code>false</code> else.
-     */
-    private static boolean isValidDirectory( final String maybeDirectoryname ) {
-        if ( U.isEmpty( maybeDirectoryname ) ) {
-            return false;
-        }
-        File possibleDirectory = IOUtility.fileFromName( Filename.of( maybeDirectoryname ) );
-
-        boolean valid = possibleDirectory.isDirectory() && possibleDirectory.canRead() && possibleDirectory.canWrite();
-        return valid;
     }
 
     /**
@@ -316,11 +305,15 @@ public final class DestinationsLogging {
      */
     private static boolean rootLoggerIsSetUp = false;
 
-    /*
-     * Asserts that the root logger exists.
+    /**
+     * Asserts that the root logger is configured.
      * <p>
-     * Deducting from observation the report server sets up all destinations sequentially
-     * running the main thread. Yet ensure only one thread manipulates the {@see #rootLoggerIsSetUp}
+     * The root logger is set up with a RollingFileAppender logging to file {@code de_mgpit_oracle_reports_plugin_destination_MgpDestination.log}
+     * in the Oracle&reg; Reports server's {@code log} directory.
+     * Log level will be {@code INFO} and pattern is {@link #VERBOSE_WIDE_LAYOUT}.
+     * <p>
+     * Annotation: Deducting from observation the report server sets up all destinations sequentially
+     * running the main thread. Yet ensure only one thread manipulates the {@code rootLoggerIsSetUp}
      * at the same time by making this method synchronized.
      */
     public synchronized static void assertRootLoggerExists() {
@@ -330,17 +323,15 @@ public final class DestinationsLogging {
             root.removeAllAppenders();
             root.setLevel( Level.INFO );
 
-            String directoryname;
-            directoryname = Utility.getLogsDir();
-            if ( !isValidDirectory( directoryname ) ) {
-                directoryname = Utility.getTempDir();
-                if ( !isValidDirectory( directoryname ) ) {
-                    directoryname = IOUtility.getTempDir();
+            Directoryname directoryname = Directoryname.of( Utility.getLogsDir() );
+            if ( !directoryname.isValidDirectory() ) {
+                directoryname = Directoryname.of( Utility.getTempDir() );
+                if ( !directoryname.isValidDirectory() ) {
+                    directoryname = Directoryname.of( IOUtility.getTempDir() );
                 }
             }
 
-            File logFile = IOUtility.fileFromNames( Directoryname.of( directoryname ),
-                    IOUtility.asLogfileFilename( MgpDestination.class.getName() ) );
+            File logFile = IOUtility.fileFromNames( directoryname, IOUtility.asLogfileFilename( MgpDestination.class.getName() ) );
             try {
                 RollingFileAppender rootLog = new RollingFileAppender( VERBOSE_WIDE_LAYOUT, logFile.getPath(),
                         Magic.APPEND_MESSAGES_TO_LOGFILE );

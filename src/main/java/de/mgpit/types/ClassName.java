@@ -22,21 +22,21 @@ package de.mgpit.types;
 
 /**
  * 
- * A transformer name.
+ * A class name.
  * <p>
  * The name is unparsed and unvalidated.
  *
  * @author mgp
  */
-public final class ContentName extends TypedString {
+public final class ClassName extends TypedString {
     
-    public static ContentName of( String name ) {
-        return new ContentName( name );
+    public static ClassName of( String name ) {
+        return new ClassName( name );
     }
 
-    String name = "";
+    private String name = "";
 
-    private ContentName( String name ) {
+    private ClassName( String name ) {
         this.name = name.trim();
     }
 
@@ -44,17 +44,17 @@ public final class ContentName extends TypedString {
         return this.name;
     }
 
-    private static ContentName NULL_VALUE = ContentName.of( (String) null );
+    private static ClassName NULL_VALUE = ClassName.of( (String) null );
 
-    public ContentName copy() {
-        return ContentName.of( this.value() );
+    public ClassName copy() {
+        return ClassName.of( this.value() );
     }
 
-    public ContentName concat( String str ) {
-        return (this.isNotNull()) ? ContentName.of( this.value().concat( str ) ) : NULL_VALUE;
+    public ClassName concat( String str ) {
+        return (this.isNotNull()) ? ClassName.of( this.value().concat( str ) ) : NULL_VALUE;
     }
 
-    public ContentName trim() {
-        return (this.isNotNull()) ? ContentName.of( this.value().trim() ) : NULL_VALUE;
+    public ClassName trim() {
+        return (this.isNotNull()) ? ClassName.of( this.value().trim() ) : NULL_VALUE;
     }
 }

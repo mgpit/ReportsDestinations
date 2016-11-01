@@ -27,8 +27,8 @@ import java.util.Properties;
 import org.apache.commons.codec.binary.Base64InputStream;
 import org.apache.commons.codec.binary.Base64OutputStream;
 
-import de.mgpit.oracle.reports.plugin.destination.content.types.InputTransformation;
-import de.mgpit.oracle.reports.plugin.destination.content.types.OutputTransformation;
+import de.mgpit.oracle.reports.plugin.destination.content.types.InputModifier;
+import de.mgpit.oracle.reports.plugin.destination.content.types.OutputModifier;
 import oracle.reports.RWException;
 
 /**
@@ -37,7 +37,7 @@ import oracle.reports.RWException;
  * @author mgp
  *
  */
-public class Base64Transformer implements InputTransformation, OutputTransformation {
+public class Base64Transformer implements InputModifier, OutputModifier {
     private static final boolean AS_ENCODING_STREAM = true;
 
     public Base64Transformer() {

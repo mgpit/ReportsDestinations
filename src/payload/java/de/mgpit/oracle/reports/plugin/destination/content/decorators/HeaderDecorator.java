@@ -27,8 +27,8 @@ import java.util.Properties;
 import de.mgpit.oracle.reports.plugin.destination.content.io.HeaderDecoratedInputStream;
 import de.mgpit.oracle.reports.plugin.destination.content.io.HeaderDecoratedOutputStream;
 import de.mgpit.oracle.reports.plugin.destination.content.types.Header;
-import de.mgpit.oracle.reports.plugin.destination.content.types.InputTransformation;
-import de.mgpit.oracle.reports.plugin.destination.content.types.OutputTransformation;
+import de.mgpit.oracle.reports.plugin.destination.content.types.InputModifier;
+import de.mgpit.oracle.reports.plugin.destination.content.types.OutputModifier;
 import oracle.reports.RWException;
 
 /**
@@ -37,7 +37,7 @@ import oracle.reports.RWException;
  * @author mgp
  *
  */
-public abstract class HeaderDecorator implements InputTransformation, OutputTransformation {
+public abstract class HeaderDecorator implements InputModifier, OutputModifier {
 
     public HeaderDecorator() {
     }

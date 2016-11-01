@@ -43,7 +43,7 @@ import oracle.reports.utility.Utility;
 
 /**
  * 
- * Implements an Oracle Reports&trade; {@link oracle.reports.server.Destination} for distributing
+ * Implements an Oracle&reg; Reports {@link oracle.reports.server.Destination} for distributing
  * the files of a distribution process to a ZIP file. The destination is able to append files to an existing
  * ZIP file with some limitations with respect to duplicates - see below.
  * 
@@ -94,7 +94,7 @@ import oracle.reports.utility.Utility;
  * </ul>
  * <strong>note: </strong>scheme must be <strong>zip</strong> (lowercase!)
  * <p>
- * When running from <strong>Oracle Forms</strong>&trade; using a <em>REPORT_OBJECT</em> you can pass the parameters as follows.
+ * When running from <strong>Oracle&reg; Forms</strong>&trade; using a <em>REPORT_OBJECT</em> you can pass the parameters as follows.
  * <ul>
  * <li>{@code SET_REPORT_OBJECT_PROPERTY( }REPORT_OBJECT</em>
  * {@code , REPORT_DESTYPE, CACHE }<sup>1)</sup> {@code );}</li>
@@ -246,22 +246,23 @@ public final class ZipDestination extends MgpDestination {
     }
 
     /**
-     * Start a new distribution cycle for a report to this destination. Will
-     * distribute one or many files depending on the format.
-     * 
+     * Starts a new distribution cycle for a report to a {@link ZipArchive}.
+     *  
      * @param allProperties
-     *            all properties (parameters) passed to the report.
-     *            For Oracle Forms&trade; this will include the parameters set via <code>SET_REPORT_OBJECT_PROPERTY</code>
-     *            plus the parameters passed via a <code>ParamList</code>
+     *            parameters for this distribution passed as {@code Properties}. Must include {@code desname} containing
+     *            a zip-URI, or explicit {@code zipfilename}, {@code desname}, and optionally {@code append}. See usage notes of this class.
+     *            <br><em>Remark:</em> For Oracle&reg; Forms this will include the parameters set via {@code SET_REPORT_OBJECT_PROPERTY}
+     *            plus the parameters passed via a {@code ParamList}
      * @param targetName
-     *            target name of the distribution. Will be the entry name of the
-     *            ZIP file.
+     *            target name of the distribution
      * @param totalNumberOfFiles
-     *            total number of files to be distributed.
+     *            total number of files being distributed
      * @param totalFileSize
-     *            total file size of all files distributed.
+     *            total file size of all files being distributed
      * @param mainFormat
-     *            the output format of the main file.
+     *            the output format of the main file being distributed
+     *            
+     * @throws RWException if there is a failure during distribution setup. The RWException normally will wrap the original Exception.
      */
     protected boolean start( final Properties allProperties, final String targetName, final int totalNumberOfFiles,
             final long totalFileSize, short mainFormat ) throws RWException {
@@ -294,7 +295,6 @@ public final class ZipDestination extends MgpDestination {
                     createZipArchive( zipArchiveFileName, inAppendingMode );
                     getLogger().info(
                             "Starting distribution to " + U.w( zipArchiveFileName ) + ". " + modeMessage( inAppendingMode ) );
-                    continueToSend = true;
                 } else {
                     getLogger().warn( "Cannot continue to send ..." );
                 }
@@ -419,6 +419,7 @@ public final class ZipDestination extends MgpDestination {
      * @throws RWException
      */
     public static void init( final Properties destinationsProperties ) throws RWException {
+        MgpDestination.init( destinationsProperties );
         initLogging( destinationsProperties, ZipDestination.class );
         dumpProperties( destinationsProperties, LOG );
         LOG.info( "Destination " + U.w( ZipDestination.class.getName() ) + " started." );

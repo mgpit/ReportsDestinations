@@ -19,6 +19,9 @@
  */
 package de.mgpit.types;
 
+
+import org.apache.log4j.Logger;
+
 import de.mgpit.oracle.reports.plugin.commons.U;
 
 /**
@@ -27,12 +30,12 @@ import de.mgpit.oracle.reports.plugin.commons.U;
  * Used for minimizing those foo( String, String, ... , String ) methods where one has to look up the correct sequence of their
  * parameters over and over and which are error prone.
  * <p>
- * There are several coding best practices and IDE support to ensure that the sequence in which the parameters 
+ * There are several coding best practices and IDE support to ensure that the sequence in which the parameters
  * are passed to a method is right, like
  * <ul>
- *  <li>advocating short parameter lists</li>
- *  <li>using builders</li>
- *  <li>assigning more specific types to each of the parameters</li>
+ * <li>advocating short parameter lists</li>
+ * <li>using builders</li>
+ * <li>assigning more specific types to each of the parameters</li>
  * </ul>
  * The type wrapping approach is part of the latter.
  * <p>
@@ -40,12 +43,12 @@ import de.mgpit.oracle.reports.plugin.commons.U;
  * or <em>named parameter call syntax</em> (e.g. PL/SQL).
  * <p>
  * This version is for Java 1.4. Using Java 5+'s Generics would allow for a much more flexible and
- * less code redundant implementation ... 
+ * less code redundant implementation ...
  * 
  * @author mgp
  */
 public abstract class TypedString {
-    
+
     protected final String NONE = "";
 
     public String toString() {
@@ -53,12 +56,12 @@ public abstract class TypedString {
     }
 
     protected abstract String value();
-    
+
     protected String assertAtLeastNone( String str ) {
-        return U.isEmpty( str )?NONE:str;
+        return U.isEmpty( str ) ? NONE : str;
     }
-    
-    protected String cleaned( String str ){
+
+    protected String cleaned( String str ) {
         return assertAtLeastNone( str ).trim();
     }
 
@@ -104,7 +107,16 @@ public abstract class TypedString {
     }
 
     public boolean isEmpty() {
-        return this.value() != null && !"".equals( this.value() );
+        return this.isNull() || this.isNone();
+    }
+    
+    
+    public boolean isNone( ){
+        return NONE.equals( this.value() );
+    }
+    
+    public boolean isNotNone() {
+        return !NONE.equals( this.value() );
     }
 
     public boolean isNull() {

@@ -26,7 +26,7 @@ import java.io.OutputStream;
  * 
  * Content.
  * <p>
- * Used by {@link Transformation}s.
+ * Used by {@link Modifier}s.
  * 
  * @author mgp
  *

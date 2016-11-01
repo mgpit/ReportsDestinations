@@ -56,7 +56,7 @@ public final class Filename extends TypedString {
         }
     }
 
-    String name = NONE;
+    private String name = NONE;
 
     private Filename( String name ) {
         this.name = cleaned( name );

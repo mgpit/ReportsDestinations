@@ -78,5 +78,11 @@ public class Magic {
      * Holds the prefix indicating that the subsequent content of the string is BASE64 encoded.
      */
     public static final String BASE64_MARKER = "(BASE64)";
+    
+    
+    /**
+     * a Prime ...
+     */
+    public static final int PRIME = 23;
 
 }

@@ -5,7 +5,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import de.mgpit.oracle.reports.plugin.commons.U;
-import de.mgpit.types.ModifyerUnparsedName;
+import de.mgpit.types.ModifierRawDeclaration;
 import junit.framework.TestCase;
 
 public class MQDestinationTest extends TestCase {
@@ -71,12 +71,18 @@ public class MQDestinationTest extends TestCase {
     }
 
     public void testRegexp2() {
-        final Pattern P = Pattern.compile( ModifyerUnparsedName.PATTERN );
+        final Pattern P = Pattern.compile( ModifierRawDeclaration.PATTERN );
         
 
         Matcher m;
 
         System.out.println( P.pattern() );
+        
+//        m = P.matcher(  null  );
+//        assertFalse( m.matches() );
+        
+        m = P.matcher( "" );
+        assertFalse( m.matches() );
 
         m = P.matcher( "1DIMENSION" );
         assertFalse( m.matches() );

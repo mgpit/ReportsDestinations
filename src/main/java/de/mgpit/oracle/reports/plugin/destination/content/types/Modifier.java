@@ -27,9 +27,9 @@ import de.mgpit.types.TypedString;
 import oracle.reports.RWException;
 
 /**
- * A Transformation used in the context of an Oracle Reports&trade; distribution.
+ * A Transformation used in the context of an Oracle&reg; Reports distribution.
  * <p>
- * Modifies the content of a Oracle Reports&trade; report on distribution of the generated report file(s).
+ * Modifies the content of a Oracle&reg; Reports report on distribution of the generated report file(s).
  * Typical applications include
  * <ul>
  * <li>Filtering of the input stream</li>
@@ -43,9 +43,13 @@ import oracle.reports.RWException;
  * 
  * @author mgp
  */
-public interface Transformation {
+public interface Modifier {
 
-    public static String PROPERTY_NAME_PREFIX = "transformer.";
+    /**
+     * The prefix to use for the <em>name</em> of the properties of a {@code Destination} definition
+     * in the {@code <reportservername>.conf} file used to declare content modifiers.  
+     */
+    public static String PROPERTY_NAME_PREFIX = "modifier.";
 
     public String mimetype();
 

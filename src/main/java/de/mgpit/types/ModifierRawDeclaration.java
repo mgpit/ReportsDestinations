@@ -22,17 +22,17 @@ package de.mgpit.types;
 
 /**
  * 
- * A transformer name.
+ * A raw modifier declaration.
  * <p>
- * The name is unparsed and unvalidated.
+ * The declaration is unparsed and unvalidated.
  *
  * @author mgp
  */
-public final class ModifyerUnparsedName extends TypedString {
+public final class ModifierRawDeclaration extends TypedString {
     /**
      * Holds the string representation of the RegExp describing a valid TransformerName declaration.
      * <p>
-     * Valid declarations are, for example
+     * Valid declarations which match the RegExp are, for example
      * <ul>
      * <li>{@code ASIMPLENAME }</li>
      * <li>{@code ANAM3W1THD1G1TS }</li>
@@ -45,23 +45,24 @@ public final class ModifyerUnparsedName extends TypedString {
      * name parameter and parantheses.
      * 
      * <pre>
-     * transformername ::= whitespace{*} name whitespace{*} parameter whitespace{*}
-     * name ::= alpha{1} other{*} 
-     * other ::= alphanum | ":" | "-" | "_" | "$"
-     * parameter ::= "(" whitespace{*}name whitespace{*} ")"
+     * modifierrawdeclaration ::= whitespace{*} name whitespace{*} parameter whitespace{*}
+     *                   name ::= alpha{1} other{*} 
+     *                  other ::= alphanum | ":" | "-" | "_" | "$"
+     *              parameter ::= "(" whitespace{*}name whitespace{*} ")"
      * </pre>
      * <p>
-     * The pattern has four capture groups. Group 2 will capture the name and group 4 the parameter - each without whitespace.
+     * The pattern has four capture groups. Group 2 will capture the modifier name 
+     * and group 4 the content provider name - each without whitespace.
      */
     public static final String PATTERN = "^\\s*((\\p{Alpha}[\\p{Alnum}:_\\-.$]*\\s*)([(]\\s*(\\p{Alpha}[\\p{Alnum}:_\\-.$]*)\\s*[)])?)\\s*$";
 
-    public static ModifyerUnparsedName of( String name ) {
-        return new ModifyerUnparsedName( name );
+    public static ModifierRawDeclaration of( String name ) {
+        return new ModifierRawDeclaration( name );
     }
 
-    String name = "";
+    private String name = NONE;
 
-    private ModifyerUnparsedName( String name ) {
+    private ModifierRawDeclaration( String name ) {
         this.name = cleaned( name );
     }
 
@@ -69,17 +70,17 @@ public final class ModifyerUnparsedName extends TypedString {
         return this.name;
     }
 
-    private static ModifyerUnparsedName NULL_VALUE = ModifyerUnparsedName.of( (String) null );
+    private static ModifierRawDeclaration NULL_VALUE = ModifierRawDeclaration.of( (String) null );
 
-    public ModifyerUnparsedName copy() {
-        return ModifyerUnparsedName.of( this.value() );
+    public ModifierRawDeclaration copy() {
+        return ModifierRawDeclaration.of( this.value() );
     }
 
-    public ModifyerUnparsedName concat( String str ) {
-        return (this.isNotNull()) ? ModifyerUnparsedName.of( this.value().concat( str ) ) : NULL_VALUE;
+    public ModifierRawDeclaration concat( String str ) {
+        return (this.isNotNull()) ? ModifierRawDeclaration.of( this.value().concat( str ) ) : NULL_VALUE;
     }
 
-    public ModifyerUnparsedName trim() {
-        return (this.isNotNull()) ? ModifyerUnparsedName.of( this.value().trim() ) : NULL_VALUE;
+    public ModifierRawDeclaration trim() {
+        return (this.isNotNull()) ? ModifierRawDeclaration.of( this.value().trim() ) : NULL_VALUE;
     }
 }

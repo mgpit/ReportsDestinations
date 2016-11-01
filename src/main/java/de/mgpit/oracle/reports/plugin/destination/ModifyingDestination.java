@@ -17,57 +17,76 @@ import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
 
+import de.mgpit.oracle.reports.plugin.commons.Magic;
 import de.mgpit.oracle.reports.plugin.commons.U;
 import de.mgpit.oracle.reports.plugin.destination.content.types.Content;
-import de.mgpit.oracle.reports.plugin.destination.content.types.InputTransformation;
-import de.mgpit.oracle.reports.plugin.destination.content.types.OutputTransformation;
-import de.mgpit.oracle.reports.plugin.destination.content.types.Transformation;
-import de.mgpit.types.ContentName;
-import de.mgpit.types.ModifyerName;
-import de.mgpit.types.ModifyerUnparsedName;
+import de.mgpit.oracle.reports.plugin.destination.content.types.InputModifier;
+import de.mgpit.oracle.reports.plugin.destination.content.types.Modifier;
+import de.mgpit.oracle.reports.plugin.destination.content.types.OutputModifier;
+import de.mgpit.types.ContentAlias;
+import de.mgpit.types.ModifierAlias;
+import de.mgpit.types.ModifierRawDeclaration;
 import oracle.reports.RWException;
 import oracle.reports.server.Destination;
 import oracle.reports.utility.Utility;
 
 /**
- * A Destination which is able to transform the report's content on distribution.
+ * A Destination which is able to modify the report's content on distribution.
  * <p>
  * This <em>abstract</em> class serves as super class for {@code oracle.reports.server.Destination}s which want to
  * modify the data of the report being distributed by the Reports Server.
- * Possible applications are 
- *  <ul>
- *      <li>encoding the data of a report with outout format {@code PDF} as {@code BASE64}</li>
- *      <li>putting the data into an <em>Envelope</em></li>
- *      <li>prepending the data with a <em>Header</em></li>
- *      <li>or combinations of such transformations</li>
- *  </ul>
- * The modifiers to apply are specified on report execution, see below. For referencing a modifier on 
+ * <p style="color:FireBrick; font-size:110%">
+ * <strong>Please read warnings at end!</strong>
+ * <p>
+ * Possible applications are
+ * <ul>
+ * <li>encoding the data of a report with outout format {@code PDF} as {@code BASE64}</li>
+ * <li>putting the data into an <em>Envelope</em></li>
+ * <li>prepending the data with a <em>Header</em></li>
+ * <li>or combinations of such modifiers</li>
+ * </ul>
+ * The modifiers to apply are specified on report execution, see below. For referencing a modifier on
  * report execution they have to be given an <em>alias</em>, which is done in the {@code <reportservername>.conf} file
- * by specifying properties with <em>name</em> {@code transformer.<alias>}.
+ * by specifying properties with <em>name</em> {@link Modifier#PROPERTY_NAME_PREFIX} .
  * <p>
  * Modifiers can be divided into <em>Decorators</em> and <em>Transformers</em>. A <em>Decorator</em> applies additional
- * content (like envelopes or headers), a <em>Transformer</em> changes the report's bytes. 
+ * content (like envelopes or headers), a <em>Transformer</em> changes the report's bytes.
  * <p>
  * For <em>Decorartor</em>s one can also specify <em>content provider</em>s which then can be used by the decorator for
  * generating the additional content. So one can choose between implementing a class for each kind of decoration or
  * implementing a generic decoration (a generic envelope, for example) and then provide the content separately.
  * <p>
- * Here is an example configuration excerpt for a {@code <reportservername>.conf} file on how to specify transformers and
- * content providers. 
+ * Here is an example configuration excerpt for a {@code <reportservername>.conf} file on how to specify modifiers and
+ * content providers.
+ * 
  * <pre>
  * {@code
  *  <destination destype="..." class="...">
  *     ...
- *     <!-- Transformers -->
- *     <property name="transformer.BASE64"      value="de.mgpit.oracle.reports.plugin.destination.content.transformers.Base64Transformer"/>
- *     <property name="transformer.Envelope"    value="de.mgpit.oracle.reports.plugin.destination.content.decorators.EnvelopeDecorator"/>
- *     <property name="transformer.Header"      value="de.mgpit.oracle.reports.plugin.destination.content.decorators.HeaderDecorator"/>
+ *     <!-- Modifiers -->
+ *     <property name="modifier.BASE64"      value="de.mgpit.oracle.reports.plugin.destination.content.transformers.Base64Transformer"/>
+ *     <property name="modifier.Envelope"    value="de.mgpit.oracle.reports.plugin.destination.content.decorators.EnvelopeDecorator"/>
+ *     <property name="modifier.Header"      value="de.mgpit.oracle.reports.plugin.destination.content.decorators.HeaderDecorator"/>
  *     <!-- Content Providers -->
- *     <property name="content.Soap_1_1"        value="tld.foo.bar.batz.SoapV0101Envelope"/> <!-- Must implement de.mgpit.oracle.reports.plugin.destination.content.types.Content -->
- *     <property name="content.Soap_1_2"        value="tld.foo.bar.batz.SoapV0102Envelope"/> <!-- Must implement de.mgpit.oracle.reports.plugin.destination.content.types.Content -->
+ *     <property name="content.Soap_1_1"     value="tld.foo.bar.batz.SoapV0101Envelope"/> <!-- Must implement de.mgpit.oracle.reports.plugin.destination.content.types.Content -->
+ *     <property name="content.Soap_1_2"     value="tld.foo.bar.batz.SoapV0102Envelope"/> <!-- Must implement de.mgpit.oracle.reports.plugin.destination.content.types.Content -->
  *  </destination>
  *         }
  * </pre>
+ * 
+ * <p>
+ * <strong>Warnings</strong>
+ * <p>
+ * Due to the architecture of the Oracle&reg; Reports server the registry for {@code Modifier}s and {@code Content} is
+ * implemented as <em>static</em> state as the reports server uses the static {@code init(Properties)} for initialization.
+ * <p>
+ * So if you have defined more than one {@code ModifyingDestination} inheriting from this class in your
+ * {@code <reportservername>.conf} configuration file they will all share the same registry for
+ * {@code Modifier}s and {@code Content}.
+ * Destination properties for specifying modifiers and content with the same name will overwrite each other.
+ * 
+ * {@see MgpDestination}
+ * 
  * @author mgp
  *
  */
@@ -76,16 +95,46 @@ public abstract class ModifyingDestination extends MgpDestination {
     private static final Logger LOG = Logger.getLogger( MgpDestination.class );
 
     /**
-     * Holds the transformer plugins as defined in the {@code <reportservername>.conf} file
+     * Holds the modifier plugins as defined in the {@code <reportservername>.conf} file
      */
-    private static Map CONTENTMODIFIERS = Collections.synchronizedMap( new HashMap( SOME_PRIME ) );
+    protected static final Map MODIFIER_REGISTRY = Collections.synchronizedMap( new HashMap( Magic.PRIME ) );
 
     /**
      * Holds the content providers as defined in the {@code <reportservername>.conf} file
      */
-    private static Map CONTENTPROVIDERS = Collections.synchronizedMap( new HashMap( SOME_PRIME ) );
+    protected static final Map CONTENTPROVIDER_REGISTRY = Collections.synchronizedMap( new HashMap( Magic.PRIME ) );
 
+    public static void registerModifier( ModifierAlias key, Class value ) {
+        MODIFIER_REGISTRY.put( key, value );
+    }
+
+    public static void registerContent( ContentAlias key, Class value ) {
+        CONTENTPROVIDER_REGISTRY.put( key, value );
+    }
+
+    /**
+     * Holds the name of the property used for passing a modifier chain to the current distribution.
+     */
+    private static final String CHAIN_DECLARATION_PROPERTY = "apply";
+
+    /**
+     * Gets the Logger for this destination.
+     * 
+     * @return logger
+     */
     protected abstract Logger getLogger();
+
+    /**
+     * Holds the modifier chain which will be applied to the output
+     * on the current distribution cycle.
+     */
+    private OutputModifier[] outputModifierChain = {};
+
+    /**
+     * Holds the modifier chain which will be applied to the input
+     * on the current distribution cycle.
+     */
+    private InputModifier[] inputModifierChain = {};
 
     /**
      * Initializes the destination on Report Server startup.
@@ -104,21 +153,21 @@ public abstract class ModifyingDestination extends MgpDestination {
      */
     public static void init( Properties destinationsProperties ) throws RWException {
         MgpDestination.init( destinationsProperties );
-        registerConfiguredContentModifiers( destinationsProperties );
-        registerConfiguredContentProvideres( destinationsProperties );
+        registerConfiguredModifiers( destinationsProperties );
+        registerConfiguredContentProviders( destinationsProperties );
     }
 
-    private static void registerConfiguredContentModifiers( Properties destinationsProperties ) throws RWException {
+    private static void registerConfiguredModifiers( Properties destinationsProperties ) throws RWException {
         Enumeration keys = destinationsProperties.keys();
         LOG.info( "About to search for and register virtual destinations ..." );
         boolean registrationErrorOccured = false;
 
         while ( keys.hasMoreElements() ) {
             String key = (String) keys.nextElement();
-            if ( isContentModificationPluginDefinition( key ) ) {
-                ModifyerUnparsedName name = extractContentModificationPluginName( key );
-                String virtualDestinationClassName = destinationsProperties.getProperty( key );
-                boolean success = registerContentModifier( name, virtualDestinationClassName );
+            if ( isModifierAliasDefinition( key ) ) {
+                ModifierAlias name = extractModifierAlias( key );
+                String fullClassName = destinationsProperties.getProperty( key );
+                boolean success = registerModifier( name, fullClassName );
                 if ( !success ) {
                     registrationErrorOccured = true;
                 }
@@ -129,8 +178,19 @@ public abstract class ModifyingDestination extends MgpDestination {
         }
     }
 
-    private static boolean registerContentModifier( ModifyerUnparsedName name, String implementingClassName ) {
-        LOG.info( " >>> About to register Content Transformer named " + U.w( name ) );
+    /**
+     * Registers a {@code Modifier} under its alias.
+     * <p>
+     * Will only register those modifiers for which the declared class can be found.
+     * 
+     * @param name
+     *            alias for registering
+     * @param implementingClassName
+     *            full class name of the {@code Modifier} class
+     * @return {@code true} on success, {@code false} else.
+     */
+    private static boolean registerModifier( ModifierAlias name, String implementingClassName ) {
+        LOG.info( " >>> About to register Modifier named " + U.w( name ) );
         Class clazz = null;
         try {
             clazz = Class.forName( implementingClassName );
@@ -139,167 +199,188 @@ public abstract class ModifyingDestination extends MgpDestination {
             LOG.warn( cnf );
             return false;
         }
-        CONTENTMODIFIERS.put( name, clazz );
+        ModifyingDestination.registerModifier( name, clazz );
         return true;
     }
 
-    private static boolean isContentModificationPluginDefinition( String key ) {
-        return key.startsWith( Transformation.PROPERTY_NAME_PREFIX );
+    /**
+     * Tests if the key defines a {@code Modifier} declaration.
+     * 
+     * @param key
+     * @return {@code true} if the key defines a {@code Modifier} declaration, {@code false} else
+     */
+    private static boolean isModifierAliasDefinition( String key ) {
+        return key.startsWith( Modifier.PROPERTY_NAME_PREFIX );
     }
 
-    private static ModifyerUnparsedName extractContentModificationPluginName( String key ) {
-        String[] pathElements = key.split( "\\." );
-        int numberOfElements = pathElements.length;
-        if ( numberOfElements < 2 ) {
-            LOG.warn( "Got invalid Content Transformername: " + U.w( key ) );
-            return null;
-        }
-        int indexOfContentModificationPluginName = --numberOfElements;
-        return ModifyerUnparsedName.of( pathElements[indexOfContentModificationPluginName] );
+    /**
+     * Gets the modifier name part from the property name.
+     * 
+     * @param key
+     *            property name
+     * @return modifier name
+     */
+    private static ModifierAlias extractModifierAlias( String key ) {
+        return ModifierAlias.of( extractAlias( key ) );
     }
 
-    private static void registerConfiguredContentProvideres( Properties destinationsProperties ) throws RWException {
+    /**
+     * Registers a {@code Content} under its alias.
+     * <p>
+     * Will only register those contents for which the declared class can be found.
+     * 
+     * @param name
+     *            alias for registering
+     * @param implementingClassName
+     *            full class name of the {@code Content} class
+     * @return {@code true} on success, {@code false} else.
+     */
+    private static void registerConfiguredContentProviders( Properties destinationsProperties ) throws RWException {
         Enumeration keys = destinationsProperties.keys();
         while ( keys.hasMoreElements() ) {
             String key = (String) keys.nextElement();
-            if ( isContentProviderDefintion( key ) ) {
-                String value = destinationsProperties.getProperty( key );
-                CONTENTPROVIDERS.put( key, value );
-                LOG.info( "Registered alias " + U.w( key ) + " for " + U.w( value ) );
+            if ( isContentAliasDefinition( key ) ) {
+                ContentAlias name = extractContentAlias( key );
+                String fullClassName = destinationsProperties.getProperty( key );
+                boolean success = registerContent( name, fullClassName );
             }
         }
     }
 
-    private static boolean isContentProviderDefintion( String key ) {
+    /**
+     * Registers a {@code Content} under its alias.
+     * <p>
+     * Will only register those contents for which the declared class can be found.
+     * 
+     * @param name
+     *            alias for registering
+     * @param implementingClassName
+     *            full class name of the {@code Content} class
+     * @return {@code true} on success, {@code false} else.
+     */
+    private static boolean registerContent( ContentAlias name, String implementingClassName ) {
+        LOG.info( " >>> About to register Modifier named " + U.w( name ) );
+        Class clazz = null;
+        try {
+            clazz = Class.forName( implementingClassName );
+            LOG.info( U.w( implementingClassName ) + " registered successfully for " + U.w( name ) );
+        } catch ( ClassNotFoundException cnf ) {
+            LOG.warn( cnf );
+            return false;
+        }
+        ModifyingDestination.registerContent( name, clazz );
+        return true;
+    }
+
+    /**
+     * Tests if the key defines a {@code Content} declaration.
+     * 
+     * @param key
+     * @return {@code true} if the key defines a {@code Modifier} declaration, {@code false} else
+     */
+    private static boolean isContentAliasDefinition( String key ) {
         return key.startsWith( Content.PROPERTY_NAME_PREFIX );
     }
 
-    protected void extractDeclaredTransformationChain( final Properties allProperties ) throws RWException {
-        String transformationDeclaration = allProperties.getProperty( "transform" );
+    /**
+     * Gets the content name part from the property name.
+     * 
+     * @param key
+     *            property name
+     * @return modifier name
+     */
+    private static ContentAlias extractContentAlias( String key ) {
+        return ContentAlias.of( extractAlias( key ) );
+    }
 
-        if ( transformationDeclaration != null ) {
-            getLogger().info( "Extracting declared Transformation Chain" );
-            ModifyerUnparsedName[] declaredTransformations = ModifierChainDeclaration
-                    .extractNames( transformationDeclaration );
-            getLogger().info( "Declaration contains " + U.w( declaredTransformations.length ) + " items." );
-
-            ArrayList declaredOutputTransformations = new ArrayList();
-            ArrayList declaredInputTransformations = new ArrayList();
-            for ( int runIndex = 0; runIndex < declaredTransformations.length; runIndex++ ) {
-                ModifyerUnparsedName givenName = declaredTransformations[runIndex];
-                getLogger().debug( U.w( U.lpad( runIndex, 2 ) ) + ": Extracting " + U.w( givenName.toString() ) );
-                Transformer transformer = new Transformer();
-                if ( transformer.transformsOnOutput( givenName ) ) {
-                    getLogger().info( U.w( givenName ) + " identified as Output transformation." );
-                    declaredOutputTransformations.add( transformer.new Out().createTransformation( givenName, this ) );
-                } else if ( transformer.transformsOnInput( givenName ) ) {
-                    getLogger().info( U.w( givenName ) + " identified as Input transformation." );
-                    declaredInputTransformations.add( transformer.new In().createTransformation( givenName, this ) );
-                } else {
-                    getLogger().warn( U.w( givenName ) + " cannot be identified as Output nor Input transformation." );
-                }
-            }
-
-            try {
-                assignOutputTransformationChain( declaredOutputTransformations );
-                assignInputTransformationChain( declaredInputTransformations );
-            } catch ( Exception any ) {
-                LOG.fatal( "Fatal error on extracting transformations!", any );
-                throw Utility.newRWException( any );
-            }
-
-        } else {
-            getLogger().info( "No transformations declared." );
+    /**
+     * Extracts the alias from the key given.
+     * <p>
+     * The key is supposed to be of format {@code prefix.alias}. This means
+     * the alias will be the last element in this dot seprated path.
+     * 
+     * @param key
+     *            to extract the alias from
+     * @return the alias part from the key
+     */
+    private static String extractAlias( String key ) {
+        String[] pathElements = key.split( "\\." );
+        int numberOfElements = pathElements.length;
+        if ( numberOfElements < 2 ) {
+            LOG.warn( "Got invalid name: " + U.w( key ) );
+            return null;
         }
+        int indexOfAlias = --numberOfElements;
+        return pathElements[indexOfAlias];
     }
 
     protected InputStream getContent( File file ) throws RWException {
         InputStream sourceInput = super.getContent( file );
-        return wrapWithInputTransformers( sourceInput );
+        return wrapWithInputModifiers( sourceInput );
     }
 
     /**
-     * Wraps the output wiht {@link OutputTransformation}s.
-     * 
-     * @param destinationStream
-     * @return
-     * @throws RWException
-     */
-    protected OutputStream wrapWithOutputTransformers( OutputStream destinationStream ) throws RWException {
-        OutputStream wrapped = destinationStream;
-        if ( this.outputTransformationChain != null ) {
-            final int startIndex = this.outputTransformationChain.length - 1;
-            final Properties allProperties = getProperties();
-            for ( int runIndex = startIndex; runIndex >= 0; --runIndex ) {
-                OutputTransformation transformation = this.outputTransformationChain[runIndex];
-                wrapped = transformation.forOutput( wrapped, allProperties );
-                getLogger().info( "Transformer for " + U.w( transformation.toString() ) + " has been applied successfully." );
-            }
-        }
-        return wrapped;
-    }
-
-    /**
-     * Wraps the input with {@link InputTransformation}s.
+     * Wraps the input with {@code InputModifier}s.
      * 
      * @param initialStream
      * @return
      * @throws RWException
      */
-    protected InputStream wrapWithInputTransformers( InputStream initialStream ) throws RWException {
+    protected InputStream wrapWithInputModifiers( InputStream initialStream ) throws RWException {
         InputStream wrapped = initialStream;
-        if ( this.inputTransformationChain != null ) {
-            final int endIndex = this.inputTransformationChain.length;
+        if ( this.inputModifierChain != null ) {
+            final int endIndex = this.inputModifierChain.length;
             final Properties allProperties = getProperties();
             for ( int runIndex = 0; runIndex < endIndex; runIndex++ ) {
-                InputTransformation transformation = this.inputTransformationChain[runIndex];
-                wrapped = transformation.forInput( wrapped, allProperties );
-                getLogger().info( "Transformer " + U.w( transformation.toString() ) + " has been applied successfully." );
+                InputModifier modifier = this.inputModifierChain[runIndex];
+                wrapped = modifier.forInput( wrapped, allProperties );
+                getLogger().info( "Modifier " + U.w( modifier.toString() ) + " has been applied successfully." );
             }
         }
         return wrapped;
     }
 
     /**
-     * Holds the transformation chain which will be applied to the output
-     * on the current distribution cycle - which is
-     * <br/>
-     * {@code start} &rarr; {@code sendFile}<sup>{1..n}</sup> &rarr; {@code stop()}
+     * Wraps the output with {@code OutputModifier}s.
      * 
+     * @param destinationStream
+     * @return
+     * @throws RWException
      */
-    private OutputTransformation[] outputTransformationChain = {};
+    protected OutputStream wrapWithOutputModifiers( OutputStream destinationStream ) throws RWException {
+        OutputStream wrapped = destinationStream;
+        if ( this.outputModifierChain != null ) {
+            final int startIndex = this.outputModifierChain.length - 1;
+            final Properties allProperties = getProperties();
+            for ( int runIndex = startIndex; runIndex >= 0; --runIndex ) {
+                OutputModifier modifier = this.outputModifierChain[runIndex];
+                wrapped = modifier.forOutput( wrapped, allProperties );
+                getLogger().info( "Modifier for " + U.w( modifier.toString() ) + " has been applied successfully." );
+            }
+        }
+        return wrapped;
+    }
+
     /**
-     * Holds the transformation chain which will be applied to the input
-     * on the current distribution cycle - which is
-     * <br/>
-     * {@code start} &rarr; {@code sendFile}<sup>{1..n}</sup> &rarr; {@code stop()}
+     * Starts a new distribution cycle for a report to this destination.
+     * 
+     * @param allProperties
+     *            parameters for this distribution passed as {@code Properties}
+     *            <br>
+     *            <em>Remark:</em> For Oracle&reg; Forms this will include the parameters set via {@code SET_REPORT_OBJECT_PROPERTY}
+     *            plus the parameters passed via a {@code ParamList}
+     * @param targetName
+     *            target name of the distribution
+     * @param totalNumberOfFiles
+     *            total number of files being distributed
+     * @param totalFileSize
+     *            total file size of all files being distributed
+     * @param mainFormat
+     *            the output format of the main file being distributed
+     * 
+     * @throws RWException
+     *             if there is a failure during distribution setup. The RWException normally will wrap the original Exception.
      */
-    private InputTransformation[] inputTransformationChain = {};
-
-    private void assignOutputTransformationChain( List extracted ) {
-        if ( extracted != null && extracted.size() > 0 ) {
-            this.outputTransformationChain = new OutputTransformation[extracted.size()];
-            int targetIndex = 0;
-            Iterator elements = extracted.iterator();
-            while ( elements.hasNext() ) {
-                OutputTransformation element = (OutputTransformation) elements.next();
-                this.outputTransformationChain[targetIndex++] = element;
-            }
-        }
-    }
-
-    private void assignInputTransformationChain( List extracted ) {
-        if ( extracted != null && extracted.size() > 0 ) {
-            this.outputTransformationChain = new OutputTransformation[extracted.size()];
-            int targetIndex = 0;
-            Iterator elements = extracted.iterator();
-            while ( elements.hasNext() ) {
-                InputTransformation element = (InputTransformation) elements.next();
-                this.inputTransformationChain[targetIndex++] = element;
-            }
-        }
-    }
-
     protected boolean start( Properties allProperties, String targetName, int totalNumberOfFiles, long totalFileSize,
             short mainFormat ) throws RWException {
 
@@ -307,8 +388,7 @@ public abstract class ModifyingDestination extends MgpDestination {
             boolean continueToSend = super.start( allProperties, targetName, totalNumberOfFiles, totalFileSize, mainFormat );
 
             if ( continueToSend ) {
-                getLogger().info( "Looking for Transformation Chain for extraction ... " );
-                extractDeclaredTransformationChain( allProperties );
+                extractDeclaredModifierChain( allProperties );
             } else {
                 getLogger().warn( "Cannot continue to send ..." );
             }
@@ -320,131 +400,243 @@ public abstract class ModifyingDestination extends MgpDestination {
     }
 
     /**
+     * Looks for and extracts the declared modification chain from a distribution.
+     * <p>
+     * 
+     * @param allProperties
+     * @throws RWException
+     */
+    protected void extractDeclaredModifierChain( final Properties allProperties ) throws RWException {
+        getLogger().info( "Looking for Modifier Chain declaration (Property \"" + CHAIN_DECLARATION_PROPERTY + "\" )..." );
+        String modificationDeclaration = allProperties.getProperty( CHAIN_DECLARATION_PROPERTY );
+
+        if ( modificationDeclaration != null ) {
+            getLogger().info( "Declaration found. Extracting declared Modifier Chain" );
+            ModifierRawDeclaration[] declaredModifiers = ModifierChainDeclaration.extractNames( modificationDeclaration );
+
+            final int numberOfDeclarationsFound = declaredModifiers.length;
+            getLogger().info( "Chain contains " + U.w( numberOfDeclarationsFound ) + " items." );
+            List declaredOutputModifications = new ArrayList( numberOfDeclarationsFound );
+            List declaredInputModifications = new ArrayList( numberOfDeclarationsFound );
+
+            for ( int runIndex = 0; runIndex < numberOfDeclarationsFound; runIndex++ ) {
+                getLogger().warn( "Iterating ..." );
+                ModifierRawDeclaration unparsed = declaredModifiers[runIndex];
+                getLogger().warn( "Unparsed is: " + unparsed.toString() );
+                
+                
+                ModifierDeclaration parsed = null;
+                try {
+                    parsed = new ModifierDeclaration( unparsed );
+                } catch ( Throwable thrown ) {
+                    getLogger().fatal( "Deep shit happened!", thrown );
+                }
+                
+                
+                getLogger().debug( U.w( U.lpad( runIndex, 2 ) ) + ": Extracting " + U.w( parsed.toString() ) );
+                if ( parsed.definesOutputModifier() ) {
+                    getLogger().info( U.w( parsed ) + " identified as Output modifier." );
+                    declaredOutputModifications.add( parsed );
+                } else if ( parsed.definesInputModifier() ) {
+                    getLogger().info( U.w( parsed ) + " identified as Input modifier." );
+                    declaredInputModifications.add( parsed );
+                } else {
+                    getLogger().warn( U.w( parsed ) + " cannot be identified as Output nor Input modifier." );
+                }
+            }
+
+            try {
+                buildOutputModifierChain( declaredOutputModifications );
+                buildInputModifierChain( declaredInputModifications );
+            } catch ( Exception any ) {
+                LOG.fatal( "Fatal error on instantiating extracted modifiers!", any );
+                throw Utility.newRWException( any );
+            }
+
+        } else {
+            getLogger().info( "No modifiers declared for this distribution." );
+        }
+    }
+
+    /**
+     * Instantiates the Output modifiers.
+     * <p>
+     * TODO: Code duplication with {@code buildInputModifierChain}
+     * 
+     * @param declarationsExtracted
+     */
+    private void buildOutputModifierChain( final List declarationsExtracted ) throws Exception {
+        if ( declarationsExtracted != null && declarationsExtracted.size() > 0 ) {
+            this.outputModifierChain = new OutputModifier[declarationsExtracted.size()];
+            int targetIndex = 0;
+            Iterator toInstantiate = declarationsExtracted.iterator();
+            while ( toInstantiate.hasNext() ) {
+                ModifierDeclaration declaration = (ModifierDeclaration) toInstantiate.next();
+                // fail fast
+                OutputModifier modifier = declaration.instantiateOutputModifier();
+                this.outputModifierChain[targetIndex++] = modifier;
+            }
+        }
+    }
+
+    /**
+     * Instantiates the Output modifiers.
+     * <p>
+     * TODO: Code duplication with {@code buildOutputModifierChain}
+     * 
+     * @param declarationsExtracted
+     */
+    private void buildInputModifierChain( final List declarationsExtracted ) throws Exception {
+        if ( declarationsExtracted != null && declarationsExtracted.size() > 0 ) {
+            this.outputModifierChain = new OutputModifier[declarationsExtracted.size()];
+            int targetIndex = 0;
+            Iterator toInstantiate = declarationsExtracted.iterator();
+            while ( toInstantiate.hasNext() ) {
+                ModifierDeclaration declaration = (ModifierDeclaration) toInstantiate.next();
+                // fail fast
+                InputModifier modifier = declaration.instantiateInputModifier();
+                this.inputModifierChain[targetIndex++] = modifier;
+            }
+        }
+    }
+
+    /**
+     * A Modifier Declaration.
      * 
      * @author mgp
      *
      */
-    protected class Transformer {
-        private final Logger outerLog = getLogger();
+    protected final class ModifierDeclaration {
 
-        protected TransformerDeclaration getContentDeclaration( ModifyerUnparsedName name ) {
-            return new TransformerDeclaration( name );
-        }
+        /**
+         * Holds the pattern for parsing modifier declarations.
+         */
+        private final Pattern PARSE_PATTERN = Pattern.compile( ModifierRawDeclaration.PATTERN );
 
-        protected Transformation createTransformationInstance( ModifyerUnparsedName name ) throws RWException {
-            Class clazz = (Class) CONTENTMODIFIERS.get( name );
-            if ( clazz != null ) {
-                try {
-                    Object newInstance = clazz.newInstance();
-                    Transformation transformer = (Transformation) newInstance;
-                    return transformer;
-                } catch ( InstantiationException cannotInstantiate ) {
-                    outerLog.error( "Cannot instantiate " + U.w( clazz.getName() ), cannotInstantiate );
-                    throw Utility.newRWException( cannotInstantiate );
-                } catch ( Exception anyOther ) {
-                    outerLog.error( "Error during instantiation of ContentModificationPlugin!", anyOther );
-                    throw Utility.newRWException( anyOther );
+        /**
+         * Holds the modifiers alias.
+         */
+        private ModifierAlias alias = null;
+        /**
+         * Holds the modifier class
+         */
+        private Class modifier = null;
+
+        /**
+         * Holds the alias of an optional content provider.
+         */
+        private ContentAlias contentAlias = null;
+        /**
+         * Holds the content class
+         */
+        private Class content = null;
+
+        /**
+         * Creates a new {@code ModifierDeclaration}.
+         * 
+         * @param unparsed
+         *            a raw modifier declaration
+         * 
+         * @throws IllegalArgumentException
+         *             on null or non parseable input
+         */
+        protected ModifierDeclaration( final ModifierRawDeclaration unparsed ) {
+            U.assertNotNull( unparsed, "Cannot parse null name!" );
+            Matcher test = PARSE_PATTERN.matcher( unparsed.toString() );
+            if ( test.matches() ) {
+                String modifierDefinition = test.group( 2 );
+                String contentDefinition = test.group( 4 );
+
+                this.alias = ModifierAlias.of( modifierDefinition );
+                U.assertNotEmpty( modifierDefinition, "Cannot parse " + unparsed + "!" );
+                this.modifier = (Class) MODIFIER_REGISTRY.get( this.alias );
+
+                if ( isModifierValid() ) {
+                    this.contentAlias = ContentAlias.of( contentDefinition );
+                    if ( !this.contentAlias.isEmpty() ) {
+                        this.content = (Class) CONTENTPROVIDER_REGISTRY.get( this.content );
+                    }
                 }
             } else {
-                IllegalArgumentException illegalArgument = new IllegalArgumentException(
-                        "No transformer named " + U.w( name ) + " has been registered!" );
-                getLogger().fatal( illegalArgument );
-                throw Utility.newRWException( illegalArgument );
+                throw new IllegalArgumentException( "Cannot parse " + U.w( unparsed ) + " to a Modifier Declaration" );
             }
         }
 
-        protected Transformation buildTransformation( ModifyerUnparsedName name, Destination requesting ) throws RWException {
+        /**
+         * Tests if the {@code Modifier} definition is valid.
+         * <p>
+         * A modifier definition is valid if both there is a non empty alias and the class
+         * referenced by the alias is registered in the Modifier Registry.
+         * 
+         * @return {@code true} if the modifier definition is valid, {@code false} else
+         */
+        private boolean isModifierValid() {
+            return !this.alias.isEmpty() && this.modifier != null;
+        }
+
+        /**
+         * Tests if the {@code Content} definition is valid.
+         * <p>
+         * A content definition is valid if either the content alias is empty or
+         * there is a non empty content alias and the class referenced by the content alias
+         * is registered in the Content Registry.
+         * 
+         * @return {@code true} if the modifier definition is valid, {@code false} else
+         */
+        private boolean isContentValid() {
+            return this.contentAlias.isEmpty() || !this.contentAlias.isEmpty() && this.content != null;
+        }
+
+        /**
+         * Tests if the {@code ModifierDeclaration} is valid.
+         * <p>
+         * A {@code ModifierDeclaration} is valid if both the modifier definition and the content definition are valid.
+         * 
+         * @return {@code true} if the {@code ModifierDeclaration} is valid, {@code false} else
+         */
+        private boolean isValid() {
+            return isModifierValid() && isContentValid();
+        }
+
+        protected boolean isParametrized() {
+            return isValid() && !this.contentAlias.isEmpty();
+        }
+
+        protected boolean definesOutputModifier() {
+            return isValid() && OutputModifier.class.isAssignableFrom( this.modifier );
+        }
+
+        protected boolean definesInputModifier() {
+            return isValid() && InputModifier.class.isAssignableFrom( this.modifier );
+        }
+
+        protected final OutputModifier instantiateOutputModifier() throws Exception {
+            U.assertTrue( isValid(), "Cannot instantiate with an invalid Modifier Definition!" );
+            return (OutputModifier) instantiate(); // createModifierInstance( declaration, requesting );
+        }
+
+        protected final InputModifier instantiateInputModifier() throws Exception {
+            U.assertTrue( isValid(), "Cannot instantiate with an invalid Modifier Definition!" );
+            return (InputModifier) instantiate(); // createModifierInstance( declaration, requesting );
+        }
+
+        private Modifier instantiate() throws Exception {
             try {
-                TransformerDeclaration declaredContent = getContentDeclaration( name );
-                return this.createTransformationInstance( name );
-            } catch ( Throwable any ) {
-                outerLog.fatal( "Cannot instantiate " + U.w( name ) + " (as OutputTransformation)", any );
-                throw Utility.newRWException( new Exception( any ) );
-            }
-
-        }
-
-        /**
-         * A Factory for building OutputTransformations.
-         * 
-         * @author mgp
-         *
-         */
-        private final class Out extends Transformer {
-            protected final OutputTransformation createTransformation( ModifyerUnparsedName name, Destination requesting )
-                    throws RWException {
-                return (OutputTransformation) new Out().createTransformation( name, requesting );
+                Modifier instance = (Modifier) modifier.newInstance();
+                return instance;
+            } catch ( InstantiationException cannotInstatiate ) {
+                getLogger().fatal( "Cannot instantiate abstract/interface " + modifier.getName() + "!", cannotInstatiate );
+                throw cannotInstatiate;
+            } catch ( IllegalAccessException cannotAccess ) {
+                getLogger().fatal( "Cannot instantiate due to access restrictions on " + modifier.getName() + "!", cannotAccess );
+                throw cannotAccess;
             }
         }
 
-        /**
-         * A Factory for building InputTransformations.
-         * 
-         * @author mgp
-         *
-         */
-        private final class In extends Transformer {
-            protected final InputTransformation createTransformation( ModifyerUnparsedName name, Destination requesting )
-                    throws RWException {
-                return (InputTransformation) new In().createTransformation( name, requesting );
-            }
+        public String toString() {
+            return (this.isValid()) ? this.alias + (this.isParametrized() ? "(" + this.contentAlias + ")" : "") : "<!!!Invalid!!!>";
         }
 
-        /**
-         * A Content Declaration.
-         * 
-         * @author mgp
-         *
-         */
-        private final class TransformerDeclaration {
-            /**
-             * Holds the TransformerName
-             */
-            private final Pattern PARSE_PATTERN = Pattern.compile( ModifyerUnparsedName.PATTERN );
-
-            private ModifyerName transformerName = null;
-            private ContentName contentName = null;
-
-            protected TransformerDeclaration( ModifyerUnparsedName givenName ) {
-                Matcher test = PARSE_PATTERN.matcher( givenName.toString() );
-                if ( test.matches() ) {
-                    String transformerDefinition = test.group( 2 );
-                    String contentDefinition = test.group( 4 );
-                    this.transformerName = ModifyerName.of( transformerDefinition );
-                    this.contentName = ContentName.of( contentDefinition );
-                }
-            }
-
-            protected boolean isParametrized() {
-                return !this.contentName.isEmpty();
-            }
-
-            public ModifyerName getTransformerName() {
-                return this.transformerName;
-            }
-
-            public ContentName getContentName() {
-                return this.contentName;
-            }
-        }
-
-        protected boolean transformsOnInput( ModifyerUnparsedName givenName ) {
-            Class clazz = (Class) CONTENTMODIFIERS.get( givenName );
-            if ( clazz == null ) {
-                outerLog.error( "No transformer named " + U.w( givenName ) + "has been registered!" );
-                return false;
-            }
-            return InputTransformation.class.isAssignableFrom( clazz );
-        }
-
-        protected boolean transformsOnOutput( ModifyerUnparsedName givenName ) {
-            Class clazz = (Class) CONTENTMODIFIERS.get( givenName );
-            if ( clazz == null ) {
-                outerLog.error( "No transformer named " + U.w( givenName ) + "has been registered!" );
-                return false;
-            }
-            return OutputTransformation.class.isAssignableFrom( clazz );
-        }
     }
 
 }

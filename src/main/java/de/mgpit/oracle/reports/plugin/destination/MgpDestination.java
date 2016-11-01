@@ -42,37 +42,64 @@ import oracle.reports.server.Destination;
 import oracle.reports.utility.Utility;
 
 /**
- * Oracle Reports&trade; Destination with separate logging.
+ * Oracle&reg; Reports Destination with separate logging.
  * <p>
  * Abstract super class for {@code de.mgpit.oracle.reports.destination.*}-Report Destinations.
+ * <p style="color:FireBrick; font-size:110%">
+ * See notes on inheriting from this class at end!
  * <p>
  * Provides logging setup during {@link #init(Properties)} of the destination and some handy utility methods.
  * <p>
- * {@code de.mgpit.oracle.reports.destination.*}-Report Destinations log to a separate file. You can set the log level
+ * All {@code de.mgpit.oracle.reports.destination.*} report destinations log to a separate file. You can set the log level
  * via the {@code loglevel} property and the log file's name via the {@code logfile} property of the destination plugin
  * configruation in the report server's conf file. If no specific file name is provided the name defaults to
  * {@code destination.log} and can be found in the report server's log directory (or the temp directory if the server does
  * not have a log directory).
  * <p>
  * The static part of a Destination holds the information configured in the {@code <servername>.cfg} file via
- * {@code //destination/property} elements.
+ * {@code //destination/property} elements (see also notes at end).
  * <p>
  * The instance part holds the information needed for the current distribution. Assumption is that for each distribution
- * a new instance of the Destination will be created by the Oracle Reports&trade; server and that there is no caching or
+ * a new instance of the Destination will be created by the Oracle&reg; Reports server and that there is no caching or
  * destination pooling.
  * <p>
- * A distribution cylcle consists of the sequence {@code start} &rarr; {@code sendFile}<sup>{1..n}</sup> &rarr; {@code stop()}.
- * The number of {@code sendFile}s depends on the reports output format.
+ * A distribution cycle consists of the sequence {@code start} &rarr; {@code sendFile}<sup>{1..n}</sup> &rarr; {@code stop()}.
+ * The number of invocations of {@code sendFile}s depends on the reports output format.
  * A {@code PDF} for example will produce one file whereas a {@code HTML} output will produce a main file containing the HTML and
  * several additional files for e.g. each image embedded in the current report.
+ * <p>
+ * <strong>!!! A note on subclassing / inheriting from this class!!!</strong>
+ * <p>
+ * The initialization process of a <em>Oracle&reg; Reports</em> is done in a static manner. Roughly outlined
+ * <ul>
+ * <li>the <em>Oracle&reg; Reports server</em> reads its {@code <reportservername>.conf} configuration file</li>
+ * <li>delegates initialization by calling {@code Destination.initDest(ServerConfig)}
+ * <li>the {@code Destination.initDest}
+ * <ul>
+ * <li>iterates over all destinations defined</li>
+ * <li>extracts their properties from the {@code ServerConfig}</li>
+ * <li>and finally invokes the <em>static</em> {@code init(Properties)} method</li>
+ * </ul>
+ * </li>
+ * </ul>
+ * So subclasses should call {@code MgpDestination.init()} (or {@code MySuperClass.init()}, resp.) explicitly
+ * as part of their {@code init(Properties) method.
+ * <p><strong>Leaf classes</strong> in your hierarchy can call {@code MgpDestination.initLogging(Properties, Class)} explicitly as part of
+ * their {@code init(Properties)} method if they want to establish their own log file.
  *
+ * @see DestinationsLogging
+ * 
  * @author mgp
  */
 public abstract class MgpDestination extends Destination {
 
+    protected static final String DEFAULT_LOG_LEVEL = "INFO";
+
     protected abstract Logger getLogger();
-    
+
     protected static final int SOME_PRIME = 23;
+    protected static final boolean CONTINUE = true;
+    protected static final boolean ABORT = false;
 
     private int numberOfFilesInDistribution = -1;
     private int indexOfCurrentlyDistributedFile = -1;
@@ -85,7 +112,7 @@ public abstract class MgpDestination extends Destination {
      * @return the numerically coded {@code format} in human readable format
      *         as "[<em>&lt;String&gt;</em>|<em>&lt;Mime String&gt;</em>]"
      */
-    public static final String humanReadable( short formatCode ) {
+    protected static final String humanReadable( short formatCode ) {
         return U.w( getFileFormatAsString( formatCode ) + "|" + getFileFormatAsMimeType( formatCode ) );
     }
 
@@ -97,7 +124,7 @@ public abstract class MgpDestination extends Destination {
      * @return the numerically coded {@code format} in human readable format
      *         as "&lt;String&gt;</em>"
      */
-    public static final String getFileFormatAsString( final short formatCode ) {
+    protected static final String getFileFormatAsString( final short formatCode ) {
         return Utility.format2String( formatCode );
     }
 
@@ -109,7 +136,7 @@ public abstract class MgpDestination extends Destination {
      * @return the numerically coded {@code format} in human readable format
      *         as "<em>&lt;Mime String&gt;</em>"
      */
-    public static final String getFileFormatAsMimeType( final short formatCode ) {
+    protected static final String getFileFormatAsMimeType( final short formatCode ) {
         return Utility.format2Mime( formatCode );
     }
 
@@ -117,11 +144,11 @@ public abstract class MgpDestination extends Destination {
      * @see U#isEmpty(String)
      * 
      */
-    public static final boolean isEmpty( final String s ) {
+    protected static final boolean isEmpty( final String s ) {
         return U.isEmpty( s );
     }
 
-    public static final boolean isEmpty( final Filename fn ) {
+    protected static final boolean isEmpty( final Filename fn ) {
         return U.isEmpty( fn );
     }
 
@@ -137,7 +164,7 @@ public abstract class MgpDestination extends Destination {
      * @param str
      * @return <code>true</code> if the string given is a Destination URI, else <code>false</code>
      */
-    public static final boolean isDestinationURI( final String given, final String scheme ) {
+    protected static final boolean isDestinationURI( final String given, final String scheme ) {
         if ( isEmpty( given ) ) {
             return false;
         }
@@ -150,25 +177,26 @@ public abstract class MgpDestination extends Destination {
     }
 
     /**
-     * Starts a new distribution cycle for a report to this destination. Will
-     * distribute one or many files depending on the output format specified for the report execution.
+     * Starts a new distribution cycle for a report to this destination. 
      * <p>
-     * The existance of the {@link Destination#setProperties()} and {@link Destination#getProperties()} indicates that the {@code allProperties}
-     * will already have been passed to this instance so passing them seems redundant. Class Destination also has an instance
-     * level field named {@code mProps} set/read by these methods.
+     * <em>Remark:</em> The existence of the methods {@code Destination.setProperties()} and {@code Destination.getProperties()} 
+     * indicates that the {@code allProperties} will already have been passed to this instance so passing them seems redundant. 
+     * Class {@code Destination} also has an instance level field named {@code mProps} set/read by these methods.
      * 
      * @param allProperties
-     *            all properties (parameters) passed to the report.
-     *            For Oracle Forms&trade; this will include the parameters set via <code>SET_REPORT_OBJECT_PROPERTY</code>
-     *            plus the parameters passed via a <code>ParamList</code>
+     *            parameters for this distribution passed as {@code Properties}
+     *            <br><em>Remark:</em> For Oracle&reg; Forms this will include the parameters set via {@code SET_REPORT_OBJECT_PROPERTY}
+     *            plus the parameters passed via a {@code ParamList}
      * @param targetName
-     *            target name of the distribution.
+     *            target name of the distribution
      * @param totalNumberOfFiles
-     *            total number of files to be distributed.
+     *            total number of files being distributed
      * @param totalFileSize
-     *            total file size of all files distributed.
+     *            total file size of all files being distributed
      * @param mainFormat
-     *            the output format of the main file.
+     *            the output format of the main file being distributed
+     *            
+     * @throws RWException if there is a failure during distribution setup. The RWException normally will wrap the original Exception.
      */
     protected boolean start( final Properties allProperties, final String targetName, final int totalNumberOfFiles,
             final long totalFileSize, final short mainFormat ) throws RWException {
@@ -185,7 +213,7 @@ public abstract class MgpDestination extends Destination {
             dumpProperties( allProperties );
         }
 
-        return true; // continue to send
+        return CONTINUE;
     }
 
     /**
@@ -349,9 +377,8 @@ public abstract class MgpDestination extends Destination {
      * @throws RWException
      */
     public static void init( final Properties destinationsProperties ) throws RWException {
-        initLogging( destinationsProperties, MgpDestination.class );
+        DestinationsLogging.assertRootLoggerExists();
         final Logger log = Logger.getRootLogger();
-        log.info( "Destination logging successfully initialized with properties: " + destinationsProperties );
         try {
             Destination.init( destinationsProperties );
         } catch ( RWException rwException ) {
@@ -365,20 +392,60 @@ public abstract class MgpDestination extends Destination {
      * in the report server's conf file.
      * Will override the corresponding settings of the {@code log4j.properties} distributed with the destination's JAR file.
      * <p>
+     * <strong style="color:FireBrick">Must be called by leaf classes of the {@code MgpDestination} hierarchy, only</strong>
+     * Else duplication and interweaving of log messages will occur.
+     * </p>
+     * 
      * 
      * @param destinationsProperties
      *            the properties set in the report server's conf file within the
      *            destination's configuration section ({@code //destination/property})
+     * @param clazz
+     *            Class to set up the logging for. Must be the (leaf) class calling this method.
+     * 
      */
-    protected static void initLogging( final Properties destinationsProperties, Class clazz ) throws RWException {
-
+    protected static final void initLogging( final Properties destinationsProperties, Class clazz ) throws RWException {
+        U.Rw.assertNotNull( clazz, "Cannot initialize logging with null Class!" );
+        // final LocationInfo location = new LocationInfo( new Throwable(), MgpDestination.class.getName() );
+        // final String callingClassName = location.getClassName();
+        // if ( clazz.getName().equals( callingClassName ) ) {
         if ( destinationsProperties != null ) {
+            /*
+             * This is the reason why clazz has to match the calling class.
+             * Imagine the following class hiearchy and each class performing its own initLogging() (during init()).
+             * A
+             * / \
+             * B C
+             * All of these calls will be given the same properties from the destination configuration in
+             * the <reportserver>.conf file.
+             * Starting with B this would be B with Properties B and then A with Properties B.
+             * Followed by C with Properties C and then A with Properties C.
+             * 
+             * Each class will get its own Logger with its own appender, but after initialization
+             * B's logger's appender points to file B.log. C's logger's appender to C.log and A's logger's
+             * appender to C.log.
+             * 
+             * As log messages propagate up the hieararchy
+             * B will log to B.log and C.log (via A)
+             * C will log to C.log
+             * A will log to C.log
+             * 
+             */
             final Filename logfilename = Filename.of( destinationsProperties.getProperty( "logfile" ) );
-            final String loglevelname = destinationsProperties.getProperty( "loglevel", "INFO" );
-
-            DestinationsLogging.assertRootLoggerExists();
+            final String loglevelname = destinationsProperties.getProperty( "loglevel", DEFAULT_LOG_LEVEL );
             DestinationsLogging.createOrReplacePackageLevelLogger( clazz, logfilename, loglevelname );
+        } else {
+            DestinationsLogging.createOrReplacePackageLevelLogger( clazz, null, DEFAULT_LOG_LEVEL );
         }
+        // }
+        /*
+         * Logger.getRootLogger().error( "Calling class is " + 
+         * new LocationInfo( new Throwable(), clazz.getName() ).getClassName() );
+         *     ^^^^^^^^^^^^
+         *     ||||||||||||
+         *     Maybe useful for detecting call by a leaf class / the class specified as destination.
+         *     With Reports 10 getClassName() reports sun.reflect.NativeMethodAccessorImpl
+         */
     }
 
     public static void shutdown() {
@@ -394,7 +461,7 @@ public abstract class MgpDestination extends Destination {
      *            the magic format code of the file ...
      * @return true if the file format identified by <code>formatCode</code> is a binary format.
      */
-    public static boolean isBinaryFile( short formatCode ) {
+    protected static final boolean isBinaryFile( short formatCode ) {
         return new DesFTP().isBinaryFile( formatCode );
     }
 

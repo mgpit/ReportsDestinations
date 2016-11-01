@@ -20,6 +20,12 @@
  */
 package de.mgpit.types;
 
+import java.io.File;
+
+import org.apache.log4j.Logger;
+
+import de.mgpit.oracle.reports.plugin.commons.U;
+import de.mgpit.oracle.reports.plugin.commons.io.IOUtility;
 
 /**
  * 
@@ -32,7 +38,7 @@ public final class Directoryname extends TypedString {
         return new Directoryname( name );
     }
 
-    String name = "";
+    private String name = "";
 
     private Directoryname( String name ) {
         this.name = cleaned( name );
@@ -54,5 +60,25 @@ public final class Directoryname extends TypedString {
 
     public Directoryname trim() {
         return (this.isNotNull()) ? Directoryname.of( this.value().trim() ) : NULL_VALUE;
+    }
+    
+    /**
+     * Checks if this is a valid directory, i.e. must be
+     * <ul>
+     * <li>an existing directory</li>
+     * <li>readable</li>
+     * <li>writable</li>
+     * </ul>
+     * 
+     * @return <code>true</code> if the pathname is a valid directory, <code>false</code> else.
+     */
+    public boolean isValidDirectory( ) {
+        if ( this.isEmpty() ) {
+            Logger.getRootLogger().warn( "I think I am Empty!" );
+            return false;
+        }
+        File possibleDirectory = IOUtility.fileFromName( this );
+        boolean valid = possibleDirectory.isDirectory() && possibleDirectory.canRead() && possibleDirectory.canWrite();
+        return valid;
     }
 }

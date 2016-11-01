@@ -27,8 +27,8 @@ import java.util.Properties;
 import de.mgpit.oracle.reports.plugin.destination.content.io.EnvelopeDecoratedInputStream;
 import de.mgpit.oracle.reports.plugin.destination.content.io.EnvelopeDecoratedOutputStream;
 import de.mgpit.oracle.reports.plugin.destination.content.types.Envelope;
-import de.mgpit.oracle.reports.plugin.destination.content.types.InputTransformation;
-import de.mgpit.oracle.reports.plugin.destination.content.types.OutputTransformation;
+import de.mgpit.oracle.reports.plugin.destination.content.types.InputModifier;
+import de.mgpit.oracle.reports.plugin.destination.content.types.OutputModifier;
 import oracle.reports.RWException;
 
 /**
@@ -37,7 +37,7 @@ import oracle.reports.RWException;
  * @author mgp
  *
  */
-public abstract class EnvelopeDecorator implements InputTransformation, OutputTransformation {
+public abstract class EnvelopeDecorator implements InputModifier, OutputModifier {
 
     public EnvelopeDecorator() {
     }

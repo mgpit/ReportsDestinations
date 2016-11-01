@@ -22,39 +22,39 @@ package de.mgpit.types;
 
 /**
  * 
- * A transformer name.
+ * A conent alias name.
  * <p>
  * The name is unparsed and unvalidated.
  *
  * @author mgp
  */
-public final class ModifyerName extends TypedString {
-
-    public static ModifyerName of( String name ) {
-        return new ModifyerName( name );
+public final class ContentAlias extends TypedString {
+    
+    public static ContentAlias of( String name ) {
+        return new ContentAlias( name );
     }
 
-    String name = NONE;
+    private String name = "";
 
-    private ModifyerName( String name ) {
-        this.name = cleaned( name );
+    private ContentAlias( String name ) {
+        this.name = name.trim();
     }
 
     protected String value() {
         return this.name;
     }
 
-    private static ModifyerName NULL_VALUE = ModifyerName.of( (String) null );
+    private static ContentAlias NULL_VALUE = ContentAlias.of( (String) null );
 
-    public ModifyerName copy() {
-        return ModifyerName.of( this.value() );
+    public ContentAlias copy() {
+        return ContentAlias.of( this.value() );
     }
 
-    public ModifyerName concat( String str ) {
-        return (this.isNotNull()) ? ModifyerName.of( this.value().concat( str ) ) : NULL_VALUE;
+    public ContentAlias concat( String str ) {
+        return (this.isNotNull()) ? ContentAlias.of( this.value().concat( str ) ) : NULL_VALUE;
     }
 
-    public ModifyerName trim() {
-        return (this.isNotNull()) ? ModifyerName.of( this.value().trim() ) : NULL_VALUE;
+    public ContentAlias trim() {
+        return (this.isNotNull()) ? ContentAlias.of( this.value().trim() ) : NULL_VALUE;
     }
 }

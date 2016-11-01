@@ -272,10 +272,21 @@ public class IOUtility {
      * 
      * @param fileName
      *            file's name
-     * @return file
+     * @return file on the fileName
      */
     public static File fileFromName( Filename fileName ) {
         return new File( fileName.toString() );
+    }
+    
+    /**
+     * Constructs a file from the file name given.
+     * 
+     * @param directoryName
+     *            directory's name
+     * @return file on the directoryName
+     */
+    public static File fileFromName( Directoryname directoryName ) {
+        return new File( directoryName.toString() );
     }
 
     /**

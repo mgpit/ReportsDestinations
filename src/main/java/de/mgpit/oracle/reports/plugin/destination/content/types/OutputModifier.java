@@ -20,18 +20,19 @@
 package de.mgpit.oracle.reports.plugin.destination.content.types;
 
 
-import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Properties;
 
 import oracle.reports.RWException;
 
 /**
- * Transformation working on {@link InputStream}s.
+ * Transformation working on {@link OutputStream}s.
  * 
  * @author mgp
  *
  */
-public interface InputTransformation extends Transformation {
+public interface OutputModifier extends Modifier {
 
-    public InputStream forInput( final InputStream in, final Properties parameters ) throws RWException;
+    public OutputStream forOutput( final OutputStream out, final Properties parameters ) throws RWException;
+
 }
