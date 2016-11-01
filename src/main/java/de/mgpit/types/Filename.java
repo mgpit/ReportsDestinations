@@ -24,6 +24,7 @@ import java.io.File;
 import java.io.IOException;
 
 import de.mgpit.oracle.reports.plugin.commons.U;
+import de.mgpit.oracle.reports.plugin.commons.io.IOUtility;
 
 /**
  * 
@@ -42,6 +43,10 @@ public final class Filename extends TypedString {
     
     public static Filename filenameNameOnlyOf( String name ) {
         return filenameNameOnlyOf( new File( name ) );
+    }
+    
+    public static Filename filenameNameOnlyOf( Filename filename ) {
+        return filenameNameOnlyOf( IOUtility.fileFromName( filename ) );
     }
     
     public static Filename filenameNameOnlyOf( File file ) {

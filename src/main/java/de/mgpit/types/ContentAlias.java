@@ -37,7 +37,7 @@ public final class ContentAlias extends TypedString {
     private String name = "";
 
     private ContentAlias( String name ) {
-        this.name = name.trim();
+        this.name = cleaned( name );
     }
 
     protected String value() {

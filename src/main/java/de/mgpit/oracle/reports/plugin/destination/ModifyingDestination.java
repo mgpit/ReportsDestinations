@@ -423,16 +423,14 @@ public abstract class ModifyingDestination extends MgpDestination {
                 getLogger().warn( "Iterating ..." );
                 ModifierRawDeclaration unparsed = declaredModifiers[runIndex];
                 getLogger().warn( "Unparsed is: " + unparsed.toString() );
-                
-                
+
                 ModifierDeclaration parsed = null;
                 try {
                     parsed = new ModifierDeclaration( unparsed );
                 } catch ( Throwable thrown ) {
                     getLogger().fatal( "Deep shit happened!", thrown );
                 }
-                
-                
+
                 getLogger().debug( U.w( U.lpad( runIndex, 2 ) ) + ": Extracting " + U.w( parsed.toString() ) );
                 if ( parsed.definesOutputModifier() ) {
                     getLogger().info( U.w( parsed ) + " identified as Output modifier." );
@@ -542,19 +540,23 @@ public abstract class ModifyingDestination extends MgpDestination {
          */
         protected ModifierDeclaration( final ModifierRawDeclaration unparsed ) {
             U.assertNotNull( unparsed, "Cannot parse null name!" );
+            getLogger().info( "Parsing...");
             Matcher test = PARSE_PATTERN.matcher( unparsed.toString() );
             if ( test.matches() ) {
+                getLogger().info( "Matched");
                 String modifierDefinition = test.group( 2 );
                 String contentDefinition = test.group( 4 );
+                getLogger().info(  U.w( modifierDefinition ) + U.w( contentDefinition ) );
 
-                this.alias = ModifierAlias.of( modifierDefinition );
                 U.assertNotEmpty( modifierDefinition, "Cannot parse " + unparsed + "!" );
+                this.alias = ModifierAlias.of( modifierDefinition );
                 this.modifier = (Class) MODIFIER_REGISTRY.get( this.alias );
-
                 if ( isModifierValid() ) {
-                    this.contentAlias = ContentAlias.of( contentDefinition );
-                    if ( !this.contentAlias.isEmpty() ) {
-                        this.content = (Class) CONTENTPROVIDER_REGISTRY.get( this.content );
+                    if ( !U.isEmpty(  contentDefinition ) ) {
+                        this.contentAlias = ContentAlias.of( contentDefinition );
+                        if ( !this.contentAlias.isEmpty() ) {
+                            this.content = (Class) CONTENTPROVIDER_REGISTRY.get( this.content );
+                        }
                     }
                 }
             } else {

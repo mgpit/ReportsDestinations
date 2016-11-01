@@ -159,7 +159,7 @@ public class IOUtility {
      * @return the file name part
      */
     public static Filename fileNameOnly( final Filename fullFileName ) {
-        return (fullFileName == null) ? null : Filename.of( Utility.fileNameOnly( fullFileName.toString() ) );
+        return (fullFileName == null) ? null : Filename.filenameNameOnlyOf( fullFileName );
     }
 
     /**

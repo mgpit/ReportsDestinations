@@ -35,6 +35,7 @@ import java.util.zip.ZipOutputStream;
 import org.apache.log4j.Logger;
 
 import de.mgpit.oracle.reports.plugin.commons.io.IOUtility;
+import de.mgpit.types.Entryname;
 import de.mgpit.types.Filename;
 
 /**
@@ -214,7 +215,7 @@ public class ZipArchive {
      * @throws Error
      *             if one of the parameters is provided as null or empty String.
      */
-    public ZipArchive addFile( final Filename sourceFileFilename, final Filename entryName ) throws ArchivingException {
+    public ZipArchive addFile( final Filename sourceFileFilename, final Entryname entryName ) throws ArchivingException {
         U.assertNotEmpty( sourceFileFilename, "sourceFileName must not be null or empty string!" );
         U.assertNotEmpty( entryName, "entryName must not be null or empty string!" );
         try {
@@ -243,7 +244,7 @@ public class ZipArchive {
      * @throws Error
      *             if one of the parameters is provided as null or empty String.
      */
-    public ZipArchive addFromStream( final InputStream source, final Filename entryName ) throws ArchivingException {
+    public ZipArchive addFromStream( final InputStream source, final Entryname entryName ) throws ArchivingException {
         return addFromStream( source, entryName, System.currentTimeMillis() );
     }
 
@@ -263,7 +264,7 @@ public class ZipArchive {
      * @throws Error
      *             if one of the parameters is provided as null or empty String.
      */
-    public ZipArchive addFromStream( final InputStream source, final Filename entryName, long time ) throws ArchivingException {
+    public ZipArchive addFromStream( final InputStream source, final Entryname entryName, long time ) throws ArchivingException {
         U.assertNotNull( source, "Input stream must not be null!" );
         U.assertNotEmpty( entryName, "entryName must not be null or empty string!" );
         if ( !isOpen() ) {
@@ -280,15 +281,15 @@ public class ZipArchive {
      * @param entryName
      *            entrie's name to register
      */
-    private void registerEntry( final Filename entryName ) {
+    private void registerEntry( final Entryname entryname ) {
         if ( entriesCreated == null ) {
             entriesCreated = new HashMap();
         }
-        entriesCreated.put( entryName, Boolean.TRUE );
+        entriesCreated.put( entryname, Boolean.TRUE );
     }
 
     private boolean hasEntry( final ZipEntry entry ) {
-        return hasEntry( entry.getName() );
+        return hasEntry( Entryname.of( entry.getName() ) );
     }
 
     /**
@@ -298,7 +299,7 @@ public class ZipArchive {
      *            entrie's name to check
      * @return {@code true} if this archive contains an entry with the name, else {@code false}
      */
-    private boolean hasEntry( final String entryName ) {
+    private boolean hasEntry( final Entryname entryName ) {
         return (entriesCreated == null) ? false : entriesCreated.containsKey( entryName );
     }
 
@@ -329,7 +330,7 @@ public class ZipArchive {
      *            timestamp to set for the new entry to create
      * @throws ArchivingException
      */
-    private void createEntryFromInputStream( final InputStream source, final Filename entryName, long entrysTimestamp )
+    private void createEntryFromInputStream( final InputStream source, final Entryname entryName, long entrysTimestamp )
             throws ArchivingException {
         final ZipEntry zipEntry = new ZipEntry( entryName.toString() );
 

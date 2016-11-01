@@ -28,6 +28,7 @@ import org.apache.commons.codec.binary.StringUtils;
 
 import de.mgpit.oracle.reports.plugin.commons.io.IOUtility;
 import de.mgpit.types.Filename;
+import de.mgpit.types.TypedString;
 import oracle.reports.RWException;
 import oracle.reports.utility.Utility;
 
@@ -490,7 +491,7 @@ public final class U {
     public static void assertNotEmpty( final String str ) throws AssertionError {
         assertNotEmpty( str, "String MUST NOT be null oder empty!" );
     }
-
+    
     /**
      * Assert that the string given is not empty.
      * <p>
@@ -509,13 +510,12 @@ public final class U {
         }
     }
 
-    public static void assertNotEmpty( final Filename filename, final String message ) throws AssertionError {
-        assertNotNull( filename );
-        assertNotEmpty( filename.toString(), message );
+    public static void assertNotEmpty( final TypedString typed, final String message ) throws AssertionError {
+        assertTrue( !typed.isEmpty(), message );
     }
 
-    public static void assertNotEmpty( final Filename filename ) throws AssertionError {
-        assertNotEmpty( filename, "Filename MUST NOT be null oder empty!" );
+    public static void assertNotEmpty( final TypedString typed ) throws AssertionError {
+        assertNotEmpty( typed, U.classname( typed.getClass() ) + " MUST NOT be null oder empty!" );
     }
 
     /**

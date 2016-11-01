@@ -36,6 +36,7 @@ import de.mgpit.oracle.reports.plugin.commons.ZipArchive;
 import de.mgpit.oracle.reports.plugin.commons.ZipArchive.ArchivingException;
 import de.mgpit.oracle.reports.plugin.commons.io.IOUtility;
 import de.mgpit.oracle.reports.plugin.destination.MgpDestination;
+import de.mgpit.types.Entryname;
 import de.mgpit.types.Filename;
 import de.mgpit.types.StringCodedBoolean;
 import oracle.reports.RWException;
@@ -188,7 +189,8 @@ public final class ZipDestination extends MgpDestination {
      * @throws RWException
      */
     protected void sendMainFile( final Filename cacheFile, final short fileFormat ) throws RWException {
-        Filename entryName = IOUtility.fileNameOnly( Filename.of( getDesname() ) );
+        Filename destinationFile = Filename.of( getDesname() );
+        Entryname entryName = Entryname.of( destinationFile );
         getLogger().info( "MAIN file " + U.w( cacheFile ) + " of format " + humanReadable( fileFormat ) + " will be put as "
                 + U.w( entryName ) + " to " + U.w( getZipArchiveFileName() ) );
         try {
@@ -209,7 +211,7 @@ public final class ZipDestination extends MgpDestination {
      * @throws RWException
      */
     protected void sendAdditionalFile( final Filename cacheFile, final short fileFormat ) throws RWException {
-        Filename entryName = IOUtility.fileNameOnly( IOUtility.fileNameOnly( cacheFile ) );
+        Entryname entryName = Entryname.of( cacheFile );
         getLogger().info( "Other file " + U.w( cacheFile ) + " of format " + humanReadable( fileFormat ) + " will be put as "
                 + U.w( entryName ) + " to " + U.w( getZipArchiveFileName() ) );
         try {
@@ -230,12 +232,11 @@ public final class ZipDestination extends MgpDestination {
      *            name for the source in the ZIP file
      * @throws ArchivingException
      */
-    protected void addFileToArchiveWithName( final Filename sourcefilename, final Filename entryname ) throws RWException {
-        Filename entryName = IOUtility.fileNameOnly( U.coalesce( entryname, sourcefilename ) );
+    protected void addFileToArchiveWithName( final Filename sourcefilename, final Entryname entryname ) throws RWException {
         try {
             File sourceFile = IOUtility.fileFromName( sourcefilename );
             InputStream in = IOUtility.inputStreamFromFile( sourceFile );
-            this.zipArchive.addFromStream( in, entryName, sourceFile.lastModified() );
+            this.zipArchive.addFromStream( in, entryname, sourceFile.lastModified() );
         } catch ( FileNotFoundException fileNotFound ) {
             getLogger().error( "Error during distribution! Could not find file to add!" );
             throw Utility.newRWException( fileNotFound );
@@ -247,11 +248,12 @@ public final class ZipDestination extends MgpDestination {
 
     /**
      * Starts a new distribution cycle for a report to a {@link ZipArchive}.
-     *  
+     * 
      * @param allProperties
      *            parameters for this distribution passed as {@code Properties}. Must include {@code desname} containing
      *            a zip-URI, or explicit {@code zipfilename}, {@code desname}, and optionally {@code append}. See usage notes of this class.
-     *            <br><em>Remark:</em> For Oracle&reg; Forms this will include the parameters set via {@code SET_REPORT_OBJECT_PROPERTY}
+     *            <br>
+     *            <em>Remark:</em> For Oracle&reg; Forms this will include the parameters set via {@code SET_REPORT_OBJECT_PROPERTY}
      *            plus the parameters passed via a {@code ParamList}
      * @param targetName
      *            target name of the distribution
@@ -261,8 +263,9 @@ public final class ZipDestination extends MgpDestination {
      *            total file size of all files being distributed
      * @param mainFormat
      *            the output format of the main file being distributed
-     *            
-     * @throws RWException if there is a failure during distribution setup. The RWException normally will wrap the original Exception.
+     * 
+     * @throws RWException
+     *             if there is a failure during distribution setup. The RWException normally will wrap the original Exception.
      */
     protected boolean start( final Properties allProperties, final String targetName, final int totalNumberOfFiles,
             final long totalFileSize, short mainFormat ) throws RWException {
