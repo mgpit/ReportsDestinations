@@ -30,11 +30,13 @@ package de.mgpit.types;
  */
 public final class ContentAlias extends TypedString {
     
+    public static final ContentAlias EMPTY_VALUE = ContentAlias.of( NONE );
+    
     public static ContentAlias of( String name ) {
         return new ContentAlias( name );
     }
 
-    private String name = "";
+    private String name = NONE;
 
     private ContentAlias( String name ) {
         this.name = cleaned( name );

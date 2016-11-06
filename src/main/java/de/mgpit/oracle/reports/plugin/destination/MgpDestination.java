@@ -52,7 +52,7 @@ import oracle.reports.utility.Utility;
  * <p>
  * All {@code de.mgpit.oracle.reports.destination.*} report destinations log to a separate file. You can set the log level
  * via the {@code loglevel} property and the log file's name via the {@code logfile} property of the destination plugin
- * configruation in the report server's conf file. If no specific file name is provided the name defaults to
+ * configuration in the report server's configuration file. If no specific file name is provided the name defaults to
  * {@code destination.log} and can be found in the report server's log directory (or the temp directory if the server does
  * not have a log directory).
  * <p>
@@ -68,7 +68,7 @@ import oracle.reports.utility.Utility;
  * A {@code PDF} for example will produce one file whereas a {@code HTML} output will produce a main file containing the HTML and
  * several additional files for e.g. each image embedded in the current report.
  * <p>
- * <strong>!!! A note on subclassing / inheriting from this class!!!</strong>
+ * <strong style="color:Teal">!!! A note on subclassing / inheriting from this class!!!</strong>
  * <p>
  * The initialization process of a <em>Oracle&reg; Reports</em> is done in a static manner. Roughly outlined
  * <ul>
@@ -76,16 +76,36 @@ import oracle.reports.utility.Utility;
  * <li>delegates initialization by calling {@code Destination.initDest(ServerConfig)}
  * <li>the {@code Destination.initDest}
  * <ul>
- * <li>iterates over all destinations defined</li>
+ * <li>iterates over all destinations defined in the configuration file</li>
  * <li>extracts their properties from the {@code ServerConfig}</li>
  * <li>and finally invokes the <em>static</em> {@code init(Properties)} method</li>
  * </ul>
  * </li>
  * </ul>
  * So subclasses should call {@code MgpDestination.init()} (or {@code MySuperClass.init()}, resp.) explicitly
- * as part of their {@code init(Properties) method.
- * <p><strong>Leaf classes</strong> in your hierarchy can call {@code MgpDestination.initLogging(Properties, Class)} explicitly as part of
+ * as part of their {@code init(Properties)} method.
+ * <p>
+ * <strong>Leaf classes</strong> in your hierarchy can call {@code MgpDestination.initLogging(Properties, Class)} explicitly as part of
  * their {@code init(Properties)} method if they want to establish their own log file.
+ * <p>
+ * <strong>Leaf classes</strong> may guard the initialization process as follows
+ * 
+ * <pre>
+ * {@code
+ *  final Logger log = Logger.getRootLogger();
+ *  try {
+ *     <em>MySuperclass</em>.init( destinationsProperties );
+ *  } catch ( RWException rwException ) {
+ *     log.fatal( "Error during delegation of initialization to <em>MySuperclass</em>.", rwException );
+ *     throw rwException;
+ *  } catch ( Throwable somethingUnexpected ) {
+ *     log.fatal( "Fatal error during delegation of initialization to <em>MySuperclass</em>!" );
+ *     throw Utility.newRWException( new Exception( "Fatal error during initializing <em>MyDestinationClass</em>" ) );
+ *  }
+ * ...
+ * }
+ * </pre>
+ * 
  *
  * @see DestinationsLogging
  * 
@@ -148,8 +168,16 @@ public abstract class MgpDestination extends Destination {
         return U.isEmpty( s );
     }
 
+    protected static final boolean isNotEmpty( final String s ) {
+        return !U.isEmpty( s );
+    }
+
     protected static final boolean isEmpty( final Filename fn ) {
         return U.isEmpty( fn );
+    }
+
+    protected static final boolean isNotEmpty( final Filename fn ) {
+        return !U.isEmpty( fn );
     }
 
     /**
@@ -170,22 +198,24 @@ public abstract class MgpDestination extends Destination {
         }
         try {
             URI tmp = new URI( given );
-            return !tmp.isOpaque() && tmp.isAbsolute() && !isEmpty( tmp.getScheme() ) && tmp.getScheme().equalsIgnoreCase( scheme );
+            return !tmp.isOpaque() && tmp.isAbsolute() && isNotEmpty( tmp.getScheme() )
+                    && tmp.getScheme().equalsIgnoreCase( scheme );
         } catch ( URISyntaxException syntax ) {
             return false;
         }
     }
 
     /**
-     * Starts a new distribution cycle for a report to this destination. 
+     * Starts a new distribution cycle for a report to this destination.
      * <p>
-     * <em>Remark:</em> The existence of the methods {@code Destination.setProperties()} and {@code Destination.getProperties()} 
-     * indicates that the {@code allProperties} will already have been passed to this instance so passing them seems redundant. 
+     * <em>Remark:</em> The existence of the methods {@code Destination.setProperties()} and {@code Destination.getProperties()}
+     * indicates that the {@code allProperties} will already have been passed to this instance so passing them seems redundant.
      * Class {@code Destination} also has an instance level field named {@code mProps} set/read by these methods.
      * 
      * @param allProperties
      *            parameters for this distribution passed as {@code Properties}
-     *            <br><em>Remark:</em> For Oracle&reg; Forms this will include the parameters set via {@code SET_REPORT_OBJECT_PROPERTY}
+     *            <br>
+     *            <em>Remark:</em> For Oracle&reg; Forms this will include the parameters set via {@code SET_REPORT_OBJECT_PROPERTY}
      *            plus the parameters passed via a {@code ParamList}
      * @param targetName
      *            target name of the distribution
@@ -195,8 +225,9 @@ public abstract class MgpDestination extends Destination {
      *            total file size of all files being distributed
      * @param mainFormat
      *            the output format of the main file being distributed
-     *            
-     * @throws RWException if there is a failure during distribution setup. The RWException normally will wrap the original Exception.
+     * 
+     * @throws RWException
+     *             if there is a failure during distribution setup. The RWException normally will wrap the original Exception.
      */
     protected boolean start( final Properties allProperties, final String targetName, final int totalNumberOfFiles,
             final long totalFileSize, final short mainFormat ) throws RWException {
@@ -290,7 +321,6 @@ public abstract class MgpDestination extends Destination {
      * @param fileSize
      *            file size of the file to be distributed in bytes
      * 
-     * 
      *            TODO: re-think if this should really be final?
      */
     protected final void sendFile( boolean isMainFile, String cacheFileFilename, short fileFormat, long fileSize )
@@ -309,9 +339,11 @@ public abstract class MgpDestination extends Destination {
             getLogger().error( "Error during sending file " + U.w( cacheFileFilename ) + ".", any );
             RWException rwException = Utility.newRWException( any );
             throw rwException;
-        } catch ( Throwable thrown ) {
-            getLogger().fatal( "Fatal Error during sending file " + U.w( cacheFileFilename ) + ".", thrown );
-            throw Utility.newRWException( new Exception( thrown ) );
+        } catch ( Throwable somethingFatal ) {
+            String message = "Fatal Error during sending " + ((isMainFile ? "main" : "additional")) + " file "
+                    + U.w( cacheFileFilename ) + "!";
+            getLogger().fatal( message, somethingFatal );
+            throw Utility.newRWException( new Exception( message, somethingFatal ) );
         }
     }
 
@@ -382,8 +414,12 @@ public abstract class MgpDestination extends Destination {
         try {
             Destination.init( destinationsProperties );
         } catch ( RWException rwException ) {
-            log.error( "Error during initializing Destination.", rwException );
+            log.fatal( "Error during delegation of initialization to Destination.", rwException );
             throw rwException;
+        } catch ( Throwable somethingUnexpected ) {
+            log.fatal( "Fatal error during delegation of initialization to Destination!" );
+            throw Utility.newRWException( new Exception( "Fatal error during initializing MgpDestination" ) );
+            // Back in the static shit here. All inheriting classes should duplicate this try-catch sequence ...
         }
     }
 
@@ -439,12 +475,12 @@ public abstract class MgpDestination extends Destination {
         }
         // }
         /*
-         * Logger.getRootLogger().error( "Calling class is " + 
+         * Logger.getRootLogger().error( "Calling class is " +
          * new LocationInfo( new Throwable(), clazz.getName() ).getClassName() );
-         *     ^^^^^^^^^^^^
-         *     ||||||||||||
-         *     Maybe useful for detecting call by a leaf class / the class specified as destination.
-         *     With Reports 10 getClassName() reports sun.reflect.NativeMethodAccessorImpl
+         * ^^^^^^^^^^^^
+         * ||||||||||||
+         * Maybe useful for detecting call by a leaf class / the class specified as destination.
+         * With Reports 10 getClassName() reports sun.reflect.NativeMethodAccessorImpl
          */
     }
 

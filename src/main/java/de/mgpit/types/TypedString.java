@@ -49,12 +49,12 @@ import de.mgpit.oracle.reports.plugin.commons.U;
  */
 public abstract class TypedString {
 
-    protected final String NONE = "";
+    protected final static String NONE = "";
 
     public String toString() {
         return this.value();
     }
-
+    
     protected abstract String value();
 
     protected String assertAtLeastNone( String str ) {
@@ -110,6 +110,9 @@ public abstract class TypedString {
         return this.isNull() || this.isNone();
     }
     
+    public boolean isNotEmpty() {
+        return !this.isEmpty();
+    }
     
     public boolean isNone( ){
         return NONE.equals( this.value() );

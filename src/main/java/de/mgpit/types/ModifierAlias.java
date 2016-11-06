@@ -24,11 +24,12 @@ package de.mgpit.types;
  * 
  * A modifier alias name.
  * <p>
- * The name is unparsed and unvalidated.
  *
  * @author mgp
  */
 public final class ModifierAlias extends TypedString {
+    
+    public static final ModifierAlias EMPTY_VALUE = ModifierAlias.of( NONE ); 
 
     public static ModifierAlias of( String name ) {
         return new ModifierAlias( name );

@@ -308,7 +308,11 @@ public final class ZipDestination extends MgpDestination {
         } catch ( RWException forLogging ) {
             getLogger().error( "Error during preparation of distribution!", forLogging );
             throw forLogging;
+        } catch ( Throwable fatalOther ) {
+            getLogger().fatal( "Fatal error on starting Distribution!", fatalOther );
+            throw Utility.newRWException( new Exception( "Fatal error on starting Distribution!", fatalOther ) );
         }
+
     }
 
     /**
@@ -367,7 +371,7 @@ public final class ZipDestination extends MgpDestination {
     private boolean setURI( final Properties allProperties, final String targetName ) {
         URI tmpURI = null;
         boolean OK = true;
-        if ( !isEmpty( targetName ) && targetName.startsWith( "zip:" ) ) {
+        if ( isNotEmpty( targetName ) && targetName.startsWith( "zip:" ) ) {
             try {
                 tmpURI = new URI( targetName );
             } catch ( URISyntaxException syntax ) {

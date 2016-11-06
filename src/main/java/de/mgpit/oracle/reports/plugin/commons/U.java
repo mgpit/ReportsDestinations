@@ -511,7 +511,7 @@ public final class U {
     }
 
     public static void assertNotEmpty( final TypedString typed, final String message ) throws AssertionError {
-        assertTrue( !typed.isEmpty(), message );
+        assertTrue( typed.isNotEmpty(), message );
     }
 
     public static void assertNotEmpty( final TypedString typed ) throws AssertionError {

@@ -19,7 +19,7 @@ public class Entryname extends TypedString {
     }
 
     private Entryname( String name ) {
-        this.name = name;
+        this.name = cleaned( name );
     }
 
     private static Entryname NULL_VALUE = Entryname.of( (String) null );

@@ -20,42 +20,20 @@
 package de.mgpit.oracle.reports.plugin.destination.mq;
 
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
 import java.util.Properties;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
 
 import de.mgpit.oracle.reports.plugin.commons.MQ;
 import de.mgpit.oracle.reports.plugin.commons.U;
-import de.mgpit.oracle.reports.plugin.commons.ZipArchive;
 import de.mgpit.oracle.reports.plugin.commons.io.IOUtility;
 import de.mgpit.oracle.reports.plugin.destination.MgpDestination;
-import de.mgpit.oracle.reports.plugin.destination.ModifierChainDeclaration;
 import de.mgpit.oracle.reports.plugin.destination.ModifyingDestination;
-import de.mgpit.oracle.reports.plugin.destination.content.types.Content;
-import de.mgpit.oracle.reports.plugin.destination.content.types.InputModifier;
-import de.mgpit.oracle.reports.plugin.destination.content.types.Modifier;
-import de.mgpit.oracle.reports.plugin.destination.content.types.OutputModifier;
-import de.mgpit.types.ContentAlias;
 import de.mgpit.types.Filename;
-import de.mgpit.types.ModifierAlias;
-import de.mgpit.types.ModifierRawDeclaration;
 import oracle.reports.RWException;
-import oracle.reports.server.Destination;
 import oracle.reports.utility.Utility;
 
 /**
@@ -214,6 +192,9 @@ public final class MQDestination extends ModifyingDestination {
         } catch ( RWException forLogging ) {
             getLogger().error( "Error during preparation of distribution!", forLogging );
             throw forLogging;
+        } catch ( Throwable fatalOther ) {
+            getLogger().fatal( "Fatal error on starting Distribution!", fatalOther );
+            throw Utility.newRWException( new Exception( "Fatal error on starting Distribution!", fatalOther ) );
         }
     }
 

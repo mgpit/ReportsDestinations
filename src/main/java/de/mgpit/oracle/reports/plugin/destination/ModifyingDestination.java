@@ -26,6 +26,7 @@ import de.mgpit.oracle.reports.plugin.destination.content.types.OutputModifier;
 import de.mgpit.types.ContentAlias;
 import de.mgpit.types.ModifierAlias;
 import de.mgpit.types.ModifierRawDeclaration;
+import de.mgpit.types.TypedString;
 import oracle.reports.RWException;
 import oracle.reports.server.Destination;
 import oracle.reports.utility.Utility;
@@ -420,26 +421,18 @@ public abstract class ModifyingDestination extends MgpDestination {
             List declaredInputModifications = new ArrayList( numberOfDeclarationsFound );
 
             for ( int runIndex = 0; runIndex < numberOfDeclarationsFound; runIndex++ ) {
-                getLogger().warn( "Iterating ..." );
                 ModifierRawDeclaration unparsed = declaredModifiers[runIndex];
-                getLogger().warn( "Unparsed is: " + unparsed.toString() );
-
-                ModifierDeclaration parsed = null;
-                try {
-                    parsed = new ModifierDeclaration( unparsed );
-                } catch ( Throwable thrown ) {
-                    getLogger().fatal( "Deep shit happened!", thrown );
-                }
+                ModifierDeclaration parsed = new ModifierDeclaration( unparsed );
 
                 getLogger().debug( U.w( U.lpad( runIndex, 2 ) ) + ": Extracting " + U.w( parsed.toString() ) );
                 if ( parsed.definesOutputModifier() ) {
-                    getLogger().info( U.w( parsed ) + " identified as Output modifier." );
+                    getLogger().debug( U.w( parsed ) + " identified as Output modifier." );
                     declaredOutputModifications.add( parsed );
                 } else if ( parsed.definesInputModifier() ) {
-                    getLogger().info( U.w( parsed ) + " identified as Input modifier." );
+                    getLogger().debug( U.w( parsed ) + " identified as Input modifier." );
                     declaredInputModifications.add( parsed );
                 } else {
-                    getLogger().warn( U.w( parsed ) + " cannot be identified as Output nor Input modifier." );
+                    getLogger().warn( U.w( parsed ) + " cannot be identified as Output nor as Input modifier." );
                 }
             }
 
@@ -509,12 +502,12 @@ public abstract class ModifyingDestination extends MgpDestination {
         /**
          * Holds the pattern for parsing modifier declarations.
          */
-        private final Pattern PARSE_PATTERN = Pattern.compile( ModifierRawDeclaration.PATTERN );
+        private final Pattern PARSE_PATTERN;
 
         /**
          * Holds the modifiers alias.
          */
-        private ModifierAlias alias = null;
+        private ModifierAlias alias = ModifierAlias.EMPTY_VALUE;
         /**
          * Holds the modifier class
          */
@@ -523,7 +516,7 @@ public abstract class ModifyingDestination extends MgpDestination {
         /**
          * Holds the alias of an optional content provider.
          */
-        private ContentAlias contentAlias = null;
+        private ContentAlias contentAlias = ContentAlias.EMPTY_VALUE;
         /**
          * Holds the content class
          */
@@ -540,21 +533,21 @@ public abstract class ModifyingDestination extends MgpDestination {
          */
         protected ModifierDeclaration( final ModifierRawDeclaration unparsed ) {
             U.assertNotNull( unparsed, "Cannot parse null name!" );
-            getLogger().info( "Parsing...");
+            PARSE_PATTERN = Pattern.compile( ModifierRawDeclaration.PATTERN );
             Matcher test = PARSE_PATTERN.matcher( unparsed.toString() );
+
             if ( test.matches() ) {
-                getLogger().info( "Matched");
                 String modifierDefinition = test.group( 2 );
                 String contentDefinition = test.group( 4 );
-                getLogger().info(  U.w( modifierDefinition ) + U.w( contentDefinition ) );
+                getLogger().info( U.w( modifierDefinition ) + U.w( contentDefinition ) );
 
                 U.assertNotEmpty( modifierDefinition, "Cannot parse " + unparsed + "!" );
                 this.alias = ModifierAlias.of( modifierDefinition );
                 this.modifier = (Class) MODIFIER_REGISTRY.get( this.alias );
                 if ( isModifierValid() ) {
-                    if ( !U.isEmpty(  contentDefinition ) ) {
+                    if ( !U.isEmpty( contentDefinition ) ) {
                         this.contentAlias = ContentAlias.of( contentDefinition );
-                        if ( !this.contentAlias.isEmpty() ) {
+                        if ( this.contentAlias.isNotEmpty() ) {
                             this.content = (Class) CONTENTPROVIDER_REGISTRY.get( this.content );
                         }
                     }
@@ -573,7 +566,7 @@ public abstract class ModifyingDestination extends MgpDestination {
          * @return {@code true} if the modifier definition is valid, {@code false} else
          */
         private boolean isModifierValid() {
-            return !this.alias.isEmpty() && this.modifier != null;
+            return this.alias.isNotEmpty() && this.modifier != null;
         }
 
         /**
@@ -581,12 +574,14 @@ public abstract class ModifyingDestination extends MgpDestination {
          * <p>
          * A content definition is valid if either the content alias is empty or
          * there is a non empty content alias and the class referenced by the content alias
-         * is registered in the Content Registry.
+         * is registered in the Content Registry. 
+         * <p>
+         * A {@code null} content definition is considered valid, too.
          * 
          * @return {@code true} if the modifier definition is valid, {@code false} else
          */
         private boolean isContentValid() {
-            return this.contentAlias.isEmpty() || !this.contentAlias.isEmpty() && this.content != null;
+            return this.contentAlias.isEmpty() || ( this.contentAlias.isNotEmpty() && this.content != null );
         }
 
         /**
@@ -601,7 +596,7 @@ public abstract class ModifyingDestination extends MgpDestination {
         }
 
         protected boolean isParametrized() {
-            return isValid() && !this.contentAlias.isEmpty();
+            return isValid() && this.contentAlias.isNotEmpty();
         }
 
         protected boolean definesOutputModifier() {

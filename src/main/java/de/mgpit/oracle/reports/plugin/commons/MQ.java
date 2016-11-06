@@ -272,6 +272,10 @@ public class MQ {
     public void disconnect() {
 
     }
+    
+    public String toString() {
+        return configuration==null?"Invalid MQ":"MQ on " + configuration.toString();
+    }
 
     public OutputStream newMessage() {
         return new OutputStream() {
