@@ -22,6 +22,8 @@ package de.mgpit.oracle.reports.plugin.destination.content.types;
 import java.io.IOException;
 import java.io.OutputStream;
 
+import javax.activation.MimeType;
+
 /**
  * 
  * Content.
@@ -58,6 +60,11 @@ public interface Content {
      * @throws IOException if any error occurs
      */
     public void writeToOut( OutputStream out ) throws IOException;
+    
+    
+    public MimeType mimetype();
+    
+    public String fileExtension();
 
 
 }

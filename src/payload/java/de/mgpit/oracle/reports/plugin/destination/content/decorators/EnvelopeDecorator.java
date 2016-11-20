@@ -37,7 +37,7 @@ import oracle.reports.RWException;
  * @author mgp
  *
  */
-public abstract class EnvelopeDecorator implements InputModifier, OutputModifier {
+public class EnvelopeDecorator extends ContentDecorator {
 
     public EnvelopeDecorator() {
     }
@@ -46,40 +46,23 @@ public abstract class EnvelopeDecorator implements InputModifier, OutputModifier
      * Applies an {@code Envelope} to an {@code InputStream}.
      */
     public InputStream forInput( final InputStream in, final Properties parameters ) throws RWException {
-        return new EnvelopeDecoratedInputStream( in, getEnvelope( parameters ) );
+        return new EnvelopeDecoratedInputStream( in, getEnvelope() );
     }
 
     /**
      * Applies an {@code Envelope} to an {@code OutputStream}.
      */
     public OutputStream forOutput( final OutputStream out, final Properties parameters ) throws RWException {
-        return new EnvelopeDecoratedOutputStream( out, getEnvelope( parameters ) );
+        return new EnvelopeDecoratedOutputStream( out, getEnvelope() );
     }
 
     /**
-     * Gets an Envelope.
+     * Gets the Envelope.
      * 
-     * @param parameters
-     *            which may be used by the Envelope
      * @return an Envelope
      */
-    protected abstract Envelope getEnvelope( Properties parameters );
-
-    /**
-     * Gets the envelope's mime type.
-     * 
-     * @return string denoting the mime type
-     */
-    public String mimetype() {
-        return "application/xml";
+    protected Envelope getEnvelope() {
+        return (Envelope) getContentModel();
     }
 
-    /**
-     * Gets the file extension which should be used for filenames of files storing data produced by this decorator.
-     * 
-     * @return string denoting the file extension
-     */
-    public String fileExtension() {
-        return "xml";
-    }
 }

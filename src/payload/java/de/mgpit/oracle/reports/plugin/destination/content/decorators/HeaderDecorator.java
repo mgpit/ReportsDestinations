@@ -26,6 +26,7 @@ import java.util.Properties;
 
 import de.mgpit.oracle.reports.plugin.destination.content.io.HeaderDecoratedInputStream;
 import de.mgpit.oracle.reports.plugin.destination.content.io.HeaderDecoratedOutputStream;
+import de.mgpit.oracle.reports.plugin.destination.content.types.Content;
 import de.mgpit.oracle.reports.plugin.destination.content.types.Header;
 import de.mgpit.oracle.reports.plugin.destination.content.types.InputModifier;
 import de.mgpit.oracle.reports.plugin.destination.content.types.OutputModifier;
@@ -37,7 +38,7 @@ import oracle.reports.RWException;
  * @author mgp
  *
  */
-public abstract class HeaderDecorator implements InputModifier, OutputModifier {
+public class HeaderDecorator extends ContentDecorator {
 
     public HeaderDecorator() {
     }
@@ -46,41 +47,23 @@ public abstract class HeaderDecorator implements InputModifier, OutputModifier {
      * Applies a {@code Header} to an {@code InputStream}.
      */
     public InputStream forInput( InputStream in, Properties parameters ) throws RWException {
-        return new HeaderDecoratedInputStream( in, getHeader( parameters ) );
+        return new HeaderDecoratedInputStream( in, getHeader() );
     }
 
     /**
      * Applies a {@code Header} to an {@code OutputStream}.
      */
     public OutputStream forOutput( OutputStream out, Properties parameters ) throws RWException {
-        return new HeaderDecoratedOutputStream( out, getHeader( parameters ) );
+        return new HeaderDecoratedOutputStream( out, getHeader() );
     }
 
     /**
      * Gets the Header.
      * 
-     * @param parameters
-     *            which may be used by the Header
      * @return a Header
      */
-    protected abstract Header getHeader( Properties parameters );
-
-    /**
-     * Gets the header's mime type.
-     * 
-     * @return string denoting the mime type
-     */
-    public String mimetype() {
-        return "application/xml";
-    }
-
-    /**
-     * Gets the file extension which should be used for filenames of files storing data produced by this decorator.
-     * 
-     * @return string denoting the file extension
-     */
-    public String fileExtension() {
-        return "xml";
+    protected Header getHeader() {
+        return (Header) getContentModel();
     }
 
 }

@@ -50,6 +50,17 @@ import oracle.reports.utility.Utility;
 public final class U {
 
     /**
+     * Returns the object's class class name, only.
+     * 
+     * @param o
+     *            the object
+     * @return the classes class name
+     */
+    public static final String classname( Object o ) {
+        return classname( o.getClass() );
+    }
+
+    /**
      * Returns the classes class name, only. Similar to Class.getSimpleName()
      * 
      * @param clazz
@@ -491,7 +502,7 @@ public final class U {
     public static void assertNotEmpty( final String str ) throws AssertionError {
         assertNotEmpty( str, "String MUST NOT be null oder empty!" );
     }
-    
+
     /**
      * Assert that the string given is not empty.
      * <p>

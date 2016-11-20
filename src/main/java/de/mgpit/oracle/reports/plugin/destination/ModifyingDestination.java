@@ -138,183 +138,16 @@ public abstract class ModifyingDestination extends MgpDestination {
     private InputModifier[] inputModifierChain = {};
 
     /**
-     * Initializes the destination on Report Server startup.
+     * Gets the content to be distributed as an {@code InputStream}.
      * <p>
-     * Invoked by the Report Server.
-     * <ul>
-     * <li>initialize log4j</li>
-     * <li>register declared content modifiers</li>
-     * <li>register declared aliases</li>
-     * </ul>
+     * If {@code InputModifier}s are specified the the file's input stream will be
+     * wrapped with those {@code InputModifier}s.
      * 
-     * @param destinationsProperties
-     *            the properties set in the report server's conf file within this
-     *            destination's configuration section ({@code //destination/property})
-     * @throws RWException
-     */
-    public static void init( Properties destinationsProperties ) throws RWException {
-        MgpDestination.init( destinationsProperties );
-        registerConfiguredModifiers( destinationsProperties );
-        registerConfiguredContentProviders( destinationsProperties );
-    }
-
-    private static void registerConfiguredModifiers( Properties destinationsProperties ) throws RWException {
-        Enumeration keys = destinationsProperties.keys();
-        LOG.info( "About to search for and register virtual destinations ..." );
-        boolean registrationErrorOccured = false;
-
-        while ( keys.hasMoreElements() ) {
-            String key = (String) keys.nextElement();
-            if ( isModifierAliasDefinition( key ) ) {
-                ModifierAlias name = extractModifierAlias( key );
-                String fullClassName = destinationsProperties.getProperty( key );
-                boolean success = registerModifier( name, fullClassName );
-                if ( !success ) {
-                    registrationErrorOccured = true;
-                }
-            }
-        }
-        if ( registrationErrorOccured ) {
-            LOG.warn( "Could not register all Content Plugins!" );
-        }
-    }
-
-    /**
-     * Registers a {@code Modifier} under its alias.
-     * <p>
-     * Will only register those modifiers for which the declared class can be found.
+     * @param file
+     *            File to be distributed
+     * @return InputStream on the content to be distributed.
      * 
-     * @param name
-     *            alias for registering
-     * @param implementingClassName
-     *            full class name of the {@code Modifier} class
-     * @return {@code true} on success, {@code false} else.
      */
-    private static boolean registerModifier( ModifierAlias name, String implementingClassName ) {
-        LOG.info( " >>> About to register Modifier named " + U.w( name ) );
-        Class clazz = null;
-        try {
-            clazz = Class.forName( implementingClassName );
-            LOG.info( U.w( implementingClassName ) + " registered successfully for " + U.w( name ) );
-        } catch ( ClassNotFoundException cnf ) {
-            LOG.warn( cnf );
-            return false;
-        }
-        ModifyingDestination.registerModifier( name, clazz );
-        return true;
-    }
-
-    /**
-     * Tests if the key defines a {@code Modifier} declaration.
-     * 
-     * @param key
-     * @return {@code true} if the key defines a {@code Modifier} declaration, {@code false} else
-     */
-    private static boolean isModifierAliasDefinition( String key ) {
-        return key.startsWith( Modifier.PROPERTY_NAME_PREFIX );
-    }
-
-    /**
-     * Gets the modifier name part from the property name.
-     * 
-     * @param key
-     *            property name
-     * @return modifier name
-     */
-    private static ModifierAlias extractModifierAlias( String key ) {
-        return ModifierAlias.of( extractAlias( key ) );
-    }
-
-    /**
-     * Registers a {@code Content} under its alias.
-     * <p>
-     * Will only register those contents for which the declared class can be found.
-     * 
-     * @param name
-     *            alias for registering
-     * @param implementingClassName
-     *            full class name of the {@code Content} class
-     * @return {@code true} on success, {@code false} else.
-     */
-    private static void registerConfiguredContentProviders( Properties destinationsProperties ) throws RWException {
-        Enumeration keys = destinationsProperties.keys();
-        while ( keys.hasMoreElements() ) {
-            String key = (String) keys.nextElement();
-            if ( isContentAliasDefinition( key ) ) {
-                ContentAlias name = extractContentAlias( key );
-                String fullClassName = destinationsProperties.getProperty( key );
-                boolean success = registerContent( name, fullClassName );
-            }
-        }
-    }
-
-    /**
-     * Registers a {@code Content} under its alias.
-     * <p>
-     * Will only register those contents for which the declared class can be found.
-     * 
-     * @param name
-     *            alias for registering
-     * @param implementingClassName
-     *            full class name of the {@code Content} class
-     * @return {@code true} on success, {@code false} else.
-     */
-    private static boolean registerContent( ContentAlias name, String implementingClassName ) {
-        LOG.info( " >>> About to register Modifier named " + U.w( name ) );
-        Class clazz = null;
-        try {
-            clazz = Class.forName( implementingClassName );
-            LOG.info( U.w( implementingClassName ) + " registered successfully for " + U.w( name ) );
-        } catch ( ClassNotFoundException cnf ) {
-            LOG.warn( cnf );
-            return false;
-        }
-        ModifyingDestination.registerContent( name, clazz );
-        return true;
-    }
-
-    /**
-     * Tests if the key defines a {@code Content} declaration.
-     * 
-     * @param key
-     * @return {@code true} if the key defines a {@code Modifier} declaration, {@code false} else
-     */
-    private static boolean isContentAliasDefinition( String key ) {
-        return key.startsWith( Content.PROPERTY_NAME_PREFIX );
-    }
-
-    /**
-     * Gets the content name part from the property name.
-     * 
-     * @param key
-     *            property name
-     * @return modifier name
-     */
-    private static ContentAlias extractContentAlias( String key ) {
-        return ContentAlias.of( extractAlias( key ) );
-    }
-
-    /**
-     * Extracts the alias from the key given.
-     * <p>
-     * The key is supposed to be of format {@code prefix.alias}. This means
-     * the alias will be the last element in this dot seprated path.
-     * 
-     * @param key
-     *            to extract the alias from
-     * @return the alias part from the key
-     */
-    private static String extractAlias( String key ) {
-        String[] pathElements = key.split( "\\." );
-        int numberOfElements = pathElements.length;
-        if ( numberOfElements < 2 ) {
-            LOG.warn( "Got invalid name: " + U.w( key ) );
-            return null;
-        }
-        int indexOfAlias = --numberOfElements;
-        return pathElements[indexOfAlias];
-    }
-
     protected InputStream getContent( File file ) throws RWException {
         InputStream sourceInput = super.getContent( file );
         return wrapWithInputModifiers( sourceInput );
@@ -322,9 +155,11 @@ public abstract class ModifyingDestination extends MgpDestination {
 
     /**
      * Wraps the input with {@code InputModifier}s.
+     * <p>
      * 
      * @param initialStream
-     * @return
+     *            the {@code InputStream} to be wrapped.
+     * @return the {@initialStream} or {@initialStream} wrapped with {@code InputModifier}s
      * @throws RWException
      */
     protected InputStream wrapWithInputModifiers( InputStream initialStream ) throws RWException {
@@ -342,14 +177,34 @@ public abstract class ModifyingDestination extends MgpDestination {
     }
 
     /**
-     * Wraps the output with {@code OutputModifier}s.
      * 
-     * @param destinationStream
      * @return
      * @throws RWException
      */
-    protected OutputStream wrapWithOutputModifiers( OutputStream destinationStream ) throws RWException {
-        OutputStream wrapped = destinationStream;
+    protected OutputStream getTarget() throws RWException {
+        OutputStream targetOut = getTargetOut();
+        return wrapWithOutputModifiers( targetOut );
+    }
+
+    /**
+     * Gets an @{code OutputStream} on the distribution target.
+     * 
+     * @return OutputStream on the distribution target.
+     * @throws RWException
+     */
+    protected abstract OutputStream getTargetOut() throws RWException;
+
+    /**
+     * Wraps the output with {@code OutputModifier}s.
+     * <p>
+     * 
+     * @param initialStream
+     *            the {@code OutputStream} to be wrapped.
+     * @return the {@initialStream} or {@initialStream} wrapped with {@code OutputModifier}s
+     * @throws RWException
+     */
+    protected OutputStream wrapWithOutputModifiers( OutputStream targetStream ) throws RWException {
+        OutputStream wrapped = targetStream;
         if ( this.outputModifierChain != null ) {
             final int startIndex = this.outputModifierChain.length - 1;
             final Properties allProperties = getProperties();
@@ -389,7 +244,7 @@ public abstract class ModifyingDestination extends MgpDestination {
             boolean continueToSend = super.start( allProperties, targetName, totalNumberOfFiles, totalFileSize, mainFormat );
 
             if ( continueToSend ) {
-                extractDeclaredModifierChain( allProperties );
+                extractDeclaredModifierChainFrom( allProperties );
             } else {
                 getLogger().warn( "Cannot continue to send ..." );
             }
@@ -407,9 +262,11 @@ public abstract class ModifyingDestination extends MgpDestination {
      * @param allProperties
      * @throws RWException
      */
-    protected void extractDeclaredModifierChain( final Properties allProperties ) throws RWException {
+    protected void extractDeclaredModifierChainFrom( final Properties allProperties ) throws RWException {
         getLogger().info( "Looking for Modifier Chain declaration (Property \"" + CHAIN_DECLARATION_PROPERTY + "\" )..." );
         String modificationDeclaration = allProperties.getProperty( CHAIN_DECLARATION_PROPERTY );
+
+        boolean declarationsOK = true;
 
         if ( modificationDeclaration != null ) {
             getLogger().info( "Declaration found. Extracting declared Modifier Chain" );
@@ -432,20 +289,28 @@ public abstract class ModifyingDestination extends MgpDestination {
                     getLogger().debug( U.w( parsed ) + " identified as Input modifier." );
                     declaredInputModifications.add( parsed );
                 } else {
-                    getLogger().warn( U.w( parsed ) + " cannot be identified as Output nor as Input modifier." );
+                    getLogger().warn( U.w( parsed + " built from " + U.w( unparsed ) )
+                            + " cannot be identified as Output nor as Input modifier." );
+                    declarationsOK = false;
                 }
             }
 
-            try {
-                buildOutputModifierChain( declaredOutputModifications );
-                buildInputModifierChain( declaredInputModifications );
-            } catch ( Exception any ) {
-                LOG.fatal( "Fatal error on instantiating extracted modifiers!", any );
-                throw Utility.newRWException( any );
+            if ( declarationsOK ) {
+                try {
+                    buildOutputModifierChainFrom( declaredOutputModifications );
+                    buildInputModifierChainFrom( declaredInputModifications );
+                } catch ( Exception any ) {
+                    LOG.fatal( "Fatal error on instantiating extracted modifiers for current distribution!", any );
+                    throw Utility.newRWException( any );
+                }
+            } else {
+                String message = "Found invalid modifier chain declaraton for current distribution!";
+                LOG.fatal( message );
+                throw Utility.newRWException( new IllegalArgumentException( message ) );
             }
 
         } else {
-            getLogger().info( "No modifiers declared for this distribution." );
+            getLogger().info( "No modifiers declared for current distribution." );
         }
     }
 
@@ -456,15 +321,17 @@ public abstract class ModifyingDestination extends MgpDestination {
      * 
      * @param declarationsExtracted
      */
-    private void buildOutputModifierChain( final List declarationsExtracted ) throws Exception {
-        if ( declarationsExtracted != null && declarationsExtracted.size() > 0 ) {
+    private void buildOutputModifierChainFrom( final List declarationsExtracted ) throws Exception {
+        final boolean hasDeclarations = declarationsExtracted != null && declarationsExtracted.size() > 0;
+        ;
+        if ( hasDeclarations ) {
             this.outputModifierChain = new OutputModifier[declarationsExtracted.size()];
             int targetIndex = 0;
             Iterator toInstantiate = declarationsExtracted.iterator();
             while ( toInstantiate.hasNext() ) {
                 ModifierDeclaration declaration = (ModifierDeclaration) toInstantiate.next();
                 // fail fast
-                OutputModifier modifier = declaration.instantiateOutputModifier();
+                OutputModifier modifier = declaration.instantiateAsOutputModifier();
                 this.outputModifierChain[targetIndex++] = modifier;
             }
         }
@@ -477,15 +344,16 @@ public abstract class ModifyingDestination extends MgpDestination {
      * 
      * @param declarationsExtracted
      */
-    private void buildInputModifierChain( final List declarationsExtracted ) throws Exception {
-        if ( declarationsExtracted != null && declarationsExtracted.size() > 0 ) {
+    private void buildInputModifierChainFrom( final List declarationsExtracted ) throws Exception {
+        final boolean hasDeclarations = declarationsExtracted != null && declarationsExtracted.size() > 0;
+        if ( hasDeclarations ) {
             this.outputModifierChain = new OutputModifier[declarationsExtracted.size()];
             int targetIndex = 0;
             Iterator toInstantiate = declarationsExtracted.iterator();
             while ( toInstantiate.hasNext() ) {
                 ModifierDeclaration declaration = (ModifierDeclaration) toInstantiate.next();
                 // fail fast
-                InputModifier modifier = declaration.instantiateInputModifier();
+                InputModifier modifier = declaration.instantiateAsInputModifier();
                 this.inputModifierChain[targetIndex++] = modifier;
             }
         }
@@ -574,14 +442,14 @@ public abstract class ModifyingDestination extends MgpDestination {
          * <p>
          * A content definition is valid if either the content alias is empty or
          * there is a non empty content alias and the class referenced by the content alias
-         * is registered in the Content Registry. 
+         * is registered in the Content Registry.
          * <p>
          * A {@code null} content definition is considered valid, too.
          * 
          * @return {@code true} if the modifier definition is valid, {@code false} else
          */
         private boolean isContentValid() {
-            return this.contentAlias.isEmpty() || ( this.contentAlias.isNotEmpty() && this.content != null );
+            return this.contentAlias.isEmpty() || (this.contentAlias.isNotEmpty() && this.content != null);
         }
 
         /**
@@ -607,14 +475,14 @@ public abstract class ModifyingDestination extends MgpDestination {
             return isValid() && InputModifier.class.isAssignableFrom( this.modifier );
         }
 
-        protected final OutputModifier instantiateOutputModifier() throws Exception {
+        protected final OutputModifier instantiateAsOutputModifier() throws Exception {
             U.assertTrue( isValid(), "Cannot instantiate with an invalid Modifier Definition!" );
-            return (OutputModifier) instantiate(); // createModifierInstance( declaration, requesting );
+            return (OutputModifier) instantiate();
         }
 
-        protected final InputModifier instantiateInputModifier() throws Exception {
+        protected final InputModifier instantiateAsInputModifier() throws Exception {
             U.assertTrue( isValid(), "Cannot instantiate with an invalid Modifier Definition!" );
-            return (InputModifier) instantiate(); // createModifierInstance( declaration, requesting );
+            return (InputModifier) instantiate();
         }
 
         private Modifier instantiate() throws Exception {
@@ -630,10 +498,239 @@ public abstract class ModifyingDestination extends MgpDestination {
             }
         }
 
+        /**
+         * Returns a string representation of this object.
+         * <p>
+         * Output will be of form
+         * <ul>
+         * <li>{@code Alias} for normal modifiers</li>
+         * <li>{@code Alias(Content)} for parametrized modifiers</li>
+         * <li>{@code <!!!Invalid!!!>} for non parseable modifiers or modifiers, which references point
+         * to non existing modifier or content aliases</li>
+         * </ul>
+         * 
+         * @returns a string representation of this object.
+         */
         public String toString() {
-            return (this.isValid()) ? this.alias + (this.isParametrized() ? "(" + this.contentAlias + ")" : "") : "<!!!Invalid!!!>";
+            String stringRepresentation = "";
+            if ( this.isValid() ) {
+                stringRepresentation = this.alias + (this.isParametrized() ? "(" + this.contentAlias + ")" : "");
+            } else {
+                if ( isModifierValid() ) {
+                    stringRepresentation = this.alias + "(<!!!Invalid(" + this.contentAlias + ")!!!>)";
+                } else {
+                    stringRepresentation = "<!!!Invalid!!!>";
+                }
+            }
+            return stringRepresentation;
         }
 
     }
 
+    /**
+     * Initializes the destination on Report Server startup.
+     * <p>
+     * Invoked by the Report Server.
+     * <ul>
+     * <li>initialize log4j</li>
+     * <li>register declared content modifiers</li>
+     * <li>register declared aliases</li>
+     * </ul>
+     * 
+     * @param destinationsProperties
+     *            the properties set in the report server's conf file within this
+     *            destination's configuration section ({@code //destination/property})
+     * @throws RWException
+     */
+    public static void init( Properties destinationsProperties ) throws RWException {
+        MgpDestination.init( destinationsProperties );
+        DestinationRegistrar.registerConfiguredModifiersFrom( destinationsProperties );
+        DestinationRegistrar.registerConfiguredContentProvidersFrom( destinationsProperties );
+    }
+
+    /**
+     * An Initializer ... :-)
+     * 
+     * @author mgp
+     *
+     */
+    private static class DestinationRegistrar {
+
+        private static void registerConfiguredModifiersFrom( Properties destinationsProperties ) throws RWException {
+            Enumeration keys = destinationsProperties.keys();
+            LOG.info( "About to search for and register declared Modifiers ..." );
+            boolean registrationErrorOccured = false;
+
+            while ( keys.hasMoreElements() ) {
+                String key = (String) keys.nextElement();
+                if ( isModifierAliasDefinition( key ) ) {
+                    ModifierAlias name = extractModifierAlias( key );
+                    String fullClassName = destinationsProperties.getProperty( key );
+                    boolean success = registerModifier( name, fullClassName );
+                    if ( !success ) {
+                        registrationErrorOccured = true;
+                    }
+                }
+            }
+            if ( registrationErrorOccured ) {
+                LOG.warn( "Could not register all Modifiers!" );
+                // TODO: Consider throwing IllegalArgumentException
+            }
+        }
+
+        /**
+         * Registers a {@code Modifier} under its alias.
+         * <p>
+         * Will only register those modifiers for which the declared class can be found.
+         * 
+         * @param name
+         *            alias for registering
+         * @param implementingClassName
+         *            full class name of the {@code Modifier} class
+         * @return {@code true} on if the class has been registered as Modifier under the alias given, {@code false} else.
+         */
+        private static boolean registerModifier( ModifierAlias name, String implementingClassName ) {
+            LOG.info( " >>> About to register Modifier named " + U.w( name ) );
+            Class clazz = null;
+            try {
+                clazz = Class.forName( implementingClassName );
+                if ( !Modifier.class.isAssignableFrom( clazz ) ) {
+                    LOG.error( implementingClassName + " is not a Modifier!" );
+                    return false;
+                }
+                LOG.info( U.w( implementingClassName ) + " registered successfully for " + U.w( name ) );
+            } catch ( ClassNotFoundException cnf ) {
+                LOG.error( cnf );
+                return false;
+            }
+            ModifyingDestination.registerModifier( name, clazz );
+            return true;
+        }
+
+        /**
+         * Tests if the key defines a {@code Modifier} declaration.
+         * 
+         * @param key
+         * @return {@code true} if the key defines a {@code Modifier} declaration, {@code false} else
+         */
+        private static boolean isModifierAliasDefinition( String key ) {
+            return key.startsWith( Modifier.PROPERTY_NAME_PREFIX );
+        }
+
+        /**
+         * Gets the modifier name part from the property name.
+         * 
+         * @param key
+         *            property name
+         * @return modifier name
+         */
+        private static ModifierAlias extractModifierAlias( String key ) {
+            return ModifierAlias.of( extractAlias( key ) );
+        }
+
+        /**
+         * Registers a {@code Content} under its alias.
+         * <p>
+         * Will only register those contents for which the declared class can be found.
+         * 
+         * @param name
+         *            alias for registering
+         * @param implementingClassName
+         *            full class name of the {@code Content} class
+         * @return {@code true} on success, {@code false} else.
+         */
+        private static void registerConfiguredContentProvidersFrom( Properties destinationsProperties ) throws RWException {
+            Enumeration keys = destinationsProperties.keys();
+            LOG.info( "About to search for and register declared Content providers ..." );
+            boolean registrationErrorOccured = false;
+
+            while ( keys.hasMoreElements() ) {
+                String key = (String) keys.nextElement();
+                if ( isContentAliasDefinition( key ) ) {
+                    ContentAlias name = extractContentAlias( key );
+                    String fullClassName = destinationsProperties.getProperty( key );
+                    boolean success = registerContent( name, fullClassName );
+                    if ( !success ) {
+                        registrationErrorOccured = true;
+                    }
+                }
+            }
+            if ( registrationErrorOccured ) {
+                LOG.warn( "Could not register all Content providers!" );
+                // TODO: Consider throwing IllegalArgumentException
+            }
+        }
+
+        /**
+         * Registers a {@code Content} under its alias.
+         * <p>
+         * Will only register those contents for which the declared class can be found.
+         * 
+         * @param name
+         *            alias for registering
+         * @param implementingClassName
+         *            full class name of the {@code Content} class
+         * @return {@code true} on if the class has been registered as Content under the alias given, {@code false} else.
+         */
+        private static boolean registerContent( ContentAlias name, String implementingClassName ) {
+            LOG.info( " >>> About to register Content named " + U.w( name ) );
+            Class implementingClass = null;
+            try {
+                implementingClass = Class.forName( implementingClassName );
+                if ( !Content.class.isAssignableFrom( implementingClass ) ) {
+                    LOG.error( implementingClassName + " is not a Content!" );
+                    return false;
+                }
+                LOG.info( U.w( implementingClassName ) + " registered successfully under alias " + U.w( name ) );
+            } catch ( ClassNotFoundException cnf ) {
+                LOG.error( cnf );
+                return false;
+            }
+            ModifyingDestination.registerContent( name, implementingClass );
+            return true;
+        }
+
+        /**
+         * Tests if the key defines a {@code Content} declaration.
+         * 
+         * @param key
+         * @return {@code true} if the key defines a {@code Modifier} declaration, {@code false} else
+         */
+        private static boolean isContentAliasDefinition( String key ) {
+            return key.startsWith( Content.PROPERTY_NAME_PREFIX );
+        }
+
+        /**
+         * Gets the content name part from the property name.
+         * 
+         * @param key
+         *            property name
+         * @return modifier name
+         */
+        private static ContentAlias extractContentAlias( String key ) {
+            return ContentAlias.of( extractAlias( key ) );
+        }
+
+        /**
+         * Extracts the alias from the key given.
+         * <p>
+         * The key is supposed to be of format {@code prefix.alias}. This means
+         * the alias will be the last element in this dot seprated path.
+         * 
+         * @param key
+         *            to extract the alias from
+         * @return the alias part from the key
+         */
+        private static String extractAlias( String key ) {
+            String[] pathElements = key.split( "\\." );
+            int numberOfElements = pathElements.length;
+            if ( numberOfElements < 2 ) {
+                LOG.warn( "Got invalid name: " + U.w( key ) );
+                return null;
+            }
+            int indexOfAlias = --numberOfElements;
+            return pathElements[indexOfAlias];
+        }
+
+    }
 }

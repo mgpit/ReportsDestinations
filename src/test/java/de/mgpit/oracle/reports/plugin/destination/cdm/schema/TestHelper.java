@@ -5,6 +5,9 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
+import javax.activation.MimeType;
+import javax.activation.MimeTypeParseException;
+
 import de.mgpit.oracle.reports.plugin.commons.Magic;
 import de.mgpit.oracle.reports.plugin.destination.content.types.Envelope;
 
@@ -92,6 +95,23 @@ public class TestHelper {
                 }
 
                 
+            }
+
+            private MimeType mimetype;
+
+            public MimeType mimetype() {
+                if ( mimetype == null ) {
+                    try {
+                        mimetype = new MimeType( "application/xml" );
+                    } catch ( MimeTypeParseException unparsable ) {
+                        mimetype = new MimeType();
+                    }
+                }
+                return this.mimetype;
+            }
+
+            public String fileExtension() {
+                return "xml";
             }
 
         }

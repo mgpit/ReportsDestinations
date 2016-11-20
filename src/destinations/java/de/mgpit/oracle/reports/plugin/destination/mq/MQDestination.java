@@ -155,10 +155,11 @@ public final class MQDestination extends ModifyingDestination {
 
     /**
      * Starts a new distribution cycle for a report to a Websphere MQ&req; queue.
-     *  
+     * 
      * @param allProperties
      *            parameters for this distribution passed as {@code Properties}
-     *            <br><em>Remark:</em> For Oracle&reg; Forms this will include the parameters set via {@code SET_REPORT_OBJECT_PROPERTY}
+     *            <br>
+     *            <em>Remark:</em> For Oracle&reg; Forms this will include the parameters set via {@code SET_REPORT_OBJECT_PROPERTY}
      *            plus the parameters passed via a {@code ParamList}
      * @param targetName
      *            target name of the distribution
@@ -168,8 +169,9 @@ public final class MQDestination extends ModifyingDestination {
      *            total file size of all files being distributed
      * @param mainFormat
      *            the output format of the main file being distributed
-     *            
-     * @throws RWException if there is a failure during distribution setup. The RWException normally will wrap the original Exception.
+     * 
+     * @throws RWException
+     *             if there is a failure during distribution setup. The RWException normally will wrap the original Exception.
      */
     protected boolean start( Properties allProperties, String targetName, int totalNumberOfFiles, long totalFileSize,
             short mainFormat ) throws RWException {
@@ -179,7 +181,7 @@ public final class MQDestination extends ModifyingDestination {
 
             if ( continueToSend ) {
                 getLogger().info( "Starting distribution to MQ" );
-                this.mq = (MQ) U.coalesce( getDeclaredMQ( allProperties ), DEFAULT_MQ );
+                this.mq = (MQ) U.coalesce( MQRegistrar.getDeclaredMQfrom( allProperties ), DEFAULT_MQ );
 
                 continueToSend = this.mq != null;
                 if ( !continueToSend ) {
@@ -203,8 +205,7 @@ public final class MQDestination extends ModifyingDestination {
         InputStream source = getContent( IOUtility.fileFromName( cacheFileFilename ) );
         try {
             U.assertNotNull( this.mq, "Cannot continue to send! No MQ destination provided nor default MQ destination speficied!" );
-            OutputStream mqOut = this.mq.newMessage();
-            OutputStream target = wrapWithOutputModifiers( mqOut );
+            OutputStream target = getTarget();
             IOUtility.copyFromToAndThenClose( source, target );
         } catch ( Throwable anyOther ) {
             getLogger().fatal( "Fatal Error during sending main file " + U.w( cacheFileFilename ) + "!", anyOther );
@@ -213,8 +214,29 @@ public final class MQDestination extends ModifyingDestination {
 
     }
 
+    /**
+     * Sends an additional file to the destination.
+     * <p>
+     * This operation is currently not supported.
+     * TODO: No clear idea for design. Should additional files go as separate messages or should
+     * additional files be appended to the main file.
+     * 
+     * @param cacheFileFilename
+     * @param fileFormat
+     */
     protected void sendAdditionalFile( final Filename cacheFileFilename, short fileFormat ) throws RWException {
         getLogger().info( "Sending Other file to " + getClass().getName() );
+        getLogger().warn( U.classname( this ) + " currently does not support multiple files!" );
+    }
+
+    /**
+     * Gets a Websphere MQ&reg; message for output.
+     * 
+     * @return {@OutputStream} for writing into an Websphere MQ&reg; message.
+     * 
+     */
+    protected OutputStream getTargetOut() {
+        return this.mq.newMessage();
     }
 
     /**
@@ -237,36 +259,38 @@ public final class MQDestination extends ModifyingDestination {
         if ( LOG.isDebugEnabled() ) {
             dumpProperties( destinationsProperties, LOG );
         }
-        registerDefaultMQ( destinationsProperties );
+        MQRegistrar.registerDefaultMQfrom( destinationsProperties );
         LOG.info( "Destination " + U.w( MQDestination.class.getName() ) + " started." );
     }
 
-    private static void registerDefaultMQ( Properties destinationsProperties ) {
-        DEFAULT_MQ = getDeclaredMQ( destinationsProperties );
-        if ( DEFAULT_MQ == null ) {
-            LOG.info(
-                    "No default MQ Connection specified. Destination may not work. Please specify a default Connection as <property name=\"mq\" value=\"wmq://<host>:<port>/dest/queue/<queuename>@<queuemanager>?channelName=<channelname>/\"/>" );
-        }
-    }
-
-    public static MQ getDeclaredMQ( Properties properties ) {
-        /*
-         * Cascading search for one of the three valid property names to specify a default MQ connection ...
-         */
-        String uriLiteral = properties.getProperty( "mq",
-                properties.getProperty( "uri", properties.getProperty( "connection", properties.getProperty( "desname" ) ) ) );
-        final String prefixWanted = MQ.Configuration.WMQ_SCHEME + ":";
-        if ( !U.isEmpty( uriLiteral ) && uriLiteral.startsWith( prefixWanted ) ) {
-
-            try {
-                return new MQ( MQ.Configuration.fromURILiteral( uriLiteral ) );
-            } catch ( URISyntaxException syntax ) {
-                LOG.error( "Invalid Connection URI! Cannot create MQ Connection!", syntax );
-            } catch ( Exception other ) {
-                LOG.error( "Cannot create MQ Connection!", other );
+    private static final class MQRegistrar {
+        private static void registerDefaultMQfrom( Properties destinationsProperties ) {
+            DEFAULT_MQ = getDeclaredMQfrom( destinationsProperties );
+            if ( DEFAULT_MQ == null ) {
+                LOG.info(
+                        "No default MQ Connection specified. Destination may not work. Please specify a default Connection as <property name=\"mq\" value=\"wmq://<host>:<port>/dest/queue/<queuename>@<queuemanager>?channelName=<channelname>/\"/>" );
             }
         }
-        return null;
+
+        public static MQ getDeclaredMQfrom( Properties properties ) {
+            /*
+             * Cascading search for one of the three valid property names to specify a default MQ connection ...
+             */
+            String uriLiteral = properties.getProperty( "mq",
+                    properties.getProperty( "uri", properties.getProperty( "connection", properties.getProperty( "desname" ) ) ) );
+            final String prefixWanted = MQ.Configuration.WMQ_SCHEME + ":";
+            if ( !U.isEmpty( uriLiteral ) && uriLiteral.startsWith( prefixWanted ) ) {
+
+                try {
+                    return new MQ( MQ.Configuration.fromURILiteral( uriLiteral ) );
+                } catch ( URISyntaxException syntax ) {
+                    LOG.error( "Invalid Connection URI! Cannot create MQ Connection!", syntax );
+                } catch ( Exception other ) {
+                    LOG.error( "Cannot create MQ Connection!", other );
+                }
+            }
+            return null;
+        }
     }
 
     public static void shutdown() {
