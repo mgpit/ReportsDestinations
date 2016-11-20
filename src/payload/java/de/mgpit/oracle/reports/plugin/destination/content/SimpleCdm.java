@@ -1,17 +1,11 @@
 package de.mgpit.oracle.reports.plugin.destination.content;
 
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.OutputStream;
 import java.io.StringWriter;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Properties;
 
-import javax.activation.MimeType;
-import javax.activation.MimeTypeParseException;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.OutputKeys;
@@ -23,10 +17,7 @@ import javax.xml.transform.stream.StreamResult;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-
-import de.mgpit.oracle.reports.plugin.commons.Magic;
-import de.mgpit.oracle.reports.plugin.commons.U;
-import de.mgpit.oracle.reports.plugin.destination.content.types.Envelope;
+import org.w3c.dom.Text;
 
 /**
  * A simple Cdm.
@@ -44,29 +35,42 @@ public class SimpleCdm extends AbstractCdm {
 
         final DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
         final DocumentBuilder cdmBuilder;
-        final Document cdm;
+        final Document currentDocument;
         cdmBuilder = builderFactory.newDocumentBuilder();
-        cdm = cdmBuilder.newDocument();
+        currentDocument = cdmBuilder.newDocument();
 
-        Element cdmdoc = cdm.createElement( "cdmdoc" );
+        Element cdmdoc = currentDocument.createElement( "cdmdoc" );
         cdmdoc.setAttribute( "created", now );
-        cdm.appendChild( cdmdoc );
+        currentDocument.appendChild( cdmdoc );
 
-        Element info = cdm.createElement( "info" );
-        info.appendChild( cdm.createTextNode( "Lorem Ipsum Dolor Sit Amet" ) );
-
-        cdmdoc.appendChild( info );
-        Element data = cdm.createElement( "data" );
+        Element address = currentDocument.createElement( "address" );
+        
+        boolean hasAddress = false; 
+        for ( int lineNumber = 1; lineNumber < 7; lineNumber++) {
+            final String key = "address_line_" + lineNumber;
+            if ( parameters.containsKey( key )) {
+                Element addressLine = currentDocument.createElement( key );
+                Text text = currentDocument.createTextNode( parameters.getProperty( key, "" ) );
+                addressLine.appendChild( text );
+                address.appendChild( addressLine );
+                hasAddress = true;
+            }
+        }
+        if ( hasAddress) {
+            cdmdoc.appendChild( address );
+        }
+        
+        Element data = currentDocument.createElement( "data" );
         cdmdoc.appendChild( data );
         /* A data element without children would result in <data/> */
-        data.appendChild( cdm.createTextNode( "" ) );
+        data.appendChild( currentDocument.createTextNode( "" ) );
 
         TransformerFactory transformerFactory = TransformerFactory.newInstance();
         Transformer transformer = transformerFactory.newTransformer();
 
         transformer.setOutputProperty( OutputKeys.INDENT, "yes" );
 
-        DOMSource xmlSource = new DOMSource( cdm );
+        DOMSource xmlSource = new DOMSource( currentDocument );
         StringWriter outputTargetTarget = new StringWriter();
         Result outputTarget = new StreamResult( outputTargetTarget );
 
