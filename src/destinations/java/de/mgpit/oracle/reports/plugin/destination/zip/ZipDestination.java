@@ -292,7 +292,7 @@ public final class ZipDestination extends MgpDestination {
                         String desname = queryParameters.getProperty( "entry" );
                         setDesname( desname );
 
-                        String appendParameterValue = allProperties.getProperty( "append", "FALSE" );
+                        String appendParameterValue = queryParameters.getProperty( "append", "FALSE" );
                         inAppendingMode = StringCodedBoolean.valueOf( appendParameterValue );
                     }
                     createZipArchive( zipArchiveFileName, inAppendingMode );
