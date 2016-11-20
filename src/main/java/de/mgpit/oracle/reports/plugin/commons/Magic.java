@@ -40,9 +40,14 @@ public class Magic {
 
     // String / Character magic numbers
     /**
-     * Holds the magig number indicating that a given character could not be found within a string.
+     * Holds the magic number indicating that a given character could not be found within a string.
      */
     public static final int CHARACTER_NOT_FOUND = -1;
+    
+    /**
+     * Holds the magic number indicating that a given substring could not be found within a string.
+     */
+    public static final int SUBSTRING_NOT_FOUND = -1;
 
     // Base64 magic numbers
     /**

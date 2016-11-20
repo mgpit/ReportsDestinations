@@ -31,6 +31,16 @@
     <property name="lib.zrclient" location="${oracle.home.jlib}/zrclient.jar" />
     <property name="lib.log4j" location="${dir.reports.jlib}/log4j-1.2.4.jar" />
     <property name="lib.commons-codec" location="${dir.reports.jlib}/commons-codec-1.5.jar" />
+    
+    <macrodef name="echotimestamp">
+      <sequential>
+        <local name="timestamp" />
+        <tstamp>
+          <format property="timestamp" pattern="yyyy-MM-dd HH:mm:ss" />
+        </tstamp>
+        <echo message="${timestamp}" />
+      </sequential>
+    </macrodef>
 
     <scriptdef name="propertyreplace" language="javascript">
         <attribute name="name" />
@@ -225,16 +235,19 @@
         <copy verbose="true" file="${deploy.jar.ZIPdestination}" todir="${dir.reports.jlib}" />
         <delete file="${deploy.jar.ZIPdestination}" failonerror="false" />
         <echo message="Zip Destination: Deployment finished" />
+        <echotimestamp/>
     </target>
 
     <target name="3 Deploy MQ Destination" depends="packageMQdest" description="Deploy MQ Destination">
         <copy verbose="true" file="${deploy.jar.MQdestination}" todir="${dir.reports.jlib}" />
         <delete file="${deploy.jar.MQdestination}" failonerror="false" />
         <echo message="MQ Destination: Deployment finished" />
+        <echotimestamp/>
     </target>
     
     <target name="1 Deploy Destinations" description="Create and Deploy Destinations" depends="9 Deploy Commons,2 Deploy Zip Destination,3 Deploy MQ Destination">
         <echo message="Deployment finished" />
+        <echotimestamp/>
     </target>
 
 

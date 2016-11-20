@@ -415,9 +415,15 @@ public abstract class ModifyingDestination extends MgpDestination {
                     if ( !U.isEmpty( contentDefinition ) ) {
                         this.contentAlias = ContentAlias.of( contentDefinition );
                         if ( this.contentAlias.isNotEmpty() ) {
-                            this.content = (Class) CONTENTPROVIDER_REGISTRY.get( this.content );
+                            this.content = (Class) CONTENTPROVIDER_REGISTRY.get( this.contentAlias );
+                        }
+
+                        if ( !isContentValid() ) {
+                            getLogger().error( "Content Declaration is NOT valid!" );
                         }
                     }
+                } else {
+                    getLogger().error( "Modifier Declaration is NOT valid!" );
                 }
             } else {
                 throw new IllegalArgumentException( "Cannot parse " + U.w( unparsed ) + " to a Modifier Declaration" );
@@ -503,8 +509,7 @@ public abstract class ModifyingDestination extends MgpDestination {
                 throw cannotAccess;
             }
         }
-        
-        
+
         private boolean isaWithModel() {
             return WithModel.class.isAssignableFrom( modifier );
         }
@@ -557,6 +562,7 @@ public abstract class ModifyingDestination extends MgpDestination {
         MgpDestination.init( destinationsProperties );
         DestinationRegistrar.registerConfiguredModifiersFrom( destinationsProperties );
         DestinationRegistrar.registerConfiguredContentProvidersFrom( destinationsProperties );
+        DestinationRegistrar.listAll();
     }
 
     /**
@@ -741,6 +747,24 @@ public abstract class ModifyingDestination extends MgpDestination {
             }
             int indexOfAlias = --numberOfElements;
             return pathElements[indexOfAlias];
+        }
+
+        protected static void listAll() {
+            final Logger LOGGA = Logger.getRootLogger();
+            LOGGA.info( "Listing Modifier Registry ..." );
+            list( MODIFIER_REGISTRY );
+            LOGGA.info( "Listing Content Registry ..." );
+            list( CONTENTPROVIDER_REGISTRY );
+        }
+
+        protected static void list( Map m ) {
+            final Logger LOGGA = Logger.getRootLogger();
+            Iterator iter = m.keySet().iterator();
+            while ( iter.hasNext() ) {
+                Object k = iter.next();
+                Object v = m.get( k );
+                LOGGA.info( U.w( k ) + " -> " + U.w( (U.coalesce( v, "<null>" )) ) );
+            }
         }
 
     }

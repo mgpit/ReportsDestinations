@@ -1,4 +1,4 @@
-package de.mgpit.oracle.reports.plugin.destination.cdm.schema;
+package de.mgpit.oracle.reports.plugin.destination.content.io;
 
 
 import java.io.ByteArrayInputStream;
