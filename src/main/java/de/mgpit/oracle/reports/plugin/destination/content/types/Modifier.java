@@ -20,11 +20,7 @@
 package de.mgpit.oracle.reports.plugin.destination.content.types;
 
 
-import java.io.InputStream;
-import java.util.Properties;
-
-import de.mgpit.types.TypedString;
-import oracle.reports.RWException;
+import javax.activation.MimeType;
 
 /**
  * A Transformation used in the context of an Oracle&reg; Reports distribution.
@@ -51,7 +47,7 @@ public interface Modifier {
      */
     public static String PROPERTY_NAME_PREFIX = "modifier.";
 
-    public String mimetype();
+    public MimeType mimetype();
 
     public String fileExtension();
 

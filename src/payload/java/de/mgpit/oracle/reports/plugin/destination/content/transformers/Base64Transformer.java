@@ -24,6 +24,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Properties;
 
+import javax.activation.MimeType;
+import javax.activation.MimeTypeParseException;
+
 import org.apache.commons.codec.binary.Base64InputStream;
 import org.apache.commons.codec.binary.Base64OutputStream;
 
@@ -33,7 +36,7 @@ import oracle.reports.RWException;
 
 /**
  * An {@code Transformation} for BASE64 encoding a {@code Stream}.
- *  
+ * 
  * @author mgp
  *
  */
@@ -59,13 +62,20 @@ public class Base64Transformer implements InputModifier, OutputModifier {
         return base64Output;
     }
 
+    private MimeType mimetype;
+
     /**
-     * Gets the mime type of the data a produced by this tranformation.
-     * 
-     * @return string denoting the mime type 
+     * Gets a {@code MimeType} of {@code text/plain} for this transformer.
      */
-    public String mimetype() {
-        return "text/plain";
+    public MimeType mimetype() {
+        if ( mimetype == null ) {
+            try {
+                mimetype = new MimeType( "text/plain" );
+            } catch ( MimeTypeParseException unparsable ) {
+                mimetype = new MimeType();
+            }
+        }
+        return this.mimetype;
     }
 
     /**

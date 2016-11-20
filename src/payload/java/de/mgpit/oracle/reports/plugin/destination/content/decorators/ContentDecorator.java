@@ -27,6 +27,9 @@ import java.util.Properties;
 import javax.activation.MimeType;
 
 import de.mgpit.oracle.reports.plugin.destination.content.types.Content;
+import de.mgpit.oracle.reports.plugin.destination.content.types.InputModifier;
+import de.mgpit.oracle.reports.plugin.destination.content.types.OutputModifier;
+import de.mgpit.oracle.reports.plugin.destination.content.types.WithModel;
 import oracle.reports.RWException;
 
 /**
@@ -34,7 +37,7 @@ import oracle.reports.RWException;
  * @author mgp
  *
  */
-public abstract class ContentDecorator {
+public abstract class ContentDecorator implements InputModifier, OutputModifier {
 
     /**
      * Creates a new ContentDecorator.
@@ -43,26 +46,7 @@ public abstract class ContentDecorator {
         super();
     }
 
-    private Content contentModel;
-    /**
-     * Gets the decorator's content model.
-     * 
-     * @return {@code Content} model.
-     */
-    public Content getContentModel() {
-        return this.contentModel;
-    };
-
-    /**
-     * Sets the decorators's content model.
-     * 
-     * @param content
-     *            {@code Content} model to set.
-     */
-    public void setContentModel( Content content ) {
-        this.contentModel = content;
-    }
-
+    
     /**
      * Decorates the {@code InputStream} given.
      * 
@@ -79,14 +63,24 @@ public abstract class ContentDecorator {
      * Applies the {@code Content} to an {@code OutputStream}.
      */
     public abstract OutputStream forOutput( final OutputStream out, final Properties parameters ) throws RWException;
+    
+    /**
+     * Gets the {@code Content} of this decorator.
+     * <p>
+     * This is the content which will be added to the decorated object in some way,
+     * e.g. as a header or as an envelope.
+     * 
+     * @return {@code Content} of this decorator
+     */
+    protected abstract Content getContent();
 
     /**
-     * Gets the envelope's mime type.
+     * Gets the content model's mime type.
      * 
      * @return string denoting the mime type
      */
     public MimeType mimetype() {
-        return getContentModel().mimetype();
+        return getContent().mimetype();
     }
 
     /**
@@ -95,7 +89,7 @@ public abstract class ContentDecorator {
      * @return string denoting the file extension
      */
     public String fileExtension() {
-        return getContentModel().fileExtension();
+        return getContent().fileExtension();
     }
 
 }

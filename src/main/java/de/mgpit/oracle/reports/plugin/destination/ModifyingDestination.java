@@ -23,12 +23,11 @@ import de.mgpit.oracle.reports.plugin.destination.content.types.Content;
 import de.mgpit.oracle.reports.plugin.destination.content.types.InputModifier;
 import de.mgpit.oracle.reports.plugin.destination.content.types.Modifier;
 import de.mgpit.oracle.reports.plugin.destination.content.types.OutputModifier;
+import de.mgpit.oracle.reports.plugin.destination.content.types.WithModel;
 import de.mgpit.types.ContentAlias;
 import de.mgpit.types.ModifierAlias;
 import de.mgpit.types.ModifierRawDeclaration;
-import de.mgpit.types.TypedString;
 import oracle.reports.RWException;
-import oracle.reports.server.Destination;
 import oracle.reports.utility.Utility;
 
 /**
@@ -487,8 +486,15 @@ public abstract class ModifyingDestination extends MgpDestination {
 
         private Modifier instantiate() throws Exception {
             try {
-                Modifier instance = (Modifier) modifier.newInstance();
-                return instance;
+                Modifier modifierInstance = (Modifier) modifier.newInstance();
+                if ( this.isaWithModel() ) {
+                    if ( isParametrized() ) {
+                        Content contentInstance = (Content) content.newInstance();
+                        ((WithModel) modifierInstance).setContentModel( contentInstance );
+                    }
+                    // TODO: Should a modifier implementing WithModel require a Content?
+                }
+                return modifierInstance;
             } catch ( InstantiationException cannotInstatiate ) {
                 getLogger().fatal( "Cannot instantiate abstract/interface " + modifier.getName() + "!", cannotInstatiate );
                 throw cannotInstatiate;
@@ -496,6 +502,11 @@ public abstract class ModifyingDestination extends MgpDestination {
                 getLogger().fatal( "Cannot instantiate due to access restrictions on " + modifier.getName() + "!", cannotAccess );
                 throw cannotAccess;
             }
+        }
+        
+        
+        private boolean isaWithModel() {
+            return WithModel.class.isAssignableFrom( modifier );
         }
 
         /**
@@ -533,8 +544,8 @@ public abstract class ModifyingDestination extends MgpDestination {
      * Invoked by the Report Server.
      * <ul>
      * <li>initialize log4j</li>
-     * <li>register declared content modifiers</li>
-     * <li>register declared aliases</li>
+     * <li>register declared content modifiers under an alias</li>
+     * <li>register declared content providers under an alias</li>
      * </ul>
      * 
      * @param destinationsProperties
@@ -549,7 +560,7 @@ public abstract class ModifyingDestination extends MgpDestination {
     }
 
     /**
-     * An Initializer ... :-)
+     * Registrar for {@code Modifier}s and {@code Content}s.
      * 
      * @author mgp
      *

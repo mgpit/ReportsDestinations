@@ -38,7 +38,7 @@ import oracle.reports.RWException;
  * @author mgp
  *
  */
-public class HeaderDecorator extends ContentDecorator {
+public abstract class HeaderDecorator extends ContentDecorator {
 
     public HeaderDecorator() {
     }
@@ -63,7 +63,7 @@ public class HeaderDecorator extends ContentDecorator {
      * @return a Header
      */
     protected Header getHeader() {
-        return (Header) getContentModel();
+        return (Header) getContent();
     }
 
 }

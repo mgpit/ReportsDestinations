@@ -37,7 +37,7 @@ import oracle.reports.RWException;
  * @author mgp
  *
  */
-public class EnvelopeDecorator extends ContentDecorator {
+public abstract class EnvelopeDecorator extends ContentDecorator {
 
     public EnvelopeDecorator() {
     }
@@ -62,7 +62,7 @@ public class EnvelopeDecorator extends ContentDecorator {
      * @return an Envelope
      */
     protected Envelope getEnvelope() {
-        return (Envelope) getContentModel();
+        return (Envelope) getContent();
     }
 
 }
