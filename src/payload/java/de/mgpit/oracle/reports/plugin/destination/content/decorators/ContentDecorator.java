@@ -72,7 +72,9 @@ public abstract class ContentDecorator implements InputModifier, OutputModifier 
      * 
      * @return {@code Content} of this decorator
      */
-    protected abstract Content getContent();
+    public abstract Content getContent();
+    
+    
 
     /**
      * Gets the content model's mime type.

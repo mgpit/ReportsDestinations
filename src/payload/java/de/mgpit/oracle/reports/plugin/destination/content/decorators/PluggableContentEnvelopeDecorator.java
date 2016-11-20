@@ -33,11 +33,11 @@ public class PluggableContentEnvelopeDecorator extends EnvelopeDecorator impleme
 
     private Content contentModel;
 
-    protected Content getContent() {
+    public Content getContent() {
         return getContentModel();
     }
 
-    public Content getContentModel() {
+    private Content getContentModel() {
         return this.contentModel;
     }
 

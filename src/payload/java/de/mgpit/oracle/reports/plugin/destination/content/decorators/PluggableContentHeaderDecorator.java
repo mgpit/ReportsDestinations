@@ -21,6 +21,7 @@ package de.mgpit.oracle.reports.plugin.destination.content.decorators;
 
 
 import de.mgpit.oracle.reports.plugin.destination.content.types.Content;
+import de.mgpit.oracle.reports.plugin.destination.content.types.WithModel;
 
 /**
  * A {@code HeaderDecorator} with pluggable {@code Content}
@@ -28,15 +29,15 @@ import de.mgpit.oracle.reports.plugin.destination.content.types.Content;
  * @author mgp
  *
  */
-public class PluggableContentHeaderDecorator extends HeaderDecorator {
+public class PluggableContentHeaderDecorator extends HeaderDecorator implements WithModel {
 
     private Content contentModel;
 
-    protected Content getContent() {
+    public Content getContent() {
         return getContentModel();
     }
 
-    public Content getContentModel() {
+    private Content getContentModel() {
         return this.contentModel;
     }
 

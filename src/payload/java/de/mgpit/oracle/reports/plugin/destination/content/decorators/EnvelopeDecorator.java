@@ -46,14 +46,14 @@ public abstract class EnvelopeDecorator extends ContentDecorator {
      * Applies an {@code Envelope} to an {@code InputStream}.
      */
     public InputStream forInput( final InputStream in, final Properties parameters ) throws RWException {
-        return new EnvelopeDecoratedInputStream( in, getEnvelope() );
+        return new EnvelopeDecoratedInputStream( in, getEnvelope( parameters ) );
     }
 
     /**
      * Applies an {@code Envelope} to an {@code OutputStream}.
      */
     public OutputStream forOutput( final OutputStream out, final Properties parameters ) throws RWException {
-        return new EnvelopeDecoratedOutputStream( out, getEnvelope() );
+        return new EnvelopeDecoratedOutputStream( out, getEnvelope( parameters ) );
     }
 
     /**
@@ -61,8 +61,10 @@ public abstract class EnvelopeDecorator extends ContentDecorator {
      * 
      * @return an Envelope
      */
-    protected Envelope getEnvelope() {
-        return (Envelope) getContent();
+    protected Envelope getEnvelope( Properties parameters ) {
+        Envelope envelope = (Envelope) getContent();
+        envelope.build( parameters );
+        return envelope;
     }
 
 }

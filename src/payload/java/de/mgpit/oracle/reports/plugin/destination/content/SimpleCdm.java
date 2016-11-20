@@ -1,11 +1,13 @@
 package de.mgpit.oracle.reports.plugin.destination.content;
 
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.StringWriter;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Properties;
 
 import javax.activation.MimeType;
@@ -24,7 +26,7 @@ import org.w3c.dom.Element;
 
 import de.mgpit.oracle.reports.plugin.commons.Magic;
 import de.mgpit.oracle.reports.plugin.commons.U;
-import de.mgpit.oracle.reports.plugin.destination.content.types.Content;
+import de.mgpit.oracle.reports.plugin.destination.content.types.Envelope;
 
 /**
  * A simple Cdm.
@@ -32,17 +34,21 @@ import de.mgpit.oracle.reports.plugin.destination.content.types.Content;
  * @author mgp
  *
  */
-public class SimpleCdm implements Content {
-    private Properties properties;
-    private String content;
-    private boolean built = false;
+public class SimpleCdm implements Envelope {
 
-    public SimpleCdm( Properties properties ) {
-        this.properties = properties;
-        build();
-    }
+    private static final String DATA_ELEMENT = "<data>";
 
-    private void build() {
+    private static final int UNDEFINED = 0;
+    private static final int IN_HEADER = 1;
+    private static final int IN_DATA = 2;
+    private static final int IN_FOOTER = 3;
+    private static final HashMap STATE_NAMES;
+
+    private int currentState = UNDEFINED;
+    private ByteArrayInputStream headersBytes;
+    private ByteArrayInputStream footersBytes;
+
+    public void build( Properties parameters ) {
         final SimpleDateFormat dateFormat = new SimpleDateFormat( "YYYY.MM.dd HH:mm:ss" );
         final String now = dateFormat.format( new Date() );
 
@@ -62,6 +68,7 @@ public class SimpleCdm implements Content {
 
             cdmdoc.appendChild( info );
             Element data = cdm.createElement( "data" );
+            cdmdoc.appendChild( data );
 
             TransformerFactory transformerFactory = TransformerFactory.newInstance();
             Transformer transformer = transformerFactory.newTransformer();
@@ -73,7 +80,18 @@ public class SimpleCdm implements Content {
             Result stringResult = new StreamResult( string );
 
             transformer.transform( source, stringResult );
-            this.content = stringResult.toString();
+
+            final String content = stringResult.toString();
+            final int indexOfDataElement = content.lastIndexOf( DATA_ELEMENT );
+            if ( indexOfDataElement == Magic.CHARACTER_NOT_FOUND ) {
+                throw new Exception( U.classname( this ) + " is corrupt" );
+            }
+            final int endOfHeaderPosition = indexOfDataElement + DATA_ELEMENT.length();
+
+            final String headerContent = content.substring( 0, endOfHeaderPosition );
+            final String footerContent = content.substring( endOfHeaderPosition );
+            this.headersBytes = new ByteArrayInputStream( headerContent.getBytes() );
+            this.footersBytes = new ByteArrayInputStream( footerContent.getBytes() );
 
             // DocumentFragment foo = cdm.createDocumentFragment();
             // foo.appendChild( info );
@@ -86,28 +104,82 @@ public class SimpleCdm implements Content {
             throw new RuntimeException( "Runtime error", any );
         }
 
-        built = true;
-    }
-
-    public int read() {
-        // TODO Auto-generated method stub
-        U.assertTrue( built, "Cannot read an unbuilt Cdm!" );
-        return Magic.END_OF_STREAM;
+        currentState = IN_HEADER;
     }
 
     public boolean dataWanted() {
+        boolean wanted = false;
+        synchronized (this) {
+            switch ( currentState ) {
+            case IN_DATA:
+                wanted = true;
+                break;
+            default:
+                wanted = false;
+            }
+            return wanted;
+        }
+    }
 
-        return false;
+    public int read() {
+        int aByte = Magic.END_OF_STREAM;
+        synchronized (this) {
+            switch ( currentState ) {
+            case UNDEFINED:
+                throw new IllegalStateException( "Envelope has not been built!" );
+            case IN_HEADER:
+                aByte = readHeader();
+                if ( aByte == Magic.END_OF_STREAM ) {
+                    currentState = IN_DATA;
+                    aByte = this.read();
+                }
+                break;
+            case IN_DATA:
+                break;
+            case IN_FOOTER:
+                aByte = readFooter();
+                break;
+            default:
+                aByte = Magic.END_OF_STREAM;
+            }
+        }
+        return aByte;
+    }
+
+    private int readFooter() {
+        return this.footersBytes.read();
+    };
+
+    private int readHeader() {
+        return this.headersBytes.read();
     }
 
     public void setDataFinished() {
-        // TODO Auto-generated method stub
-
+        if ( currentState != IN_DATA ) {
+            throw new IllegalStateException( "Envelope currently does NOT consume data!" );
+        }
+        currentState = IN_FOOTER;
     }
 
     public void writeToOut( OutputStream out ) throws IOException {
-        // TODO Auto-generated method stub
+        switch ( currentState ) {
+        case UNDEFINED:
+            throw new IllegalStateException( "Envelope has not been built!" );
+        case IN_HEADER:
+            for ( int nextByte = readHeader(); nextByte != Magic.END_OF_STREAM; nextByte = readHeader() ) {
+                out.write( nextByte );
+            }
+            currentState = IN_DATA;
+            break;
+        case IN_DATA:
+            throw new IllegalStateException( "Envelope currently wants to consume data!" );
 
+        case IN_FOOTER:
+            for ( int nextByte = readFooter(); nextByte != Magic.END_OF_STREAM; nextByte = readFooter() ) {
+                out.write( nextByte );
+            }
+            break;
+        }
     }
 
     private MimeType mimetype;
@@ -127,4 +199,15 @@ public class SimpleCdm implements Content {
         return "xml";
     }
 
+    public static String statename( int stateCode ) {
+        return U.coalesce( (String) STATE_NAMES.get( new Integer( stateCode ) ), "???Unknown???" );
+    }
+
+    static {
+        STATE_NAMES = new HashMap( 11 );
+        STATE_NAMES.put( new Integer( UNDEFINED ), "Undefined" );
+        STATE_NAMES.put( new Integer( IN_DATA ), "Data/Payload wanted" );
+        STATE_NAMES.put( new Integer( IN_HEADER ), "In Header section" );
+        STATE_NAMES.put( new Integer( IN_FOOTER ), "In Footer section" );
+    }
 }

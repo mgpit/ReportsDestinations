@@ -565,7 +565,7 @@ public abstract class ModifyingDestination extends MgpDestination {
      * @author mgp
      *
      */
-    private static class DestinationRegistrar {
+    private static final class DestinationRegistrar {
 
         private static void registerConfiguredModifiersFrom( Properties destinationsProperties ) throws RWException {
             Enumeration keys = destinationsProperties.keys();

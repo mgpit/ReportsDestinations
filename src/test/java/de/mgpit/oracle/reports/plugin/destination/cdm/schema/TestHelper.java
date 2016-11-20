@@ -4,6 +4,7 @@ package de.mgpit.oracle.reports.plugin.destination.cdm.schema;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Properties;
 
 import javax.activation.MimeType;
 import javax.activation.MimeTypeParseException;
@@ -23,6 +24,10 @@ public class TestHelper {
                     "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<cdmdoc>\n    <data>\n".getBytes() );
             private ByteArrayInputStream footer = new ByteArrayInputStream( "\n    </data>\n</cdmdoc>".getBytes() );
             private int currentBlock = IN_HEADER;
+            
+            public void build(Properties parameters ) {
+                // NOP
+            }
 
             public boolean dataWanted() {
                 boolean wanted = false;

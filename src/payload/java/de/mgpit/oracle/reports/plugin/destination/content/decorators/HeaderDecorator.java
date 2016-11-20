@@ -47,14 +47,14 @@ public abstract class HeaderDecorator extends ContentDecorator {
      * Applies a {@code Header} to an {@code InputStream}.
      */
     public InputStream forInput( InputStream in, Properties parameters ) throws RWException {
-        return new HeaderDecoratedInputStream( in, getHeader() );
+        return new HeaderDecoratedInputStream( in, getHeader( parameters ) );
     }
 
     /**
      * Applies a {@code Header} to an {@code OutputStream}.
      */
     public OutputStream forOutput( OutputStream out, Properties parameters ) throws RWException {
-        return new HeaderDecoratedOutputStream( out, getHeader() );
+        return new HeaderDecoratedOutputStream( out, getHeader( parameters ) );
     }
 
     /**
@@ -62,8 +62,10 @@ public abstract class HeaderDecorator extends ContentDecorator {
      * 
      * @return a Header
      */
-    protected Header getHeader() {
-        return (Header) getContent();
+    protected Header getHeader( Properties parameters ) {
+        Header header = (Header) getContent();
+        header.build( parameters );
+        return header;
     }
 
 }

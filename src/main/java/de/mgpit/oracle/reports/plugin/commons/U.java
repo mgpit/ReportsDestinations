@@ -462,6 +462,38 @@ public final class U {
     /* Some assertion stuff ... :-) */
 
     /**
+     * Assert that two {@code int}s are equal.
+     * 
+     * @param current
+     *            value to be tested
+     * @param expected
+     *            value to be tested against
+     * 
+     * @throws AssertionError
+     *             if the two {@code int}s are NOT equal.
+     */
+    public static void assertEqual( int current, int expected ) throws AssertionError {
+        assertEqual( current, expected, "Current value differs from expected value!" );
+    }
+
+    /**
+     * Asserts that two {@code int}s are equal.
+     * 
+     * @param current
+     *            value to be tested
+     * @param expected
+     *            value to be tested against
+     * @param message
+     *            error message to be provided if the assertion fails
+     * 
+     * @throws AssertionError
+     *             if the two {@code int}s are NOT equal.
+     */
+    public static void assertEqual( int current, int expected, String message ) throws AssertionError {
+        assertTrue( current == expected, message );
+    }
+
+    /**
      * Assert that the object given is not the {@code null} value
      * 
      * @param o
