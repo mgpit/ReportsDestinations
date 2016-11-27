@@ -22,19 +22,19 @@ package de.mgpit.oracle.reports.plugin.destination.mq;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Constructor;
 import java.net.URISyntaxException;
 import java.util.Properties;
 
 import org.apache.log4j.Logger;
 
-import de.mgpit.oracle.reports.plugin.commons.MQ;
 import de.mgpit.oracle.reports.plugin.commons.U;
+import de.mgpit.oracle.reports.plugin.commons.driver.MQ;
 import de.mgpit.oracle.reports.plugin.commons.io.IOUtility;
 import de.mgpit.oracle.reports.plugin.destination.MgpDestination;
 import de.mgpit.oracle.reports.plugin.destination.ModifyingDestination;
 import de.mgpit.types.Filename;
 import oracle.reports.RWException;
-import oracle.reports.utility.Utility;
 
 /**
  * 
@@ -53,11 +53,21 @@ import oracle.reports.utility.Utility;
  *  <destination destype="mq" class="de.mgpit.oracle.reports.plugin.destination.zip.MQDestination">
  *     <property name="loglevel" value="DEBUG"/> <!-- log4j message levels. Allow debug messages --> 
  *     <property name="logfile"  value="/tmp/log/mqdestination.log"/> <!-- file to send the messages to -->
- *     <property name="mq"       value="wmq://localhost:1414/dest/queue/MY.QUEUE@MYQMGR?channelName=CHANNEL_1/"/>
+ *     <!-- MQ Implementation - the "Driver" -->
+ *     <property name="mq.implementation"   value="de.mgpit.oracle.reports.plugin.commons.driver.FileMockedMQ" />;
+ *     <!-- (Default) MQ Connection. Can be overridden on distribution -->
+ *     <property name="mq"                  value="wmq://localhost:1414/dest/queue/MY.QUEUE@MYQMGR?channelName=CHANNEL_1/"/>
  *  </destination>
  *         }
  * </pre>
  * 
+ * The {@code mq.implementation} property is <strong>mandatory</strong> and is either one of
+ * <ul>
+ * <li>{@code de.mgpit.oracle.reports.plugin.commons.driver.FileMockedMQ}</li>
+ * <li>{@code de.mgpit.oracle.reports.plugin.commons.driver.WebsphereMQ}</li>
+ * <li>or one of your implementations of {@code de.mgpit.oracle.reports.plugin.commons.driver.MQ}</li>
+ * </ul>
+ * <p>
  * The default MQ target is configured as property named {@code mq} in the form of an URI denoting
  * Queue Manager, Queue, and Channel name.
  * <ul>
@@ -128,11 +138,6 @@ public final class MQDestination extends ModifyingDestination {
     private static final Logger LOG = Logger.getLogger( MQDestination.class );
 
     /**
-     * Holds the default MQ instance as defined in the {@code <reportservername>.conf} file
-     */
-    private static MQ DEFAULT_MQ;
-
-    /**
      * Holds the MQ connection used for the current distribution cycle - which is
      * <br/>
      * {@code start} &rarr; {@code sendFile}<sup>{1..n}</sup> &rarr; {@code stop()}
@@ -146,9 +151,10 @@ public final class MQDestination extends ModifyingDestination {
     protected void stop() throws RWException {
         try {
             super.stop();
+            this.mq.disconnect();
         } catch ( Exception any ) {
             getLogger().error( "Error during finishing distribution!", any );
-            throw Utility.newRWException( any );
+            throw asRWException( any );
         }
         getLogger().info( "Finished distribution to " + U.w( mq ) );
     }
@@ -181,11 +187,12 @@ public final class MQDestination extends ModifyingDestination {
 
             if ( continueToSend ) {
                 getLogger().info( "Starting distribution to MQ" );
-                this.mq = (MQ) U.coalesce( MQRegistrar.getDeclaredMQfrom( allProperties ), DEFAULT_MQ );
-
+                this.mq = (MQ) U.coalesce( MQRegistrar.getDeclaredMQfrom( allProperties ), MQRegistrar.DEFAULT_MQ );
                 continueToSend = this.mq != null;
                 if ( !continueToSend ) {
                     getLogger().warn( "Cannot continue to send! No MQ destination provided nor default MQ destination speficied!" );
+                } else {
+                    mq.connect();
                 }
             } else {
                 getLogger().warn( "Cannot continue to send ..." );
@@ -196,8 +203,12 @@ public final class MQDestination extends ModifyingDestination {
             throw forLogging;
         } catch ( Throwable fatalOther ) {
             getLogger().fatal( "Fatal error on starting Distribution!", fatalOther );
-            throw Utility.newRWException( new Exception( "Fatal error on starting Distribution!", fatalOther ) );
+            throw asRWException( new Exception( "Fatal error on starting Distribution!", fatalOther ) );
         }
+    }
+    
+    private boolean isMultipart() {
+        return false;
     }
 
     protected void sendMainFile( Filename cacheFileFilename, short fileFormat ) throws RWException {
@@ -206,10 +217,14 @@ public final class MQDestination extends ModifyingDestination {
         try {
             U.assertNotNull( this.mq, "Cannot continue to send! No MQ destination provided nor default MQ destination speficied!" );
             OutputStream target = getTarget();
-            IOUtility.copyFromToAndThenClose( source, target );
+            IOUtility.copyFromTo( source, target );
+            source.close();
+            if ( !this.isMultipart() ) {
+                target.close();
+            }
         } catch ( Throwable anyOther ) {
             getLogger().fatal( "Fatal Error during sending main file " + U.w( cacheFileFilename ) + "!", anyOther );
-            throw Utility.newRWException( new Exception( anyOther ) );
+            throw asRWException( new Exception( anyOther ) );
         }
 
     }
@@ -235,7 +250,7 @@ public final class MQDestination extends ModifyingDestination {
      * @return {@OutputStream} for writing into an Websphere MQ&reg; message.
      * 
      */
-    protected OutputStream getTargetOut() {
+    protected OutputStream getTargetOut() throws Exception {
         return this.mq.newMessage();
     }
 
@@ -259,11 +274,54 @@ public final class MQDestination extends ModifyingDestination {
         if ( LOG.isDebugEnabled() ) {
             dumpProperties( destinationsProperties, LOG );
         }
-        MQRegistrar.registerDefaultMQfrom( destinationsProperties );
+        try {
+            MQRegistrar.registerMqImplementationFrom( destinationsProperties );
+            MQRegistrar.registerDefaultMQfrom( destinationsProperties );
+        } catch ( Exception ex ) {
+            throw asRWException( ex );
+        } catch ( Throwable t ) {
+            throw asRWException( t );
+        }
         LOG.info( "Destination " + U.w( MQDestination.class.getName() ) + " started." );
     }
 
     private static final class MQRegistrar {
+        /**
+         * Holds the MQ Implementation.
+         */
+        private static Class MQ_IMPLEMENTATION;
+
+        private static void registerMqImplementationFrom( Properties destinationsProperties ) throws IllegalArgumentException {
+            String className = destinationsProperties.getProperty( "mq.implementation" );
+            if ( className == null ) {
+                IllegalArgumentException illegal = new IllegalArgumentException(
+                        "Missing property \"mq.implementation\" in Report Server configuration!" );
+                LOG.fatal( illegal );
+                throw illegal;
+            }
+            try {
+                MQ_IMPLEMENTATION = Class.forName( className );
+                final Class[] withConfigurationArgument = { MQ.Configuration.class };
+                Constructor c = MQ_IMPLEMENTATION.getDeclaredConstructor( withConfigurationArgument );
+                LOG.info( "Found " + className + " for MQ driver implementation." );
+            } catch ( NoSuchMethodException noSuchMethod ) {
+                final String simpleClassName = U.classname( className );
+                final String constructorName = simpleClassName + "( MQ.Configuration )";
+                IllegalArgumentException illegal = new IllegalArgumentException( className + " does not declare the constructor " + constructorName );
+                LOG.fatal( illegal );
+                throw illegal;
+            } catch ( ClassNotFoundException notFound ) {
+                IllegalArgumentException illegal = new IllegalArgumentException( className + " cannot be found!" );
+                LOG.fatal( illegal );
+                throw illegal;
+            }
+        }
+
+        /**
+         * Holds the default MQ instance as defined in the {@code <reportservername>.conf} file
+         */
+        private static MQ DEFAULT_MQ;
+
         private static void registerDefaultMQfrom( Properties destinationsProperties ) {
             DEFAULT_MQ = getDeclaredMQfrom( destinationsProperties );
             if ( DEFAULT_MQ == null ) {
@@ -280,17 +338,35 @@ public final class MQDestination extends ModifyingDestination {
                     properties.getProperty( "uri", properties.getProperty( "connection", properties.getProperty( "desname" ) ) ) );
             final String prefixWanted = MQ.Configuration.WMQ_SCHEME + ":";
             if ( !U.isEmpty( uriLiteral ) && uriLiteral.startsWith( prefixWanted ) ) {
-
-                try {
-                    return new MQ( MQ.Configuration.fromURILiteral( uriLiteral ) );
-                } catch ( URISyntaxException syntax ) {
-                    LOG.error( "Invalid Connection URI! Cannot create MQ Connection!", syntax );
-                } catch ( Exception other ) {
-                    LOG.error( "Cannot create MQ Connection!", other );
-                }
+                return newMQ( uriLiteral );
             }
             return null;
         }
+    }
+
+    /**
+     * Creates a new MQ instance.
+     * <p>
+     *  
+     * @param uriLiteral URI literal with the configuration. 
+     * @return a new MQ instance.
+     */
+    public static MQ newMQ( String uriLiteral ) {
+        try {
+            
+            final Class[] withConfigurationArgument = { MQ.Configuration.class };
+            Constructor c = MQRegistrar.MQ_IMPLEMENTATION.getDeclaredConstructor( withConfigurationArgument );
+            
+            MQ.Configuration configuration = MQ.Configuration.fromURILiteral( uriLiteral );
+            final Object[] configurationArgument = { configuration }; 
+            MQ mq = (MQ)c.newInstance( configurationArgument ); 
+            return mq;
+        } catch ( URISyntaxException syntax ) {
+            LOG.error( "Invalid Connection URI! Cannot create MQ Connection!", syntax );
+        } catch ( Exception other ) {
+            LOG.error( "Cannot create MQ Connection!", other );
+        }
+        return null;
     }
 
     public static void shutdown() {

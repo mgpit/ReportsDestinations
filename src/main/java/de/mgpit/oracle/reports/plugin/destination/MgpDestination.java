@@ -100,7 +100,7 @@ import oracle.reports.utility.Utility;
  *     throw rwException;
  *  } catch ( Throwable somethingUnexpected ) {
  *     log.fatal( "Fatal error during delegation of initialization to <em>MySuperclass</em>!" );
- *     throw Utility.newRWException( new Exception( "Fatal error during initializing <em>MyDestinationClass</em>" ) );
+ *     throw asRWException( new Exception( "Fatal error during initializing <em>MyDestinationClass</em>" ) );
  *  }
  * ...
  * }
@@ -123,6 +123,24 @@ public abstract class MgpDestination extends Destination {
 
     private int numberOfFilesInDistribution = -1;
     private int indexOfCurrentlyDistributedFile = -1;
+    
+    /**
+     * Creates a RWExcpetion on the exception given.
+     * @param ex Exception to wrap
+     * @return a new RWException
+     */
+    protected static final RWException asRWException( Exception ex ) {
+        return Utility.newRWException( ex );
+    }
+    
+    /**
+     * Creates a RWExcpetion on the exception given.
+     * @param ex Exception to wrap
+     * @return a new RWException
+     */
+    protected static final RWException asRWException( Throwable t ) {
+        return asRWException( new Exception( t ) );
+    }
 
     /**
      * Translates the numeric code for the file format into a human readable text like {@code application/pdf}
@@ -337,13 +355,13 @@ public abstract class MgpDestination extends Destination {
             }
         } catch ( Exception any ) {
             getLogger().error( "Error during sending file " + U.w( cacheFileFilename ) + ".", any );
-            RWException rwException = Utility.newRWException( any );
+            RWException rwException = asRWException( any );
             throw rwException;
         } catch ( Throwable somethingFatal ) {
             String message = "Fatal Error during sending " + ((isMainFile ? "main" : "additional")) + " file "
                     + U.w( cacheFileFilename ) + "!";
             getLogger().fatal( message, somethingFatal );
-            throw Utility.newRWException( new Exception( message, somethingFatal ) );
+            throw asRWException( new Exception( message, somethingFatal ) );
         }
     }
 
@@ -380,7 +398,7 @@ public abstract class MgpDestination extends Destination {
             return in;
         } catch ( FileNotFoundException fileNotFound ) {
             getLogger().error( "Error on getting content for distribution.!", fileNotFound );
-            throw Utility.newRWException( fileNotFound );
+            throw asRWException( fileNotFound );
         }
     }
 
@@ -418,7 +436,7 @@ public abstract class MgpDestination extends Destination {
             throw rwException;
         } catch ( Throwable somethingUnexpected ) {
             log.fatal( "Fatal error during delegation of initialization to Destination!" );
-            throw Utility.newRWException( new Exception( "Fatal error during initializing MgpDestination" ) );
+            throw asRWException( new Exception( "Fatal error during initializing MgpDestination" ) );
             // Back in the static shit here. All inheriting classes should duplicate this try-catch sequence ...
         }
     }

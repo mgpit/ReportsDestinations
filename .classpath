@@ -36,5 +36,6 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="lib" path="lib/itext-2.1.7/itext-2.1.7.jar" sourcepath="lib/itext-2.1.7/itextpdf-2.1.7.zip"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/WebsphereMq 7.5"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

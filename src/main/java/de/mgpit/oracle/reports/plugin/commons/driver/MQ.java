@@ -17,22 +17,58 @@
 /**
  * @license APACHE-2.0
  */
-package de.mgpit.oracle.reports.plugin.commons;
+package de.mgpit.oracle.reports.plugin.commons.driver;
 
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Properties;
 
-public class MQ {
+import de.mgpit.oracle.reports.plugin.commons.U;
+import de.mgpit.oracle.reports.plugin.commons.URIUtility;
+
+public abstract class MQ {
+
+    protected final Configuration configuration;
+
+    public MQ( Configuration configuration ) {
+        this.configuration = configuration;
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see de.mgpit.oracle.reports.plugin.commons.driver.MQ#toString()
+     */
+    public String toString() {
+        return configuration == null ? "Invalid MQ" : "MQ on " + configuration.toString();
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see de.mgpit.oracle.reports.plugin.commons.driver.MQ#connect()
+     */
+    public abstract void connect() throws Exception;
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see de.mgpit.oracle.reports.plugin.commons.driver.MQ#disconnect()
+     */
+    public abstract void disconnect() throws Exception;
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see de.mgpit.oracle.reports.plugin.commons.driver.MQ#newMessage()
+     */
+    public abstract OutputStream newMessage() throws Exception;
 
     /**
      * 
-     * Class a configuration for a Websphere MQ client connection.
+     * A configuration for a Websphere MQ client connection.
      * <p>
      * This is still a very simple implementation as
      * <ol>
@@ -43,7 +79,7 @@ public class MQ {
      *
      * @author mgp
      */
-    public static class Configuration {
+    public static final class Configuration {
         /**
          * Scheme for wmq URIs (IRIs) is "wmq"
          */
@@ -57,6 +93,26 @@ public class MQ {
 
         private final String hostName, queueManagerName, channelName, queueName;
         private final int port;
+
+        public final String getHostName() {
+            return this.hostName;
+        }
+
+        public final String getQueueManagerName() {
+            return this.queueManagerName;
+        }
+
+        public final String getChannelName() {
+            return this.channelName;
+        }
+
+        public final String getQueueName() {
+            return this.queueName;
+        }
+
+        public final int getPort() {
+            return this.port;
+        }
 
         /**
          * Creates a new Configuration instance
@@ -257,54 +313,6 @@ public class MQ {
             return hashCode();
         }
 
-    }
-
-    private final Configuration configuration;
-
-    public MQ( Configuration configuration ) {
-        this.configuration = configuration;
-    }
-
-    public void connect() {
-
-    }
-
-    public void disconnect() {
-
-    }
-    
-    public String toString() {
-        return configuration==null?"Invalid MQ":"MQ on " + configuration.toString();
-    }
-
-    public OutputStream newMessage() {
-        return new OutputStream() {
-            private FileOutputStream file;
-
-            public void write( int b ) throws IOException {
-                if ( file != null ) {
-                    file.write( b );
-                }
-            }
-
-            public void flush() throws IOException {
-                file.flush();
-            }
-
-            public void close() throws IOException {
-                file.close();
-            }
-
-            {
-                try {
-                    file = new FileOutputStream(
-                            File.createTempFile( "QMSALSAXP.IQ.DEVELOPMENT__", ".mq", new File( "O:\\tmp\\reports\\output" ) ) );
-                } catch ( IOException ignored ) {
-                    file = null;
-                }
-            }
-
-        };
     }
 
 }

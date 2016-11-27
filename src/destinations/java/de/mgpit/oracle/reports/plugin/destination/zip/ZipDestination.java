@@ -32,8 +32,8 @@ import org.apache.log4j.Logger;
 
 import de.mgpit.oracle.reports.plugin.commons.U;
 import de.mgpit.oracle.reports.plugin.commons.URIUtility;
-import de.mgpit.oracle.reports.plugin.commons.ZipArchive;
-import de.mgpit.oracle.reports.plugin.commons.ZipArchive.ArchivingException;
+import de.mgpit.oracle.reports.plugin.commons.driver.ZipArchive;
+import de.mgpit.oracle.reports.plugin.commons.driver.ZipArchive.ArchivingException;
 import de.mgpit.oracle.reports.plugin.commons.io.IOUtility;
 import de.mgpit.oracle.reports.plugin.destination.MgpDestination;
 import de.mgpit.types.Entryname;
@@ -174,7 +174,7 @@ public final class ZipDestination extends MgpDestination {
             super.stop();
         } catch ( Exception any ) {
             getLogger().error( "Error during finishing distribution!", any );
-            throw Utility.newRWException( any );
+            throw asRWException( any );
         }
         getLogger().info( "Finished distribution to " + U.w( getZipArchiveFileName() ) );
     }
@@ -197,7 +197,7 @@ public final class ZipDestination extends MgpDestination {
             addFileToArchiveWithName( cacheFile, entryName );
         } catch ( Throwable anyOther ) {
             getLogger().fatal( "Fatal Error during sending main file " + U.w( cacheFile ) + "!", anyOther );
-            throw Utility.newRWException( new Exception( anyOther ) );
+            throw asRWException( new Exception( anyOther ) );
         }
     }
 
@@ -218,7 +218,7 @@ public final class ZipDestination extends MgpDestination {
             addFileToArchiveWithName( cacheFile, entryName );
         } catch ( Throwable anyOther ) {
             getLogger().fatal( "Fatal Error during sending additional file " + U.w( cacheFile ) + "!", anyOther );
-            throw Utility.newRWException( new Exception( anyOther ) );
+            throw asRWException( new Exception( anyOther ) );
         }
     }
 
@@ -239,10 +239,10 @@ public final class ZipDestination extends MgpDestination {
             this.zipArchive.addFromStream( in, entryname, sourceFile.lastModified() );
         } catch ( FileNotFoundException fileNotFound ) {
             getLogger().error( "Error during distribution! Could not find file to add!" );
-            throw Utility.newRWException( fileNotFound );
+            throw asRWException( fileNotFound );
         } catch ( ArchivingException archivingException ) {
             getLogger().error( "Error during distribution! Could not archive file!", archivingException );
-            throw Utility.newRWException( archivingException );
+            throw asRWException( archivingException );
         }
     }
 
@@ -310,7 +310,7 @@ public final class ZipDestination extends MgpDestination {
             throw forLogging;
         } catch ( Throwable fatalOther ) {
             getLogger().fatal( "Fatal error on starting Distribution!", fatalOther );
-            throw Utility.newRWException( new Exception( "Fatal error on starting Distribution!", fatalOther ) );
+            throw asRWException( new Exception( "Fatal error on starting Distribution!", fatalOther ) );
         }
 
     }

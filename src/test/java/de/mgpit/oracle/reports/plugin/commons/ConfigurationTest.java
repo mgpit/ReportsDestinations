@@ -9,7 +9,7 @@ import com.sun.java.util.collections.Arrays;
 import com.sun.java.util.collections.Comparator;
 import com.sun.java.util.collections.Iterator;
 
-import de.mgpit.oracle.reports.plugin.commons.MQ.Configuration;
+import de.mgpit.oracle.reports.plugin.commons.driver.MQ.Configuration;
 import junit.framework.TestCase;
 
 public class ConfigurationTest extends TestCase {

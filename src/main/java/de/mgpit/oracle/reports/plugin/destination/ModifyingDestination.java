@@ -95,24 +95,6 @@ public abstract class ModifyingDestination extends MgpDestination {
     private static final Logger LOG = Logger.getLogger( MgpDestination.class );
 
     /**
-     * Holds the modifier plugins as defined in the {@code <reportservername>.conf} file
-     */
-    protected static final Map MODIFIER_REGISTRY = Collections.synchronizedMap( new HashMap( Magic.PRIME ) );
-
-    /**
-     * Holds the content providers as defined in the {@code <reportservername>.conf} file
-     */
-    protected static final Map CONTENTPROVIDER_REGISTRY = Collections.synchronizedMap( new HashMap( Magic.PRIME ) );
-
-    public static void registerModifier( ModifierAlias key, Class value ) {
-        MODIFIER_REGISTRY.put( key, value );
-    }
-
-    public static void registerContent( ContentAlias key, Class value ) {
-        CONTENTPROVIDER_REGISTRY.put( key, value );
-    }
-
-    /**
      * Holds the name of the property used for passing a modifier chain to the current distribution.
      */
     private static final String CHAIN_DECLARATION_PROPERTY = "apply";
@@ -181,8 +163,12 @@ public abstract class ModifyingDestination extends MgpDestination {
      * @throws RWException
      */
     protected OutputStream getTarget() throws RWException {
-        OutputStream targetOut = getTargetOut();
-        return wrapWithOutputModifiers( targetOut );
+        try {
+            OutputStream targetOut = getTargetOut();
+            return wrapWithOutputModifiers( targetOut );
+        } catch ( Exception any ) {
+            throw asRWException( any );
+        }
     }
 
     /**
@@ -190,8 +176,9 @@ public abstract class ModifyingDestination extends MgpDestination {
      * 
      * @return OutputStream on the distribution target.
      * @throws RWException
+     * @throws Exception
      */
-    protected abstract OutputStream getTargetOut() throws RWException;
+    protected abstract OutputStream getTargetOut() throws RWException, Exception;
 
     /**
      * Wraps the output with {@code OutputModifier}s.
@@ -300,12 +287,12 @@ public abstract class ModifyingDestination extends MgpDestination {
                     buildInputModifierChainFrom( declaredInputModifications );
                 } catch ( Exception any ) {
                     LOG.fatal( "Fatal error on instantiating extracted modifiers for current distribution!", any );
-                    throw Utility.newRWException( any );
+                    throw asRWException( any );
                 }
             } else {
                 String message = "Found invalid modifier chain declaraton for current distribution!";
                 LOG.fatal( message );
-                throw Utility.newRWException( new IllegalArgumentException( message ) );
+                throw asRWException( new IllegalArgumentException( message ) );
             }
 
         } else {
@@ -410,12 +397,12 @@ public abstract class ModifyingDestination extends MgpDestination {
 
                 U.assertNotEmpty( modifierDefinition, "Cannot parse " + unparsed + "!" );
                 this.alias = ModifierAlias.of( modifierDefinition );
-                this.modifier = (Class) MODIFIER_REGISTRY.get( this.alias );
+                this.modifier = (Class) DestinationRegistrar.MODIFIER_REGISTRY.get( this.alias );
                 if ( isModifierValid() ) {
                     if ( !U.isEmpty( contentDefinition ) ) {
                         this.contentAlias = ContentAlias.of( contentDefinition );
                         if ( this.contentAlias.isNotEmpty() ) {
-                            this.content = (Class) CONTENTPROVIDER_REGISTRY.get( this.contentAlias );
+                            this.content = (Class) DestinationRegistrar.CONTENTPROVIDER_REGISTRY.get( this.contentAlias );
                         }
 
                         if ( !isContentValid() ) {
@@ -572,6 +559,23 @@ public abstract class ModifyingDestination extends MgpDestination {
      *
      */
     private static final class DestinationRegistrar {
+        /**
+         * Holds the modifier plugins as defined in the {@code <reportservername>.conf} file
+         */
+        protected static final Map MODIFIER_REGISTRY = Collections.synchronizedMap( new HashMap( Magic.PRIME ) );
+
+        /**
+         * Holds the content providers as defined in the {@code <reportservername>.conf} file
+         */
+        protected static final Map CONTENTPROVIDER_REGISTRY = Collections.synchronizedMap( new HashMap( Magic.PRIME ) );
+
+        public static void registerModifier( ModifierAlias key, Class value ) {
+            MODIFIER_REGISTRY.put( key, value );
+        }
+
+        public static void registerContent( ContentAlias key, Class value ) {
+            CONTENTPROVIDER_REGISTRY.put( key, value );
+        }
 
         private static void registerConfiguredModifiersFrom( Properties destinationsProperties ) throws RWException {
             Enumeration keys = destinationsProperties.keys();
@@ -620,7 +624,7 @@ public abstract class ModifyingDestination extends MgpDestination {
                 LOG.error( cnf );
                 return false;
             }
-            ModifyingDestination.registerModifier( name, clazz );
+            registerModifier( name, clazz );
             return true;
         }
 
@@ -703,7 +707,7 @@ public abstract class ModifyingDestination extends MgpDestination {
                 LOG.error( cnf );
                 return false;
             }
-            ModifyingDestination.registerContent( name, implementingClass );
+            registerContent( name, implementingClass );
             return true;
         }
 

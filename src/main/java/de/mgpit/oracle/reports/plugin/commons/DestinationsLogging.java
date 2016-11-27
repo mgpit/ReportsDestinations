@@ -290,7 +290,7 @@ public final class DestinationsLogging {
             if ( !directoryname.isValidDirectory() ) {
                 directoryname = Directoryname.of( Utility.getTempDir() );
                 if ( !directoryname.isValidDirectory() ) {
-                    directoryname = Directoryname.of( IOUtility.getTempDir() );
+                    directoryname = Directoryname.of( IOUtility.getSystemTempDir() );
                     // Assumption: tempdir will always exist and be valid
                 }
             }
@@ -327,7 +327,7 @@ public final class DestinationsLogging {
             if ( !directoryname.isValidDirectory() ) {
                 directoryname = Directoryname.of( Utility.getTempDir() );
                 if ( !directoryname.isValidDirectory() ) {
-                    directoryname = Directoryname.of( IOUtility.getTempDir() );
+                    directoryname = Directoryname.of( IOUtility.getSystemTempDir() );
                 }
             }
 

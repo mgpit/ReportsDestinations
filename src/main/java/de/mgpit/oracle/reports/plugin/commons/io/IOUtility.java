@@ -64,7 +64,7 @@ public class IOUtility {
      * 
      * @return string with the pathname of the directory denoted by <code>java.io.tmpdir</code>.
      */
-    public static synchronized String getTempDir() {
+    public static synchronized String getSystemTempDir() {
         if ( tmpdir == null ) {
             GetPropertyAction a = new GetPropertyAction( "java.io.tmpdir" );
             tmpdir = ((String) AccessController.doPrivileged( a ));

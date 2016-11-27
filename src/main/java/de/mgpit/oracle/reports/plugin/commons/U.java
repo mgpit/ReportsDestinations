@@ -61,7 +61,7 @@ public final class U {
     }
 
     /**
-     * Returns the classes class name, only. Similar to Class.getSimpleName()
+     * Gets the classes class name, only. Similar to Class.getSimpleName()
      * 
      * @param clazz
      *            the class
@@ -72,6 +72,13 @@ public final class U {
         return classname( clazz.getName() );
     }
 
+    /**
+     * Gets the class name part of a class name string. Similar to Class.getSimpleName()
+     * 
+     * @param maybeFullClassName
+     *            the class name string
+     * @return the classes class name
+     */
     public static final String classname( String maybeFullClassName ) {
         assertNotEmpty( maybeFullClassName );
         int lastDotPosition = maybeFullClassName.lastIndexOf( '.' );
@@ -618,7 +625,7 @@ public final class U {
      * try {
      *     U.assertXXX( ... );
      * } catch ( AssertionError error ) {
-     *     throw Utility.newRWException( error ); 
+     *     throw asRWException( error ); 
      * }}
      * </pre>
      * 
@@ -669,8 +676,10 @@ public final class U {
         public final void evaluate() throws RWException {
             try {
                 test();
+            } catch ( Exception ex ) {
+                throw Utility.newRWException( ex );
             } catch ( Throwable t ) {
-                throw Utility.newRWException( new Exception( t.getCause() ) );
+                throw Utility.newRWException( new Exception( t ) );
             }
         }
 

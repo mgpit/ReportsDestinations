@@ -21,9 +21,9 @@
     <property name="dir.reports" location="${oracle.home}/reports" />
     <property name="dir.reports.jlib" location="${dir.reports}/jlib" />
 
-    <property name="deploy.jar.ZIPdestination" value="zipdestination_0.0.1.jar" />
-    <property name="deploy.jar.MQdestination" value="mqdestination_0.0.1.jar" />
-    <property name="deploy.jar.MgpCommons" value="mgpcommons_0.0.1.jar" />
+    <property name="deploy.jar.ZIPdestination" value="zipdestination_0.9.0.jar" />
+    <property name="deploy.jar.MQdestination" value="mqdestination_0.3.0.jar" />
+    <property name="deploy.jar.MgpCommons" value="mgpcommons_0.9.0.jar" />
 
     <property name="lib.mgp.reports.commons" location="${dir.reports.jlib}/${deploy.jar.MgpCommons}" />
 
@@ -31,15 +31,15 @@
     <property name="lib.zrclient" location="${oracle.home.jlib}/zrclient.jar" />
     <property name="lib.log4j" location="${dir.reports.jlib}/log4j-1.2.4.jar" />
     <property name="lib.commons-codec" location="${dir.reports.jlib}/commons-codec-1.5.jar" />
-    
+
     <macrodef name="echotimestamp">
-      <sequential>
-        <local name="timestamp" />
-        <tstamp>
-          <format property="timestamp" pattern="yyyy-MM-dd HH:mm:ss" />
-        </tstamp>
-        <echo message="${timestamp}" />
-      </sequential>
+        <sequential>
+            <local name="timestamp" />
+            <tstamp>
+                <format property="timestamp" pattern="yyyy-MM-dd HH:mm:ss" />
+            </tstamp>
+            <echo message="${timestamp}" />
+        </sequential>
     </macrodef>
 
     <scriptdef name="propertyreplace" language="javascript">
@@ -65,11 +65,21 @@
 		]]>
     </scriptdef>
 
+    <property name="wmq.home" location="O:/IBM/WebSphere MQ"/>
+    <property name="wmq.lib" location="${wmq.home}/java/lib"/>
+
+    <path id="wmq.class.path">
+        <pathelement path="${wmq.lib}/com.ibm.mq.jar"/>
+        <pathelement path="${wmq.lib}/com.ibm.mq.jmqi.jar"/>
+    </path>
+
+
     <path id="project.class.path">
         <pathelement path="${lib.rwrun}" />
         <pathelement path="${lib.zrclient}/" />
         <pathelement path="${lib.log4j}" />
         <pathelement path="${lib.commons-codec}" />
+        <!--path refid="wmq.class.path"/-->
     </path>
 
     <property name="orajaxb" location="${oracle.home}\bin\orajaxb.bat" />
@@ -168,21 +178,29 @@
         <mkdir dir="${dir.build}" />
     </target>
 
-    <target name="compileCommons" depends="cleanbuildcommons">
-        <javac includeantruntime="false" defaultexcludes="true" srcdir="${dir.src.main}" destdir="${dir.build}" source="1.4" target="1.4" debug="yes" >
+    <target name="compileMain">
+        <description>Compiles the Java classes in ${dir.src.main}</description>
+        <javac includeantruntime="false" defaultexcludes="true" srcdir="${dir.src.main}" destdir="${dir.build}" source="1.4" target="1.4" debug="yes">
             <compilerarg value="-Xbootclasspath/p:${toString:java14.bootstrap.class.path}" />
             <classpath refid="project.class.path" />
+            <!-- TODO: Temp -->
+            <exclude name="**/WebsphereMQ.java" />
         </javac>
-
-        <javac includeantruntime="false" defaultexcludes="true" srcdir="${dir.src.payload}" destdir="${dir.build}" source="1.4" target="1.4" debug="yes" >
-            <exclude name="**/cdm/**"/>
-            <compilerarg value="-Xbootclasspath/p:${toString:java14.bootstrap.class.path}" />
-            <classpath refid="project.class.path" />
-        </javac>
-
     </target>
-
+    <target name="compilePayloads">
+        <description>Compiles teh Java classed in ${dir.src.payload}</description>
+        <javac includeantruntime="false" defaultexcludes="true" srcdir="${dir.src.payload}" destdir="${dir.build}" source="1.4" target="1.4" debug="yes">
+            <exclude name="**/cdm/**" />
+            <compilerarg value="-Xbootclasspath/p:${toString:java14.bootstrap.class.path}" />
+            <classpath refid="project.class.path" />
+        </javac>
+    </target>
+    <target name="compileCommons" depends="cleanbuildcommons, compileMain, compilePayloads">
+        <description>Performs the compilations needed for building the ${deploy.jar.MgpCommons} archive</description>
+    </target>
     <target name="package&amp;DeployCommons">
+        <description>Creates the ${deploy.jar.MgpCommons} archive and deploys it to the Oracle Reports
+        Server library directory ${dir.reports.jlib}</description>
         <jar destfile="${deploy.jar.MgpCommons}" basedir="${dir.build}" update="false" />
         <copy verbose="true" file="${deploy.jar.MgpCommons}" todir="${dir.reports.jlib}" />
         <delete file="${deploy.jar.MgpCommons}" failonerror="false" />
@@ -244,7 +262,7 @@
         <echo message="MQ Destination: Deployment finished" />
         <echotimestamp/>
     </target>
-    
+
     <target name="1 Deploy Destinations" description="Create and Deploy Destinations" depends="9 Deploy Commons,2 Deploy Zip Destination,3 Deploy MQ Destination">
         <echo message="Deployment finished" />
         <echotimestamp/>
@@ -259,6 +277,7 @@
     </fileset>
     <fileset dir="${dir.src.payload}" id="sourcefiles#payload">
         <include name="**/*.java" />
+        <exclude name="**/cdm/**" />
     </fileset>
     <fileset dir="${dir.test}" id="testfiles">
         <include name="**/*.java" />
@@ -309,10 +328,12 @@
                     <scriptfilter language="javascript">
                         <![CDATA[
                         var theToken=self.getToken();
-                        var startOf = theToken.indexOf( '<pre><code class="language-java">' );
+                        var startOf = theToken.indexOf( '<pre>
+                        <code class="language-java">' );
                         if ( startOf > -1 ) {
                             /* lame search for class name - no syntax awareness ... */
-                            startOf = startOf + '<pre><code class="language-java">'.length + 1;
+                            startOf = startOf + '<pre>
+                                <code class="language-java">'.length + 1;
                             var last = startOf;
                             /* Skip imports ... */
                             startOf = theToken.indexOf( 'import', last );
@@ -337,12 +358,12 @@
                         self.setToken( theToken );
                         ]]>
                     </scriptfilter>
-                </tokenfilter>
-            </filterchain>
-        </copy>
-    </target>
-    
-    <!--
+                            </tokenfilter>
+                        </filterchain>
+                    </copy>
+                </target>
+
+                <!--
     <scriptdef name="scripttest2" language="javascript">
       <element name="fileset" type="fileset"/>
    
@@ -364,4 +385,4 @@
             </scripttest2>
     </target>
     -->
-</project>
+            </project>
