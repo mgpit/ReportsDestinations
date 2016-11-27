@@ -4,10 +4,12 @@
      ====================================================================== -->
 <project name="Developer 2000 Reports" basedir=".">
 
+    <target name="splashit">
+        <splash imageurl="file:///${dir.project.res}/animated.gif" showduration="1" />
+    </target>
+
     <!-- set global properties for this build -->
-    <property name="dir.src.main" location="src/main/java" />
-    <property name="dir.src.dest" location="src/destinations/java" />
-    <property name="dir.src.payload" location="src/payload/java" />
+
     <property name="dir.test" location="src/test/java" />
     <property name="dir.res" location="src/main/resources" />
     <property name="dir.build" location="tmp" />
@@ -20,12 +22,6 @@
 
     <property name="dir.reports" location="${oracle.home}/reports" />
     <property name="dir.reports.jlib" location="${dir.reports}/jlib" />
-
-    <property name="deploy.jar.ZIPdestination" value="zipdestination_0.9.0.jar" />
-    <property name="deploy.jar.MQdestination" value="mqdestination_0.3.0.jar" />
-    <property name="deploy.jar.MgpCommons" value="mgpcommons_0.9.0.jar" />
-
-    <property name="lib.mgp.reports.commons" location="${dir.reports.jlib}/${deploy.jar.MgpCommons}" />
 
     <property name="lib.rwrun" location="${dir.reports.jlib}/rwrun.jar" />
     <property name="lib.zrclient" location="${oracle.home.jlib}/zrclient.jar" />
@@ -65,14 +61,13 @@
 		]]>
     </scriptdef>
 
-    <property name="wmq.home" location="O:/IBM/WebSphere MQ"/>
-    <property name="wmq.lib" location="${wmq.home}/java/lib"/>
+    <property name="wmq.home" location="O:/IBM/WebSphere MQ" />
+    <property name="wmq.lib" location="${wmq.home}/java/lib" />
 
     <path id="wmq.class.path">
-        <pathelement path="${wmq.lib}/com.ibm.mq.jar"/>
-        <pathelement path="${wmq.lib}/com.ibm.mq.jmqi.jar"/>
+        <pathelement path="${wmq.lib}/com.ibm.mq.jar" />
+        <pathelement path="${wmq.lib}/com.ibm.mq.jmqi.jar" />
     </path>
-
 
     <path id="project.class.path">
         <pathelement path="${lib.rwrun}" />
@@ -82,15 +77,296 @@
         <!--path refid="wmq.class.path"/-->
     </path>
 
+    <property name="ora.jdk.14.lib" location="${oracle.home}\jre\1.4.2.\lib" />
+    <path id="java14.bootstrap.class.path">
+        <fileset dir="${ora.jdk.14.lib}">
+            <include name="**/*.jar" />
+        </fileset>
+    </path>
+
+    <macrodef name="cleanupSingleBuildDir">
+        <sequential>
+            <delete dir="${dir.build}" includeemptydirs="true" verbose="true" failonerror="false" />
+            <mkdir dir="${dir.build}" />
+        </sequential>
+    </macrodef>
+
+    <!-- ================================================================================ -->
+
+    <!--
+        ======================================================================
+                        9  -  C O M M O N S
+        ======================================================================
+    -->
+
+    <property name="dir.src.main" location="src/main/java" />
+    <target name="compileCommons">
+        <cleanupSingleBuildDir/>
+        <description>Compiles the Java classes in ${dir.src.main}</description>
+        <javac includeantruntime="false" defaultexcludes="true" srcdir="${dir.src.main}" destdir="${dir.build}" source="1.4" target="1.4" debug="yes">
+            <compilerarg value="-Xbootclasspath/p:${toString:java14.bootstrap.class.path}" />
+            <classpath refid="project.class.path" />
+            <!-- TODO: Temp -->
+            <exclude name="**/WebsphereMQ.java" />
+        </javac>
+    </target>
+
+    <property name="deploy.jar.MgpCommons" value="mgpcommons_0.9.0.jar" />
+    <target name="package&amp;DeployCommons" depends="compileCommons">
+        <description>Creates the ${deploy.jar.MgpCommons} archive and deploys it to the Oracle Reports
+        Server library directory ${dir.reports.jlib}</description>
+        <jar destfile="${deploy.jar.MgpCommons}" basedir="${dir.build}" update="false" />
+        <copy verbose="true" file="${deploy.jar.MgpCommons}" todir="${dir.reports.jlib}" />
+        <delete file="${deploy.jar.MgpCommons}" failonerror="false" />
+    </target>
+    
+    <property name="lib.mgp.reports.commons" location="${dir.reports.jlib}/${deploy.jar.MgpCommons}" />
+    <target name="9 Deploy Commons" description="Deploy Commons" depends="splashit,package&amp;DeployCommons" />
+    
+    <!--
+        ======================================================================
+                        4  -  P A Y L O A D S
+        ======================================================================
+    -->
+
+    <path id="Payloads.class.path">
+        <path refid="project.class.path" />
+        <pathelement path="${lib.mgp.reports.commons}" />
+    </path>
+    
+    <property name="dir.src.payload" location="src/payload/java" />
+    <target name="compilePayloads">
+        <cleanupSingleBuildDir/>
+        <description>Compiles teh Java classed in ${dir.src.payload}</description>
+        <javac includeantruntime="false" defaultexcludes="true" srcdir="${dir.src.payload}" destdir="${dir.build}" source="1.4" target="1.4" debug="yes">
+            <exclude name="**/cdm/schema/**" />
+            <compilerarg value="-Xbootclasspath/p:${toString:java14.bootstrap.class.path}" />
+            <classpath refid="Payloads.class.path" />
+        </javac>
+    </target>
+
+    <property name="deploy.jar.Payloads" value="payloads.jar" />
+    <target name="packagePayloads" depends="compilePayloads">
+        <echo message="About to make JAR archive ..." />
+        <jar destfile="${deploy.jar.Payloads}" basedir="${dir.build}" update="false" />
+    </target>
+
+    <target name="4 Deploy Payloads" depends="splashit,packagePayloads" description="Deploay Payload Commons">
+        <copy verbose="true" file="${deploy.jar.Payloads}" todir="${dir.reports.jlib}" />
+        <delete file="${deploy.jar.Payloads}" failonerror="false" />
+        <echo message="Payloads: Deployment finished" />
+        <echotimestamp />
+    </target>
+
+    
+    <!--
+        ======================================================================
+                        3  -  M Q  D E S T I N A T I O N
+        ======================================================================
+    -->
+
+    <path id="MQdest.class.path">
+        <path refid="project.class.path" />
+        <pathelement path="${lib.mgp.reports.commons}" />
+    </path>
+
+    <property name="dir.src.mqdest" location="src/destinations/mq/java" />
+    <target name="compileMQdest">
+        <cleanupSingleBuildDir/>
+        <echo message="About to compile MQ Destination ..." />
+        <echo level="info" message="Using classpath ${toString:MQdest.class.path}" />
+        <javac includeantruntime="false" defaultexcludes="true" srcdir="${dir.src.mqdest}" destdir="${dir.build}" source="1.4" target="1.4" debug="yes">
+            <compilerarg value="-Xbootclasspath/p:${toString:java14.bootstrap.class.path}" />
+            <classpath refid="MQdest.class.path" />
+        </javac>
+    </target>
+
+    <property name="deploy.jar.MQdestination" value="mqdestination_0.3.0.jar" />
+    <target name="packageMQdest" depends="compileMQdest">
+        <echo message="About to make JAR archive ..." />
+        <copy file="${dir.res}/log4j.MQDestination.properties" todir="${dir.build}" overwrite="true" />
+        <jar destfile="${deploy.jar.MQdestination}" basedir="${dir.build}" update="false" />
+    </target>
+
+    <target name="3 Deploy MQ Destination" depends="splashit,packageMQdest" description="Deploy MQ Destination">
+        <copy verbose="true" file="${deploy.jar.MQdestination}" todir="${dir.reports.jlib}" />
+        <delete file="${deploy.jar.MQdestination}" failonerror="false" />
+        <echo message="MQ Destination: Deployment finished" />
+        <echotimestamp />
+    </target>
+
+    
+    <!--
+        ======================================================================
+                        2  -  Z I P  D E S T I N A T I O N
+        ======================================================================
+    -->
+
+    <path id="ZIPdest.class.path">
+        <path refid="project.class.path" />
+        <pathelement path="${lib.mgp.reports.commons}" />
+    </path>
+
+    <property name="dir.src.zipdest" location="src/destinations/zip/java" />
+    <target name="compileZIPdest">
+        <cleanupSingleBuildDir/>
+        <echo message="About to compile ZIP Destination ..." />
+        <echo level="info" message="Using classpath ${toString:ZIPdest.class.path}" />
+        <javac includeantruntime="false" defaultexcludes="true" srcdir="${dir.src.zipdest}" destdir="${dir.build}" source="1.4" target="1.4" debug="yes">
+            <compilerarg value="-Xbootclasspath/p:${toString:java14.bootstrap.class.path}" />
+            <classpath refid="ZIPdest.class.path" />
+        </javac>
+    </target>
+
+    <property name="deploy.jar.ZIPdestination" value="zipdestination_0.9.0.jar" />
+    <target name="packageZIPdest" depends="compileZIPdest">
+        <echo message="About to make JAR archive ..." />
+        <copy file="${dir.res}/log4j.ZipDestination.properties" todir="${dir.build}" overwrite="true" />
+        <jar destfile="${deploy.jar.ZIPdestination}" basedir="${dir.build}" update="false" />
+    </target>
+
+    <target name="2 Deploy Zip Destination" depends="splashit,packageZIPdest" description="Deploy ZIP Destination">
+        <copy verbose="true" file="${deploy.jar.ZIPdestination}" todir="${dir.reports.jlib}" />
+        <delete file="${deploy.jar.ZIPdestination}" failonerror="false" />
+        <echo message="Zip Destination: Deployment finished" />
+        <echotimestamp />
+    </target>
+
+    
+    <!--
+        ======================================================================
+                        1  -  D E P L O Y   A L L   D E S T I N A T I O N S
+        ======================================================================
+    -->
+    
+    <!--
+    <target name="copycdmresources">
+        <propertyreplace name="dir.build.schema" value="${dir.build}${file.separator}${jaxb.cdmdoc.packagename}" token="." replace="${file.separator}" />
+        <copy verbose="true" file="${jaxb.cdmdoc.dir.schema}/cdmdoc.xsd" todir="${dir.build.schema}" />
+        <copy verbose="true" file="${jaxb.cdmdoc.dir.schema}/jaxb.properties" todir="${dir.build.schema}" />
+    </target>
+    -->
+    
+
+    <target name="1 Deploy All and Everything" depends="9 Deploy Commons,4 Deploy Payloads,2 Deploy Zip Destination,3 Deploy MQ Destination" description="Create and Deploy 'Everything'">
+        <echo message="Deployment finished" />
+        <echotimestamp />
+    </target>
+
+    <!-- ================================================================================ -->
+    
+
+    <!--
+        ======================================================================
+                        M A K E   H T M L   D O C U M E N T A T I O N
+        ======================================================================
+    -->
+
+    
+    <fileset dir="${dir.src.main}" id="sourcefiles#common">
+        <include name="**/*.java" />
+    </fileset>
+    <fileset dir="${dir.src.mqdest}" id="sourcefiles#mqdestination">
+        <include name="**/*.java" />
+    </fileset>
+    <fileset dir="${dir.src.zipdest}" id="sourcefiles#zipdestination">
+        <include name="**/*.java" />
+    </fileset>
+    <fileset dir="${dir.src.payload}" id="sourcefiles#payload">
+        <include name="**/*.java" />
+        <exclude name="**/cdm/**" />
+    </fileset>
+
+    <fileset dir="${dir.test}" id="testfiles">
+        <include name="**/*.java" />
+        <exclude name="**/com/**" />
+        <exclude name="**/spielwiese/**" />
+    </fileset>
+
+    <union id="src.all">
+        <resources refid="sourcefiles#common" />
+        <resources refid="sourcefiles#payload" />
+        <resources refid="sourcefiles#mqdestination" />
+        <resources refid="sourcefiles#zipdestination" />
+        <resources refid="testfiles" />
+    </union>
+
+    <target name="Make HTML Documentation" description="Prepare for documentation">
+        <delete dir="res/html" failonerror="false" />
+        <echo message="${toString:src.all}" />
+        <copy overwrite="true" todir="res/html">
+            <resources refid="src.all" />
+
+            <mapper>
+                <chainedmapper>
+                    <flattenmapper />
+                    <globmapper from="*.java" to="*.html" />
+                </chainedmapper>
+            </mapper>
+            <filterchain>
+                <tokenfilter>
+                    <!-- remember: filetokenizer liest die ganze Datei -->
+                    <filetokenizer />
+                    <scriptfilter language="javascript">
+                        <![CDATA[
+                        var theToken=self.getToken();
+                        /* Watch out! & must be replaced FIRST !!! 
+                           Order matters ... */
+                        theToken = theToken.replace('&', '&amp;' );
+                        theToken = theToken.replace('<', '&lt;' );
+                        theToken = theToken.replace('>', '&gt;' );
+                        self.setToken(theToken);
+                        ]]>
+                    </scriptfilter>
+                </tokenfilter>
+                <concatfilter prepend="res/doc-header.html.fragment" />
+                <concatfilter append="res/doc-trailer.html.fragment" />
+                <tokenfilter>
+                    <filetokenizer />
+                    <scriptfilter language="javascript">
+                        <![CDATA[
+                        var theToken=self.getToken();
+                        var startOf = theToken.indexOf( '<pre><code class="language-java">' );
+                        if ( startOf > -1 ) {
+                            /* lame search for class name - no syntax awareness ... */
+                            startOf = startOf + '<pre><code class="language-java">'.length + 1;
+                            var last = startOf;
+                            /* Skip imports ... */
+                            startOf = theToken.indexOf( 'import', last );
+                            while( startOf > -1 ) {
+                                last = startOf + 'import'.length+1;
+                                startOf = theToken.indexOf( 'import', last );
+                            }
+                            starOf = last;
+                            startOf = theToken.indexOf( 'public', startOf );
+                            startOf = startOf + 'public'.length+1;
+                            startOf = theToken.indexOf( 'class', startOf );
+                            if ( startOf > -1 ) {
+                                startOf = startOf + 'class'.length + 1;
+                                var endOf = theToken.indexOf( " ", startOf );
+                                if ( endOf > startOf ) {
+                                    var replacement = theToken.substring( startOf, endOf );
+                                    replacement = replacement.trim();
+                                    theToken = theToken.replace( '$$REPLACE$$', replacement );
+                                }
+                            }
+                        }
+                        self.setToken( theToken );
+                        ]]>
+                    </scriptfilter>
+                </tokenfilter>
+            </filterchain>
+        </copy>
+    </target>
+
+<!--
     <property name="orajaxb" location="${oracle.home}\bin\orajaxb.bat" />
     <property name="lib.ora.xmlparser2" location="${oracle.home.lib}/xmlparserv2.jar" />
     <property name="lib.ora.xsu12" location="${oracle.home.lib}/xsu12.jar" />
     <property name="lib.ora.xml" location="${oracle.home.lib}/xml.jar" />
-
     <path id="orajaxb.class.path">
         <pathelement path="${lib.ora.xml}" />
     </path>
-
 
     <property name="jwsdp.home" location="O:/Oracle/jwsdp-1.1" />
     <property name="jwsdp.jaxb.home" location="${jwsdp.home}/jaxb-1.0" />
@@ -105,33 +381,7 @@
         <pathelement path="${lib.sun.jaxb-ri}" />
         <pathelement path="${lib.sun.jaxb-libs}" />
     </path>
-
-
-
-    <path id="ZIPdest.class.path">
-        <path refid="project.class.path" />
-        <pathelement path="${lib.mgp.reports.commons}" />
-    </path>
-
-    <path id="MQdest.class.path">
-        <path refid="project.class.path" />
-        <pathelement path="${lib.mgp.reports.commons}" />
-    </path>
-
-    <!--        <path refid="orajaxb.class.path" /> -->
-    <!--        <path refid="sunjaxb.class.path" /> -->
-
-    <property name="ora.jdk.14.lib" location="${oracle.home}\jre\1.4.2.\lib" />
-    <path id="java14.bootstrap.class.path">
-        <fileset dir="${ora.jdk.14.lib}">
-            <include name="**/*.jar" />
-        </fileset>
-    </path>
-
-    <target name="splashit">
-        <splash imageurl="file:///${dir.project.res}/animated.gif" showduration="1" />
-    </target>
-
+    
     <target name="Clean JAXB generated classes">
         <echo level="info" message="About to delete previously generated classes ..." />
         <delete failonerror="false" verbose="true">
@@ -167,222 +417,5 @@
             <arg value="${xjc} -extension -b ${schema.bindings.name} -p ${jaxb.cdmdoc.packagename} ${schema.schema.name} " />
         </exec>
     </target>
-
-    <target name="cleanbuildcommons" depends="splashit">
-        <delete dir="${dir.build}" includeemptydirs="true" verbose="true" failonerror="false" />
-        <mkdir dir="${dir.build}" />
-    </target>
-
-    <target name="cleanbuild" depends="splashit">
-        <delete dir="${dir.build}" includeemptydirs="true" verbose="true" failonerror="false" />
-        <mkdir dir="${dir.build}" />
-    </target>
-
-    <target name="compileMain">
-        <description>Compiles the Java classes in ${dir.src.main}</description>
-        <javac includeantruntime="false" defaultexcludes="true" srcdir="${dir.src.main}" destdir="${dir.build}" source="1.4" target="1.4" debug="yes">
-            <compilerarg value="-Xbootclasspath/p:${toString:java14.bootstrap.class.path}" />
-            <classpath refid="project.class.path" />
-            <!-- TODO: Temp -->
-            <exclude name="**/WebsphereMQ.java" />
-        </javac>
-    </target>
-    <target name="compilePayloads">
-        <description>Compiles teh Java classed in ${dir.src.payload}</description>
-        <javac includeantruntime="false" defaultexcludes="true" srcdir="${dir.src.payload}" destdir="${dir.build}" source="1.4" target="1.4" debug="yes">
-            <exclude name="**/cdm/**" />
-            <compilerarg value="-Xbootclasspath/p:${toString:java14.bootstrap.class.path}" />
-            <classpath refid="project.class.path" />
-        </javac>
-    </target>
-    <target name="compileCommons" depends="cleanbuildcommons, compileMain, compilePayloads">
-        <description>Performs the compilations needed for building the ${deploy.jar.MgpCommons} archive</description>
-    </target>
-    <target name="package&amp;DeployCommons">
-        <description>Creates the ${deploy.jar.MgpCommons} archive and deploys it to the Oracle Reports
-        Server library directory ${dir.reports.jlib}</description>
-        <jar destfile="${deploy.jar.MgpCommons}" basedir="${dir.build}" update="false" />
-        <copy verbose="true" file="${deploy.jar.MgpCommons}" todir="${dir.reports.jlib}" />
-        <delete file="${deploy.jar.MgpCommons}" failonerror="false" />
-    </target>
-
-    <target name="9 Deploy Commons" description="Deploy Commons" depends="compileCommons, package&amp;DeployCommons" />
-
-    <target name="compileZIPdest" depends="cleanbuild">
-        <echo message="About to compile ZIP Destination ..." />
-        <echo level="info" message="Using classpath ${toString:ZIPdest.class.path}" />
-        <javac includeantruntime="false" defaultexcludes="true" srcdir="${dir.src.dest}" destdir="${dir.build}" source="1.4" target="1.4" debug="yes" >
-            <compilerarg value="-Xbootclasspath/p:${toString:java14.bootstrap.class.path}" />
-            <classpath refid="ZIPdest.class.path" />
-            <include name="**/zip/**" />
-            <exclude name="**/cdm/**" />
-            <exclude name="**/mq/**" />
-        </javac>
-    </target>
-
-    <target name="packageZIPdest" depends="compileZIPdest">
-        <echo message="About to make JAR archive ..." />
-        <copy file="${dir.res}/log4j.ZipDestination.properties" todir="${dir.build}" overwrite="true" />
-        <jar destfile="${deploy.jar.ZIPdestination}" basedir="${dir.build}" update="false" />
-    </target>
-
-    <target name="compileMQdest" depends="cleanbuild">
-        <echo message="About to compile MQ Destination ..." />
-        <echo level="info" message="Using classpath ${toString:MQdest.class.path}" />
-        <javac includeantruntime="false" defaultexcludes="true" srcdir="${dir.src.dest}" destdir="${dir.build}" source="1.4" target="1.4" debug="yes" >
-            <compilerarg value="-Xbootclasspath/p:${toString:java14.bootstrap.class.path}" />
-            <classpath refid="MQdest.class.path" />
-            <include name="**/mq/**" />
-            <exclude name="**/cdm/**" />
-            <exclude name="**/zip/**" />
-        </javac>
-    </target>
-
-    <target name="copycdmresources">
-        <propertyreplace name="dir.build.schema" value="${dir.build}${file.separator}${jaxb.cdmdoc.packagename}" token="." replace="${file.separator}" />
-        <copy verbose="true" file="${jaxb.cdmdoc.dir.schema}/cdmdoc.xsd" todir="${dir.build.schema}" />
-        <copy verbose="true" file="${jaxb.cdmdoc.dir.schema}/jaxb.properties" todir="${dir.build.schema}" />
-    </target>
-    <target name="packageMQdest" depends="compileMQdest">
-        <echo message="About to make JAR archive ..." />
-        <copy file="${dir.res}/log4j.MQDestination.properties" todir="${dir.build}" overwrite="true" />
-        <jar destfile="${deploy.jar.MQdestination}" basedir="${dir.build}" update="false" />
-    </target>
-
-    <target name="2 Deploy Zip Destination" depends="packageZIPdest" description="Deploy ZIP Destination">
-        <copy verbose="true" file="${deploy.jar.ZIPdestination}" todir="${dir.reports.jlib}" />
-        <delete file="${deploy.jar.ZIPdestination}" failonerror="false" />
-        <echo message="Zip Destination: Deployment finished" />
-        <echotimestamp/>
-    </target>
-
-    <target name="3 Deploy MQ Destination" depends="packageMQdest" description="Deploy MQ Destination">
-        <copy verbose="true" file="${deploy.jar.MQdestination}" todir="${dir.reports.jlib}" />
-        <delete file="${deploy.jar.MQdestination}" failonerror="false" />
-        <echo message="MQ Destination: Deployment finished" />
-        <echotimestamp/>
-    </target>
-
-    <target name="1 Deploy Destinations" description="Create and Deploy Destinations" depends="9 Deploy Commons,2 Deploy Zip Destination,3 Deploy MQ Destination">
-        <echo message="Deployment finished" />
-        <echotimestamp/>
-    </target>
-
-
-    <fileset dir="${dir.src.main}" id="sourcefiles#common">
-        <include name="**/*.java" />
-    </fileset>
-    <fileset dir="${dir.src.dest}" id="sourcefiles#destinations">
-        <include name="**/*.java" />
-    </fileset>
-    <fileset dir="${dir.src.payload}" id="sourcefiles#payload">
-        <include name="**/*.java" />
-        <exclude name="**/cdm/**" />
-    </fileset>
-    <fileset dir="${dir.test}" id="testfiles">
-        <include name="**/*.java" />
-        <exclude name="**/com/**" />
-        <exclude name="**/spielwiese/**" />
-    </fileset>
-
-    <union id="src.all">
-        <resources refid="sourcefiles#common" />
-        <resources refid="sourcefiles#destinations" />
-        <resources refid="sourcefiles#payload" />
-        <resources refid="testfiles" />
-    </union>
-
-    <target name="Make HTML Documentation" description="Prepare for documentation">
-        <delete dir="res/html" failonerror="false" />
-        <echo message="${toString:src.all}" />
-        <copy overwrite="true" todir="res/html">
-
-            <resources refid="src.all" />
-
-            <mapper>
-                <chainedmapper>
-                    <flattenmapper />
-                    <globmapper from="*.java" to="*.html" />
-                </chainedmapper>
-            </mapper>
-            <filterchain>
-                <tokenfilter>
-                    <!-- remember: filetokenizer liest die ganze Datei -->
-                    <filetokenizer />
-                    <scriptfilter language="javascript">
-                        <![CDATA[
-                        var theToken=self.getToken();
-                        /* Watch out! & must be replaced FIRST !!! 
-                           Order matters ... */
-                        theToken = theToken.replace('&', '&amp;' );
-                        theToken = theToken.replace('<', '&lt;' );
-                        theToken = theToken.replace('>', '&gt;' );
-                        self.setToken(theToken);
-                        ]]>
-                    </scriptfilter>
-                </tokenfilter>
-                <concatfilter prepend="res/doc-header.html.fragment" />
-                <concatfilter append="res/doc-trailer.html.fragment" />
-                <tokenfilter>
-                    <filetokenizer />
-                    <scriptfilter language="javascript">
-                        <![CDATA[
-                        var theToken=self.getToken();
-                        var startOf = theToken.indexOf( '<pre>
-                        <code class="language-java">' );
-                        if ( startOf > -1 ) {
-                            /* lame search for class name - no syntax awareness ... */
-                            startOf = startOf + '<pre>
-                                <code class="language-java">'.length + 1;
-                            var last = startOf;
-                            /* Skip imports ... */
-                            startOf = theToken.indexOf( 'import', last );
-                            while( startOf > -1 ) {
-                                last = startOf + 'import'.length+1;
-                                startOf = theToken.indexOf( 'import', last );
-                            }
-                            starOf = last;
-                            startOf = theToken.indexOf( 'public', startOf );
-                            startOf = startOf + 'public'.length+1;
-                            startOf = theToken.indexOf( 'class', startOf );
-                            if ( startOf > -1 ) {
-                                startOf = startOf + 'class'.length + 1;
-                                var endOf = theToken.indexOf( " ", startOf );
-                                if ( endOf > startOf ) {
-                                    var replacement = theToken.substring( startOf, endOf );
-                                    replacement = replacement.trim();
-                                    theToken = theToken.replace( '$$REPLACE$$', replacement );
-                                }
-                            }
-                        }
-                        self.setToken( theToken );
-                        ]]>
-                    </scriptfilter>
-                            </tokenfilter>
-                        </filterchain>
-                    </copy>
-                </target>
-
-                <!--
-    <scriptdef name="scripttest2" language="javascript">
-      <element name="fileset" type="fileset"/>
-   
-      <![CDATA[
-        filesets = elements.get("fileset");
-        project.log("Number of filesets = " + filesets.size());
-        for (i = 0; i < filesets.size(); ++i) {
-          project.log("fileset " + i + " basedir = "
-            + filesets.get(i).getDir(project));
-        }
-      ]]>
-   
-    </scriptdef>
-   
-    <target name="ZZZ Test" description="ZZZ Test">
-        <scripttest2>
-            <fileset dir="${dir.src.main}"/>
-            <fileset dir="${dir.src.dest}"/>
-            </scripttest2>
-    </target>
-    -->
-            </project>
+-->
+</project>

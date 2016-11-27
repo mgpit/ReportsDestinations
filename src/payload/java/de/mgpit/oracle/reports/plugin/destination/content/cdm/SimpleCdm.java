@@ -1,4 +1,4 @@
-package de.mgpit.oracle.reports.plugin.destination.content;
+package de.mgpit.oracle.reports.plugin.destination.content.cdm;
 
 
 import java.io.StringWriter;
