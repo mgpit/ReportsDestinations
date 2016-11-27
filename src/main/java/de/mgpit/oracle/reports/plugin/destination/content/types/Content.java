@@ -49,12 +49,12 @@ public interface Content {
      * 
      * @return {@code true} if the payload should be provided, now,{@code false} else
      */
-    public boolean dataWanted();
+    public boolean wantsData();
 
     /**
-     * Get the signal that the payload is finished
+     * Tells the {@code Content} that the data is finished.
      */
-    public void setDataFinished();
+    public void dataFinished();
 
     /**
      * Write this to the given output stream.

@@ -50,10 +50,10 @@ public class HeaderDecoratedInputStream extends FilterInputStream {
 
     public int read() throws IOException {
         final int aByte;
-        if ( header.dataWanted() ) {
+        if ( header.wantsData() ) {
             aByte = in.read();
             if ( aByte == Magic.END_OF_STREAM ) {
-                header.setDataFinished();
+                header.dataFinished();
                 return this.read();
             }
         } else {
@@ -63,6 +63,6 @@ public class HeaderDecoratedInputStream extends FilterInputStream {
     }
 
     public synchronized int available() throws IOException {
-        return header.dataWanted() ? in.available() : 0;
+        return header.wantsData() ? in.available() : 0;
     }
 }

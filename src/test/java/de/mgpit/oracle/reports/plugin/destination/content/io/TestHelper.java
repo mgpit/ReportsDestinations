@@ -29,7 +29,7 @@ public class TestHelper {
                 // NOP
             }
 
-            public boolean dataWanted() {
+            public boolean wantsData() {
                 boolean wanted = false;
                 synchronized (this) {
                     switch ( currentBlock ) {
@@ -74,7 +74,7 @@ public class TestHelper {
                 return header.read();
             }
 
-            public void setDataFinished() {
+            public void dataFinished() {
                 if ( currentBlock != IN_DATA ) {
                     throw new IllegalStateException( "dataFinished() not allowed when Cdm doesn't want data!" );
                 }

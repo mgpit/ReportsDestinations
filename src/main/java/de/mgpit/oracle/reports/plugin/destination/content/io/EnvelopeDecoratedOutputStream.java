@@ -47,11 +47,11 @@ public class EnvelopeDecoratedOutputStream extends FilterOutputStream {
     }
 
     public void write( int b ) throws IOException {
-        if ( !envelope.dataWanted() ) {
+        if ( !envelope.wantsData() ) {
             envelope.writeToOut( out );
         }
 
-        if ( envelope.dataWanted() ) {
+        if ( envelope.wantsData() ) {
             out.write( b );
         } else {
             throw new IOException( "Cannot write into an Envelope which is not in state \"data wanted\"!" );
@@ -59,10 +59,10 @@ public class EnvelopeDecoratedOutputStream extends FilterOutputStream {
     }
 
     public void flush() throws IOException {
-        if ( !envelope.dataWanted() ) {
+        if ( !envelope.wantsData() ) {
             throw new IOException( "Cannot flush an Envelope which is not in state \"data wanted\"!" );
         }
-        envelope.setDataFinished();
+        envelope.dataFinished();
         envelope.writeToOut( out );
         out.flush();
     }

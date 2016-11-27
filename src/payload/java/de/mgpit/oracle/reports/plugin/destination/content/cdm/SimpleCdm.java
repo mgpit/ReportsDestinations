@@ -29,7 +29,7 @@ public class SimpleCdm extends AbstractCdm {
 
     private static final String DATA_ELEMENT = "<data>";
 
-    public String getPopulatedCdmAsString( Properties parameters ) throws Exception {
+    public String getEnvelopeAsStringPopulatedWith( Properties parameters ) throws Exception {
         final SimpleDateFormat dateFormat = new SimpleDateFormat( "yyyy.MM.dd HH:mm:ss" );
         final String now = dateFormat.format( new Date() );
 
@@ -80,7 +80,7 @@ public class SimpleCdm extends AbstractCdm {
 
     }
 
-    protected String getSplitAtTag() {
+    protected String getSplitAtToken() {
         return DATA_ELEMENT;
     }
 

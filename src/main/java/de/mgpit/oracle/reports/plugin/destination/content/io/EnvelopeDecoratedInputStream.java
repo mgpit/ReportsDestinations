@@ -50,10 +50,10 @@ public class EnvelopeDecoratedInputStream extends FilterInputStream {
 
     public int read() throws IOException {
         final int aByte;
-        if ( envelope.dataWanted() ) {
+        if ( envelope.wantsData() ) {
             aByte = in.read();
             if ( aByte == Magic.END_OF_STREAM ) {
-                envelope.setDataFinished();
+                envelope.dataFinished();
                 return this.read();
             }
         } else {
@@ -63,6 +63,6 @@ public class EnvelopeDecoratedInputStream extends FilterInputStream {
     }
 
     public synchronized int available() throws IOException {
-        return envelope.dataWanted() ? in.available() : 0;
+        return envelope.wantsData() ? in.available() : 0;
     }
 }

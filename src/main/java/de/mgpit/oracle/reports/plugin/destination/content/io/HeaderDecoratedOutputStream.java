@@ -46,11 +46,11 @@ public class HeaderDecoratedOutputStream extends FilterOutputStream {
     }
 
     public void write( int b ) throws IOException {
-        if ( !header.dataWanted() ) {
+        if ( !header.wantsData() ) {
             header.writeToOut( out );
         }
 
-        if ( header.dataWanted() ) {
+        if ( header.wantsData() ) {
             out.write( b );
         } else {
             throw new IOException( "Cannot write after a Header which is not in state \"data wanted\"!" );
@@ -58,10 +58,10 @@ public class HeaderDecoratedOutputStream extends FilterOutputStream {
     }
 
     public void flush() throws IOException {
-        if ( !header.dataWanted() ) {
+        if ( !header.wantsData() ) {
             throw new IOException( "Cannot flush a Header which is not in state \"data wanted\"!" );
         }
-        header.setDataFinished();
+        header.dataFinished();
         out.flush();
     }
 
