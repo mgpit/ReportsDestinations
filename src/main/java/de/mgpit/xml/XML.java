@@ -1,11 +1,18 @@
 package de.mgpit.xml;
 
 
+import java.io.StringWriter;
 import java.text.SimpleDateFormat;
 import java.util.Stack;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Result;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -124,7 +131,8 @@ public class XML {
         Node current = current();
         if ( hasCurrent() && current.hasChildNodes() ) {
             NodeList children = current.getChildNodes();
-            if ( children.getLength() == 1 && children.item( 0 ).getNodeType() != Node.ELEMENT_NODE ) {
+            if ( children.getLength() == 1 && children.item( 0 )
+                                                      .getNodeType() != Node.ELEMENT_NODE ) {
                 throw new IllegalStateException( "Cannot append Child Nodes to a Node which has Text!" );
             }
         }
@@ -231,6 +239,28 @@ public class XML {
             throw new IllegalStateException( "XML is empty!" );
         }
         return (Node) hierarchy.elementAt( 0 );
+    }
+
+    public String toString() {
+        try {
+            final TransformerFactory transformerFactory = TransformerFactory.newInstance();
+            final Transformer transformer = transformerFactory.newTransformer();
+
+            if ( this.isFragment() ) {
+                transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+            }
+            transformer.setOutputProperty( OutputKeys.INDENT, "yes" );
+
+            DOMSource xmlSource = new DOMSource( get() );
+            StringWriter outputTargetContent = new StringWriter();
+            Result outputTarget = new StreamResult( outputTargetContent );
+
+            transformer.transform( xmlSource, outputTarget );
+            return outputTargetContent.toString();
+        } catch ( Exception toBeMadeUnchecked ) {
+            throw new RuntimeException( toBeMadeUnchecked );
+        }
+
     }
 
     /**
