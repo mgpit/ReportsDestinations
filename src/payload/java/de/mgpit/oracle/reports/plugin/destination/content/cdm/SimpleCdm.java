@@ -6,8 +6,6 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Properties;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Result;
 import javax.xml.transform.Transformer;
@@ -15,9 +13,8 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Text;
+import de.mgpit.xml.XML;
+import de.mgpit.xml.XML.XMLFragment;
 
 /**
  * A simple Cdm.
@@ -33,50 +30,52 @@ public class SimpleCdm extends AbstractCdm {
         final SimpleDateFormat dateFormat = new SimpleDateFormat( "yyyy.MM.dd HH:mm:ss" );
         final String now = dateFormat.format( new Date() );
 
-        final DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
-        final DocumentBuilder cdmBuilder;
-        final Document currentDocument;
-        cdmBuilder = builderFactory.newDocumentBuilder();
-        currentDocument = cdmBuilder.newDocument();
+        XML cdm = XML.newDocument();
+        cdm.add( "cdmdoc" )
+           .attribute( "created", now )
+           .nest();
 
-        Element cdmdoc = currentDocument.createElement( "cdmdoc" );
-        cdmdoc.setAttribute( "created", now );
-        currentDocument.appendChild( cdmdoc );
-
-        Element address = currentDocument.createElement( "address" );
-        
-        boolean hasAddress = false; 
-        for ( int lineNumber = 1; lineNumber < 7; lineNumber++) {
+        XMLFragment address = XML.newFragment( cdm );
+        address.add( "address" );
+        boolean hasAddress = false;
+        address.nest();
+        for ( int lineNumber = 1; lineNumber < 7; lineNumber++ ) {
             final String key = "address_line_" + lineNumber;
-            if ( parameters.containsKey( key )) {
-                Element addressLine = currentDocument.createElement( key );
-                Text text = currentDocument.createTextNode( parameters.getProperty( key, "" ) );
-                addressLine.appendChild( text );
-                address.appendChild( addressLine );
+            if ( parameters.containsKey( key ) ) {
+                address.add( key )
+                       .withData( parameters.getProperty( key, "" ) );
                 hasAddress = true;
             }
         }
-        if ( hasAddress) {
-            cdmdoc.appendChild( address );
+        // address.up();
+        if ( hasAddress ) {
+            cdm.add( address );
         }
-        
-        Element data = currentDocument.createElement( "data" );
-        cdmdoc.appendChild( data );
-        /* A data element without children would result in <data/> */
-        data.appendChild( currentDocument.createTextNode( "" ) );
+        cdm.add( "fizz" )
+           .nest()
+           .add( "buzz" )
+           .nest()
+           .add( "foo" )
+           .add( "bar" )
+           .withData( "Lorem Ipsum" )
+           .unnest()
+           .add( "doe" ).withData( "Dolor sit amet" )
+           .unnest()
+           .add( "data" )
+           .withData( "" );
 
         TransformerFactory transformerFactory = TransformerFactory.newInstance();
         Transformer transformer = transformerFactory.newTransformer();
 
         transformer.setOutputProperty( OutputKeys.INDENT, "yes" );
 
-        DOMSource xmlSource = new DOMSource( currentDocument );
-        StringWriter outputTargetTarget = new StringWriter();
-        Result outputTarget = new StreamResult( outputTargetTarget );
+        DOMSource xmlSource = new DOMSource( cdm.get() );
+        StringWriter outputTargetContent = new StringWriter();
+        Result outputTarget = new StreamResult( outputTargetContent );
 
         transformer.transform( xmlSource, outputTarget );
-
-        return outputTargetTarget.toString();
+        System.out.println( outputTargetContent.toString() );
+        return outputTargetContent.toString();
 
     }
 

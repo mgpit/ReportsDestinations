@@ -123,6 +123,7 @@ public abstract class MgpDestination extends Destination {
 
     private int numberOfFilesInDistribution = -1;
     private int indexOfCurrentlyDistributedFile = -1;
+    private String mimetype = "";
     
     /**
      * Creates a RWExcpetion on the exception given.
@@ -257,11 +258,24 @@ public abstract class MgpDestination extends Destination {
 
         this.numberOfFilesInDistribution = totalNumberOfFiles;
         this.indexOfCurrentlyDistributedFile = 0;
-
+        this.mimetype = getFileFormatAsMimeType( mainFormat );
+        
+        final Properties parametersAsProperties = new Properties();
+        parametersAsProperties.put( "distribution.numberOfFiles", String.valueOf( this.numberOfFilesInDistribution ) );
+        parametersAsProperties.put( "distribution.totalFileSize",  String.valueOf( totalFileSize ) );
+        parametersAsProperties.put( "distribution.mimetype", this.mimetype );
+        
         if ( getLogger().isDebugEnabled() ) {
             dumpProperties( allProperties );
+            getLogger().debug( "Added the following properties to this distribution" );
+            dumpProperties( parametersAsProperties );
         }
-
+        
+        final Properties currentDistributionsProperties = new Properties();
+        currentDistributionsProperties.putAll( allProperties );
+        currentDistributionsProperties.putAll( parametersAsProperties );
+        this.setProperties( currentDistributionsProperties );
+        
         return CONTINUE;
     }
 

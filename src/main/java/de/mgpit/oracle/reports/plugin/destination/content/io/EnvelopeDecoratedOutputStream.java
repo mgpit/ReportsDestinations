@@ -20,22 +20,24 @@
 package de.mgpit.oracle.reports.plugin.destination.content.io;
 
 
-import java.io.BufferedOutputStream;
 import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
-import de.mgpit.oracle.reports.plugin.commons.Magic;
+import org.apache.log4j.Logger;
+
 import de.mgpit.oracle.reports.plugin.commons.U;
 import de.mgpit.oracle.reports.plugin.destination.content.types.Envelope;
 
 /**
  * An {@code OutputStream} decorated with an {@code Envelope}.
- *  
+ * 
  * @author mgp
  *
  */
 public class EnvelopeDecoratedOutputStream extends FilterOutputStream {
+    private static final Logger LOG = Logger.getRootLogger();
+    private boolean notFlushedYet = true;
 
     private final Envelope envelope;
 
@@ -53,18 +55,19 @@ public class EnvelopeDecoratedOutputStream extends FilterOutputStream {
 
         if ( envelope.wantsData() ) {
             out.write( b );
-        } else {
-            throw new IOException( "Cannot write into an Envelope which is not in state \"data wanted\"!" );
         }
     }
 
     public void flush() throws IOException {
-        if ( !envelope.wantsData() ) {
-            throw new IOException( "Cannot flush an Envelope which is not in state \"data wanted\"!" );
+        if ( this.notFlushedYet ) {
+            if ( !envelope.wantsData() ) {
+                throw new IOException( "Cannot flush an Envelope which is not in state \"data wanted\"!" );
+            }
+            envelope.dataFinished();
+            envelope.writeToOut( out );
+            out.flush();
+            notFlushedYet = false;
         }
-        envelope.dataFinished();
-        envelope.writeToOut( out );
-        out.flush();
     }
 
     /*

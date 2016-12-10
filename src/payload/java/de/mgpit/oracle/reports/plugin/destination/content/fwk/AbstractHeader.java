@@ -17,7 +17,7 @@
 /**
  * @license APACHE-2.0
  */
-package de.mgpit.oracle.reports.plugin.destination.content.cdm;
+package de.mgpit.oracle.reports.plugin.destination.content.fwk;
 
 
 import java.io.ByteArrayInputStream;
@@ -108,6 +108,7 @@ public abstract class AbstractHeader implements Header {
                 break;
             case AT_END:
                 /* Header is consumed */
+                aByte = Magic.END_OF_STREAM;
                 break;
             default:
                 aByte = Magic.END_OF_STREAM;

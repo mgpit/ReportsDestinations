@@ -20,6 +20,7 @@
 package de.mgpit.oracle.reports.plugin.destination.mq;
 
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Constructor;
@@ -206,7 +207,7 @@ public final class MQDestination extends ModifyingDestination {
             throw asRWException( new Exception( "Fatal error on starting Distribution!", fatalOther ) );
         }
     }
-    
+
     private boolean isMultipart() {
         return false;
     }
@@ -214,19 +215,31 @@ public final class MQDestination extends ModifyingDestination {
     protected void sendMainFile( Filename cacheFileFilename, short fileFormat ) throws RWException {
         getLogger().info( "Sending MAIN file of format " + humanReadable( fileFormat ) + " to " + getClass().getName() );
         InputStream source = getContent( IOUtility.fileFromName( cacheFileFilename ) );
+        OutputStream target = null;
         try {
             U.assertNotNull( this.mq, "Cannot continue to send! No MQ destination provided nor default MQ destination speficied!" );
-            OutputStream target = getTarget();
+            target = getTarget();
             IOUtility.copyFromTo( source, target );
             source.close();
             if ( !this.isMultipart() ) {
                 target.close();
             }
         } catch ( Throwable anyOther ) {
+
             getLogger().fatal( "Fatal Error during sending main file " + U.w( cacheFileFilename ) + "!", anyOther );
             throw asRWException( new Exception( anyOther ) );
+        } finally {
+            try {
+                if ( source != null ) source.close();
+            } catch ( Exception ignore ) {
+            }
+            ;
+            try {
+                if ( target != null ) target.close();
+            } catch ( Exception ignore ) {
+            }
+            ;
         }
-
     }
 
     /**
@@ -307,7 +320,8 @@ public final class MQDestination extends ModifyingDestination {
             } catch ( NoSuchMethodException noSuchMethod ) {
                 final String simpleClassName = U.classname( className );
                 final String constructorName = simpleClassName + "( MQ.Configuration )";
-                IllegalArgumentException illegal = new IllegalArgumentException( className + " does not declare the constructor " + constructorName );
+                IllegalArgumentException illegal = new IllegalArgumentException(
+                        className + " does not declare the constructor " + constructorName );
                 LOG.fatal( illegal );
                 throw illegal;
             } catch ( ClassNotFoundException notFound ) {
@@ -347,19 +361,20 @@ public final class MQDestination extends ModifyingDestination {
     /**
      * Creates a new MQ instance.
      * <p>
-     *  
-     * @param uriLiteral URI literal with the configuration. 
+     * 
+     * @param uriLiteral
+     *            URI literal with the configuration.
      * @return a new MQ instance.
      */
     public static MQ newMQ( String uriLiteral ) {
         try {
-            
+
             final Class[] withConfigurationArgument = { MQ.Configuration.class };
             Constructor c = MQRegistrar.MQ_IMPLEMENTATION.getDeclaredConstructor( withConfigurationArgument );
-            
+
             MQ.Configuration configuration = MQ.Configuration.fromURILiteral( uriLiteral );
-            final Object[] configurationArgument = { configuration }; 
-            MQ mq = (MQ)c.newInstance( configurationArgument ); 
+            final Object[] configurationArgument = { configuration };
+            MQ mq = (MQ) c.newInstance( configurationArgument );
             return mq;
         } catch ( URISyntaxException syntax ) {
             LOG.error( "Invalid Connection URI! Cannot create MQ Connection!", syntax );
