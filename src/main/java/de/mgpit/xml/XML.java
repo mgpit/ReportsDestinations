@@ -21,7 +21,9 @@ package de.mgpit.xml;
 
 
 import java.io.StringWriter;
+import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Stack;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -49,8 +51,8 @@ import org.w3c.dom.Text;
  */
 public class XML {
 
-    private static final SimpleDateFormat XML_DATE = new SimpleDateFormat( "yyyy.MM.dd" );
-    private static final SimpleDateFormat XML_DATE_TIME = new SimpleDateFormat( "yyyy.MM.dd'T'hh:mm:ss" );
+    private static final SimpleDateFormat XML_DATE = new SimpleDateFormat( "yyyy-MM-dd" );
+    private static final SimpleDateFormat XML_DATE_TIME = new SimpleDateFormat( "yyyy-MM-dd'T'hh:mm:ss" );
 
     /**
      * Hold the document.
@@ -65,6 +67,8 @@ public class XML {
      */
     private Node last;
 
+    private Charset charset;
+
     /**
      * Factory method - creates a new {@code XML} document.
      * 
@@ -73,6 +77,10 @@ public class XML {
      */
     public static final XML newDocument() throws Exception {
         return new XML();
+    }
+
+    public static final XML newDocument( String charsetName ) throws Exception {
+        return new XML( charsetName );
     }
 
     /**
@@ -100,6 +108,11 @@ public class XML {
         } else {
             document = null;
         }
+    }
+
+    private XML( String charsetName ) throws Exception {
+        this();
+        this.charset = Charset.forName( charsetName );
     }
 
     /**
@@ -193,7 +206,7 @@ public class XML {
 
     /**
      * Adds a {@code Text} node to the {@code Node} last created.
-     * 
+     *
      * @param data
      *            {@code Text}'s content
      * @return this {@code XML}
@@ -204,14 +217,27 @@ public class XML {
         if ( last.hasChildNodes() ) {
             throw new IllegalStateException( "Cannot append Text to a Node which has children!" );
         }
-        Text newChild = document().createTextNode( data );
+        Text newChild = document().createTextNode( (data == null ? "" : data) ); // TODO: Should I really???
         last.appendChild( newChild );
         return this;
     }
 
+    public XML withData( boolean b ) throws IllegalStateException {
+        return withData( Boolean.valueOf( b )
+                                .toString() );
+    }
+
+    public XML withData( Date d ) throws IllegalStateException {
+        return withData( XML_DATE_TIME.format( d ) );
+    }
+
+    public XML withDateData( Date d ) throws IllegalStateException {
+        return withData( XML_DATE.format( d ) );
+    }
+
     /**
      * Adds an {@code Attribute} to the {@code Node} last added.
-     * 
+     *
      * @param name
      *            {@code Attribute}'s name
      * @param value
@@ -219,8 +245,23 @@ public class XML {
      * @return this {@code XML}
      */
     public XML attribute( String name, String value ) {
-        ((Element) last).setAttribute( name, value );
+        if ( value != null ) {
+            ((Element) last).setAttribute( name, value );
+        }
         return this;
+    }
+
+    public XML attribute( String name, boolean b ) {
+        return attribute( name, Boolean.valueOf( b )
+                                       .toString() );
+    }
+
+    public XML attribute( String name, Date d ) {
+        return attribute( name, XML_DATE_TIME.format( d ) );
+    }
+
+    public XML dateAttribute( String name, Date d ) {
+        return attribute( name, XML_DATE.format( d ) );
     }
 
     /**
@@ -270,6 +311,10 @@ public class XML {
             }
             transformer.setOutputProperty( OutputKeys.INDENT, "yes" );
 
+            if ( charsetDefined() ) {
+                transformer.setOutputProperty( OutputKeys.ENCODING, this.charset.name() );
+            }
+
             DOMSource xmlSource = new DOMSource( get() );
             StringWriter outputTargetContent = new StringWriter();
             Result outputTarget = new StreamResult( outputTargetContent );
@@ -280,6 +325,10 @@ public class XML {
             throw new RuntimeException( toBeMadeUnchecked );
         }
 
+    }
+
+    private boolean charsetDefined() {
+        return this.charset != null;
     }
 
     /**
