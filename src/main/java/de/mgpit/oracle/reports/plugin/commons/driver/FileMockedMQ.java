@@ -10,11 +10,10 @@ import org.apache.log4j.Logger;
 
 import de.mgpit.oracle.reports.plugin.commons.U;
 import de.mgpit.oracle.reports.plugin.commons.io.IOUtility;
+import de.mgpit.types.Filename;
 import oracle.reports.utility.Utility;
 
 public class FileMockedMQ extends MQ {
-
-    private FileOutputStream fileOut;
 
     public FileMockedMQ( Configuration configuration ) {
         super( configuration );
@@ -22,6 +21,24 @@ public class FileMockedMQ extends MQ {
 
     public OutputStream newMessage() {
         return new OutputStream() {
+            
+            private File file;
+            private FileOutputStream fileOut;
+
+            {
+                try {
+                    File targetDirectory = new File( U.coalesce( Utility.getTempDir(), IOUtility.getSystemTempDir() ) );
+                    String prefix = filenameFromConfiguration();
+                    String suffix = ".part";
+                    File file = File.createTempFile( prefix, suffix, targetDirectory );
+                    Logger.getRootLogger()
+                        .info( "Connected to: " + file.getAbsolutePath() );
+                    fileOut = new FileOutputStream( file );
+                } catch ( Exception cause ) {
+                    Logger.getRootLogger().error( "Cannot get Output Stream", cause );
+                    throw new RuntimeException( cause );
+                }
+            }
 
             public void write( int b ) throws IOException {
                 if ( fileOut != null ) {
@@ -34,20 +51,22 @@ public class FileMockedMQ extends MQ {
             }
 
             public void close() throws IOException {
+                flush();
                 fileOut.close();
+                final Filename finalFilename = Filename.of( file.getPath() ).withExtension( "mgf" );
+                file.renameTo( IOUtility.fileFromName( finalFilename ) );
             }
 
         };
     }
 
-    public void connect() throws Exception {
-        File targetDirectory = new File( U.coalesce( Utility.getTempDir(), IOUtility.getSystemTempDir() ) );
-        File targetFile = File.createTempFile( "QMSALSAXP.IQ.DEVELOPMENT__", ".mq", targetDirectory );
-        Logger.getRootLogger().info( "Connected to: " + targetFile.getAbsolutePath() );
-        fileOut = new FileOutputStream( targetFile );
+    public void connect() throws Exception {}
+
+    private String filenameFromConfiguration() {
+        return configuration.getQueueManagerName() + "_" + configuration.getQueueName() + "_" + configuration.getChannelName()
+                + "__";
     }
 
-    public void disconnect() throws Exception {
-    }
+    public void disconnect() throws Exception {}
 
 }

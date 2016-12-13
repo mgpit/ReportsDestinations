@@ -36,15 +36,23 @@ public class SimpleCdmTest extends TestCase {
     }
 
     public void testBuild() {
-        final SimpleCdm simple = new SimpleCdm();
         final Properties parameters = new Properties();
         for ( int lineNumber = 1; lineNumber < 6; lineNumber++ ) {
             final String key = "address_line_" + lineNumber;
             parameters.setProperty( key, key );
         }
         boolean exceptionOccured = false;
+        
         try {
-            simple.build( parameters );
+            SimpleCdm first = null, last = null;
+            for ( int i = 0; i < 1010; i++ ) {
+                final SimpleCdm simple = new SimpleCdm();
+                simple.build( parameters );
+                if ( i == 0 ) { first = simple; }
+                if ( i == 1009 ) { last = simple; }
+            }
+            System.out.println( first.getText() );
+            System.out.println( last.getText() );
         } catch ( Throwable anly ) {
             exceptionOccured = true;
             anly.printStackTrace( System.err );

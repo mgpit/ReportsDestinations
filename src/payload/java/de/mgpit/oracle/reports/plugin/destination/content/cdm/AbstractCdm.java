@@ -24,7 +24,9 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.StringWriter;
+import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Properties;
@@ -56,6 +58,10 @@ import de.mgpit.oracle.reports.plugin.destination.content.types.Envelope;
  */
 public abstract class AbstractCdm implements Envelope {
 
+    private static final SimpleDateFormat UNIFIER_PREFIX_FORMAT = new SimpleDateFormat( "yyyyMMddhhmmssSSS" );
+    private static final DecimalFormat UNIFIER_SUFFIX_FORMAT = new DecimalFormat( "000" );
+    private static int UNIFIER_COUNTER = 0; 
+    
     private static final int UNDEFINED = 0;
     private static final int BEFORE_DATA = 1;
     private static final int IN_DATA = 2;
@@ -65,20 +71,35 @@ public abstract class AbstractCdm implements Envelope {
     private int currentState = UNDEFINED;
     private ByteArrayInputStream contentToPutBeforeData;
     private ByteArrayInputStream contentToPutAfterData;
+    
+    public static synchronized String getUnifier() {
+        final Date now = Calendar.getInstance().getTime();
+        final String unifierPrefix = UNIFIER_PREFIX_FORMAT.format( now );
+        final String unifierSuffix = UNIFIER_SUFFIX_FORMAT.format( (double) UNIFIER_COUNTER );
+        
+        UNIFIER_COUNTER = (UNIFIER_COUNTER < 999)?UNIFIER_COUNTER+1:0;
+        
+        return unifierPrefix.concat( unifierSuffix );
+    }
 
+    private String text;
+    public String getText() {
+        return this.text;
+    }
+    
     public void build( Properties parameters ) {
         try {
 
-            final String content = getEnvelopeAsStringPopulatedWith( parameters );
+            text = getEnvelopeAsStringPopulatedWith( parameters );
             final String splitToken = getSplitAtToken();
-            final int indexOfSplitToken = content.lastIndexOf( splitToken );
+            final int indexOfSplitToken = text.lastIndexOf( splitToken );
             if ( indexOfSplitToken == Magic.SUBSTRING_NOT_FOUND ) {
                 throw new Exception( U.classname( this ) + " is corrupt" );
             }
             final int cuttingPosition = indexOfSplitToken + splitToken.length();
 
-            final String beforeContent = content.substring( 0, cuttingPosition );
-            final String afterContent = content.substring( cuttingPosition );
+            final String beforeContent = text.substring( 0, cuttingPosition );
+            final String afterContent = text.substring( cuttingPosition );
             this.contentToPutBeforeData = new ByteArrayInputStream( beforeContent.getBytes() );
             this.contentToPutAfterData = new ByteArrayInputStream( afterContent.getBytes() );
 

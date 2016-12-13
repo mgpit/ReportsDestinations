@@ -45,13 +45,14 @@ public class SimpleCdm extends AbstractCdm {
 
     private static final String DATA_ELEMENT = "<data>";
 
-    public String getEnvelopeAsStringPopulatedWith( Properties parameters ) throws Exception {
+    protected String getEnvelopeAsStringPopulatedWith( Properties parameters ) throws Exception {
         final SimpleDateFormat dateFormat = new SimpleDateFormat( "yyyy.MM.dd HH:mm:ss" );
         final String now = dateFormat.format( new Date() );
 
         XML cdm = XML.newDocument();
         cdm.add( "cdmdoc" )
            .attribute( "created", now )
+           .attribute( "unifier", getUnifier() )
            .nest();
 
         XMLFragment address = XML.newFragment( cdm );
@@ -83,10 +84,6 @@ public class SimpleCdm extends AbstractCdm {
            .unnest()
            .add( "data" )
            .withData( "" );
-
-        // System.out.println( cdm.toString() );
-        // System.out.println( "\n" );
-        if ( hasAddress ) System.out.println( address.toString() );
         return cdm.toString();
 
     }
