@@ -55,7 +55,7 @@ public class XML {
     private static final SimpleDateFormat XML_DATE_TIME = new SimpleDateFormat( "yyyy-MM-dd'T'hh:mm:ss" );
 
     /**
-     * Hold the document.
+     * Holds the document.
      */
     private final Document document;
     /**
@@ -98,10 +98,9 @@ public class XML {
     }
 
     private XML() throws Exception {
-        final DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
-        final DocumentBuilder builder = builderFactory.newDocumentBuilder();
-
         if ( !this.isFragment() ) {
+            final DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
+            final DocumentBuilder builder = builderFactory.newDocumentBuilder();
             document = builder.newDocument();
             last = document;
             hierarchy.push( last );
