@@ -25,9 +25,9 @@ public class FilenameTest extends TestCase {
         Filename expected = Filename.of( expectedFullFilename );
         Filename actual = filename.withNewExtension( ".part" );
         
-        System.out.println( filename.toString() );
-        System.out.println( expected.toString() );
-        System.out.println( actual.toString() );
+        // System.out.println( filename.toString() );
+        // System.out.println( expected.toString() );
+        // System.out.println( actual.toString() );
         
         assertEquals( expectedFullFilename, actual.toString() );
         
@@ -72,5 +72,14 @@ public class FilenameTest extends TestCase {
         assertTrue( greater.compareTo( less ) > 0 );
         
         assertEquals( other.compareTo( other ), 0 );
+    }
+    
+    public void testCopy() {
+        Filename expected = Filename.of( "C:\\tmp\\reports\\zzz.zip" );
+        Filename actual = expected.copy();
+        
+        assertEquals( actual, expected );
+        assertFalse( actual == expected );
+        assertTrue( actual != expected );
     }
 }
