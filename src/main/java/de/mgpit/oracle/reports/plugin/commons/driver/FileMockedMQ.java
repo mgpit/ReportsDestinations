@@ -53,7 +53,7 @@ public class FileMockedMQ extends MQ {
             public void close() throws IOException {
                 flush();
                 fileOut.close();
-                final Filename finalFilename = Filename.of( file.getPath() ).withExtension( "mgf" );
+                final Filename finalFilename = Filename.of( file.getPath() ).withNewExtension( "mgf" );
                 file.renameTo( IOUtility.fileFromName( finalFilename ) );
             }
 

@@ -22,6 +22,8 @@ package de.mgpit.types;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import de.mgpit.oracle.reports.plugin.commons.U;
 import de.mgpit.oracle.reports.plugin.commons.io.IOUtility;
@@ -33,22 +35,23 @@ import de.mgpit.oracle.reports.plugin.commons.io.IOUtility;
  * @author mgp
  */
 public final class Filename extends TypedString {
-    public static Filename of( String name ) {
-        return new Filename( name );
+
+    public static Filename of( String fullname ) {
+        return new Filename( fullname );
     }
 
     public static Filename of( File file ) {
         return of( file.getPath() );
     }
-    
-    public static Filename filenameNameOnlyOf( String name ) {
-        return filenameNameOnlyOf( new File( name ) );
+
+    public static Filename filenameNameOnlyOf( String fullname ) {
+        return filenameNameOnlyOf( new File( fullname ) );
     }
-    
+
     public static Filename filenameNameOnlyOf( Filename filename ) {
         return filenameNameOnlyOf( IOUtility.fileFromName( filename ) );
     }
-    
+
     public static Filename filenameNameOnlyOf( File file ) {
         return new Filename( file.getName() );
     }
@@ -63,43 +66,76 @@ public final class Filename extends TypedString {
 
     private String name = NONE;
 
-    private Filename( String name ) {
-        this.name = cleaned( name );
-    }
-
-    protected String value() {
+    public String getName() {
         return this.name;
     }
 
-    public Filename withExtension( String newExtension ) {
-        String value = this.value();
-        if ( U.isEmpty( value ) ) {
-            return null;
-        }
-        if ( !U.isEmpty( newExtension ) ) {
-            String fileNameWithExtension;
+    private String extension = NONE;
 
-            int dotPosition = value.lastIndexOf( '.' );
-            String currentExtension = (dotPosition>0)?value.substring( dotPosition + 1 ):"";
-            
-            boolean canKeep = currentExtension.equals( newExtension );
-            Filename answer = (canKeep)?this.copy():this.concat("."+newExtension);
-            return answer;
-        }
-        return copy();
+    public String getExtension() {
+        return this.extension;
     }
-    
-    private static Filename NULL_VALUE = Filename.of( (String)null );
+
+    private Filename() {
+        // NOOP
+    }
+
+    private Filename( String fullname ) {
+        final String cleaned = cleaned( fullname );
+        final int lastDotPosition = cleaned.lastIndexOf( '.' );
+        if ( lastDotPosition > 0 ) {
+            this.name = cleaned.substring( 0, lastDotPosition );
+            this.extension = cleaned.substring( lastDotPosition + 1 );
+        } else {
+            this.name = cleaned;
+            this.extension = NONE;
+        }
+    }
+
+    private Filename( String name, String extension ) {
+        this.name = name;
+        this.extension = extension;
+    }
+
+    public String value() {
+        StringBuffer sb = new StringBuffer( getName() );
+        if ( !U.isEmpty( getExtension() ) ) {
+            sb.append( "." )
+              .append( getExtension() );
+        }
+        return sb.toString();
+    }
+
+    private static final String DOT = ".";
+
+    public Filename withNewExtension( String newExtension ) {
+        String cleanedExtension = cleaned( newExtension );
+        if ( U.isEmpty( cleanedExtension ) ) {
+            return new Filename( getName(), NONE );
+        }
+        int offset = 0;
+        for ( ; cleanedExtension.startsWith( DOT, offset ); offset++ );
+        String extenstionStrippedFromLeadingDots = (offset > 0) ? cleanedExtension.substring( offset ) : cleanedExtension;
+
+        return new Filename( getName(), extenstionStrippedFromLeadingDots );
+    }
+
+    private static Filename NULL_VALUE = new Filename(); // Filename.of( (String) null );
 
     public Filename copy() {
         return Filename.of( this.value() );
     }
+
     public Filename concat( String str ) {
-        return (this.isNotNull())?Filename.of( this.value().concat(str) ):NULL_VALUE;
+        return (this.isNotNull()) ? Filename.of( this.value()
+                                                     .concat( str ) )
+                : NULL_VALUE;
     }
-    
+
     public Filename trim() {
-        return (this.isNotNull())?Filename.of( this.value().trim()):NULL_VALUE;
+        return (this.isNotNull()) ? Filename.of( this.value()
+                                                     .trim() )
+                : NULL_VALUE;
     }
 
 }

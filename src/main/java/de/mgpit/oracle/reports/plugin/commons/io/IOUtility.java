@@ -84,7 +84,7 @@ public class IOUtility {
      */
     public static Filename asLogfileFilename( final String str ) {
         String replaced = str.replace( '.', '_' );
-        return Filename.of( replaced ).withExtension( "log" );
+        return Filename.of( replaced ).withNewExtension( "log" );
     }
 
     /**
@@ -135,7 +135,7 @@ public class IOUtility {
      * @return string containing a filename ending with the extension given
      */
     public static Filename withExtension( final Filename fileName, final String newExtension ) {
-        return (fileName == null) ? null : fileName.withExtension( newExtension );
+        return (fileName == null) ? null : fileName.withNewExtension( newExtension );
     }
 
     /**
