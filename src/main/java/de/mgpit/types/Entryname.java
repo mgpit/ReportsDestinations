@@ -28,8 +28,15 @@ public class Entryname extends TypedString {
         return Entryname.of( this.value() );
     }
 
-    public Entryname concat( String str ) {
-        return (this.isNotNull()) ? Entryname.of( this.value().concat( str ) ) : NULL_VALUE;
+    public Entryname concat( Entryname other ) {
+        if (other == null) {
+            throw new IllegalArgumentException( "Other musn't be null" );
+        }
+        if ( this.isNotNull() ) {
+            return Entryname.of( this.value().concat( other.value() ) );
+        } else {
+            return other.copy();
+        }
     }
 
     public Entryname trim() {

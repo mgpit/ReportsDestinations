@@ -43,7 +43,7 @@ import de.mgpit.xml.XML.XMLFragment;
  */
 public class SimpleCdm extends AbstractCdm {
 
-    private static final String DATA_ELEMENT = "<data>";
+    private static final String DATA_CLOSING_TAG = "</data>";
 
     protected String getEnvelopeAsStringPopulatedWith( Properties parameters ) throws Exception {
         final SimpleDateFormat dateFormat = new SimpleDateFormat( "yyyy.MM.dd HH:mm:ss" );
@@ -89,7 +89,7 @@ public class SimpleCdm extends AbstractCdm {
     }
 
     protected String getSplitAtToken() {
-        return DATA_ELEMENT;
+        return DATA_CLOSING_TAG;
     }
 
 }

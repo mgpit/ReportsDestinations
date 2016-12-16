@@ -131,7 +131,7 @@ public class ZipArchive {
      * @return a new ZipArchive
      */
     private ZipArchive createTemporaryFileFromName( final Filename fileName ) {
-        temporaryFile = IOUtility.fileFromName( fileName.concat( ".part" ) );
+        temporaryFile = IOUtility.fileFromName( fileName.withNewExtension( ".part" ) );
         return this;
     }
 

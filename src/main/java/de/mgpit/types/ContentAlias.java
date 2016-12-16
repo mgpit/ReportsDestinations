@@ -19,7 +19,6 @@
  */
 package de.mgpit.types;
 
-
 /**
  * 
  * A conent alias name.
@@ -52,8 +51,15 @@ public final class ContentAlias extends TypedString {
         return ContentAlias.of( this.value() );
     }
 
-    public ContentAlias concat( String str ) {
-        return (this.isNotNull()) ? ContentAlias.of( this.value().concat( str ) ) : NULL_VALUE;
+    public ContentAlias concat( ContentAlias other ) {
+        if (other == null) {
+            throw new IllegalArgumentException( "Other musn't be null" );
+        }
+        if ( this.isNotNull() ) {
+            return ContentAlias.of( this.value().concat( other.value() ) );
+        } else {
+            return other.copy();
+        }
     }
 
     public ContentAlias trim() {

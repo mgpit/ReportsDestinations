@@ -60,8 +60,8 @@ public abstract class AbstractCdm implements Envelope {
 
     private static final SimpleDateFormat UNIFIER_PREFIX_FORMAT = new SimpleDateFormat( "yyyyMMddhhmmssSSS" );
     private static final DecimalFormat UNIFIER_SUFFIX_FORMAT = new DecimalFormat( "000" );
-    private static int UNIFIER_COUNTER = 0; 
-    
+    private static int UNIFIER_COUNTER = 0;
+
     private static final int UNDEFINED = 0;
     private static final int BEFORE_DATA = 1;
     private static final int IN_DATA = 2;
@@ -71,43 +71,64 @@ public abstract class AbstractCdm implements Envelope {
     private int currentState = UNDEFINED;
     private ByteArrayInputStream contentToPutBeforeData;
     private ByteArrayInputStream contentToPutAfterData;
-    
+
+    /**
+     * 
+     * @return a new Unifier
+     */
     public static synchronized String getUnifier() {
-        final Date now = Calendar.getInstance().getTime();
+        final Date now = Calendar.getInstance()
+                                 .getTime();
         final String unifierPrefix = UNIFIER_PREFIX_FORMAT.format( now );
         final String unifierSuffix = UNIFIER_SUFFIX_FORMAT.format( (double) UNIFIER_COUNTER );
-        
-        UNIFIER_COUNTER = (UNIFIER_COUNTER < 999)?UNIFIER_COUNTER+1:0;
-        
+
+        UNIFIER_COUNTER = (UNIFIER_COUNTER < 999) ? UNIFIER_COUNTER + 1 : 0;
+
         return unifierPrefix.concat( unifierSuffix );
     }
 
     private String text;
-    public String getText() {
-        return this.text;
-    }
-    
-    public void build( Properties parameters ) {
-        try {
 
-            text = getEnvelopeAsStringPopulatedWith( parameters );
-            final String splitToken = getSplitAtToken();
-            final int indexOfSplitToken = text.lastIndexOf( splitToken );
-            if ( indexOfSplitToken == Magic.SUBSTRING_NOT_FOUND ) {
-                throw new Exception( U.classname( this ) + " is corrupt" );
-            }
-            final int cuttingPosition = indexOfSplitToken + splitToken.length();
-
-            final String beforeContent = text.substring( 0, cuttingPosition );
-            final String afterContent = text.substring( cuttingPosition );
-            this.contentToPutBeforeData = new ByteArrayInputStream( beforeContent.getBytes() );
-            this.contentToPutAfterData = new ByteArrayInputStream( afterContent.getBytes() );
-
-        } catch ( Exception any ) {
-            throw new RuntimeException( "Runtime error", any );
+    /**
+     * Builds this CDM.
+     * <p>
+     * The CDM may have variable content. Parameters for populating this content can be passed as {@code Properties}.
+     * 
+     * @param parameters
+     *            Properties for populating.
+     * 
+     * @throws Exception
+     *             on errors during the build.
+     */
+    public void build( Properties parameters ) throws Exception {
+        text = getEnvelopeAsStringPopulatedWith( parameters );
+        final String splitToken = getSplitAtToken();
+        final int lastIndexOfSplitToken = text.lastIndexOf( splitToken );
+        if ( lastIndexOfSplitToken == Magic.SUBSTRING_NOT_FOUND ) {
+            throw new CdmCorruptException( U.classname( this ) + " is corrupt. " + splitToken + " not found!" );
+        }
+        final int firstIndexOfSplitToken = text.indexOf( splitToken );
+        if ( firstIndexOfSplitToken != lastIndexOfSplitToken ) {
+            throw new CdmCorruptException( U.classname( this ) + " is corrupt. " + splitToken + " contained two times at least!" );
         }
 
+        final int cuttingPosition = lastIndexOfSplitToken;
+
+        final String beforeContent = text.substring( 0, cuttingPosition );
+        final String afterContent = text.substring( cuttingPosition );
+        this.contentToPutBeforeData = new ByteArrayInputStream( beforeContent.getBytes() );
+        this.contentToPutAfterData = new ByteArrayInputStream( afterContent.getBytes() );
+
         currentState = BEFORE_DATA;
+    }
+
+    /**
+     * Gets the content of this CDM.
+     * 
+     * @return
+     */
+    public String getText() {
+        return this.text;
     }
 
     protected abstract String getEnvelopeAsStringPopulatedWith( Properties parameters ) throws Exception;
@@ -209,6 +230,18 @@ public abstract class AbstractCdm implements Envelope {
 
     public static String statename( int stateCode ) {
         return U.coalesce( (String) STATE_NAMES.get( new Integer( stateCode ) ), "???Unknown???" );
+    }
+
+    public static class CdmCorruptException extends Exception {
+        private static final long serialVersionUID = 1L;
+
+        public CdmCorruptException( String message ) {
+            super( message );
+        }
+
+        public CdmCorruptException( String message, Throwable cause ) {
+            super( message, cause );
+        }
     }
 
     static {

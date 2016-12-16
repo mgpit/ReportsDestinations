@@ -29,8 +29,8 @@ public class FileMockedMQ extends MQ {
                 try {
                     File targetDirectory = new File( U.coalesce( Utility.getTempDir(), IOUtility.getSystemTempDir() ) );
                     String prefix = filenameFromConfiguration();
-                    String suffix = ".part";
-                    File file = File.createTempFile( prefix, suffix, targetDirectory );
+                    String suffix = "part";
+                    file = File.createTempFile( prefix, suffix, targetDirectory );
                     Logger.getRootLogger()
                         .info( "Connected to: " + file.getAbsolutePath() );
                     fileOut = new FileOutputStream( file );

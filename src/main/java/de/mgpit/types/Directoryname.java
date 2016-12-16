@@ -54,8 +54,15 @@ public final class Directoryname extends TypedString {
         return Directoryname.of( this.value() );
     }
 
-    public Directoryname concat( String str ) {
-        return (this.isNotNull()) ? Directoryname.of( this.value().concat( str ) ) : NULL_VALUE;
+    public Directoryname concat( Directoryname other ) {
+        if (other == null) {
+            throw new IllegalArgumentException( "Other musn't be null" );
+        }
+        if ( this.isNotNull() ) {
+            return Directoryname.of( this.value().concat( other.value() ) );
+        } else {
+            return other.copy();
+        }
     }
 
     public Directoryname trim() {

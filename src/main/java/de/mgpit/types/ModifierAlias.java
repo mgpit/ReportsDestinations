@@ -51,8 +51,15 @@ public final class ModifierAlias extends TypedString {
         return ModifierAlias.of( this.value() );
     }
 
-    public ModifierAlias concat( String str ) {
-        return (this.isNotNull()) ? ModifierAlias.of( this.value().concat( str ) ) : NULL_VALUE;
+    public ModifierAlias concat( ModifierAlias other ) {
+        if (other == null) {
+            throw new IllegalArgumentException( "Other musn't be null" );
+        }
+        if ( this.isNotNull() ) {
+            return ModifierAlias.of( this.value().concat( other.value() ) );
+        } else {
+            return other.copy();
+        }
     }
 
     public ModifierAlias trim() {

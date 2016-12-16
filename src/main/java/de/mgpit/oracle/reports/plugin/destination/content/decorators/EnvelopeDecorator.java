@@ -30,6 +30,7 @@ import de.mgpit.oracle.reports.plugin.destination.content.types.Envelope;
 import de.mgpit.oracle.reports.plugin.destination.content.types.InputModifier;
 import de.mgpit.oracle.reports.plugin.destination.content.types.OutputModifier;
 import oracle.reports.RWException;
+import oracle.reports.utility.Utility;
 
 /**
  * A Decorator for applying {@link Envelope}s to a Stream.
@@ -61,10 +62,14 @@ public abstract class EnvelopeDecorator extends ContentDecorator {
      * 
      * @return an Envelope
      */
-    protected Envelope getEnvelope( Properties parameters ) {
-        Envelope envelope = (Envelope) getContent();
-        envelope.build( parameters );
-        return envelope;
+    protected Envelope getEnvelope( Properties parameters ) throws RWException {
+        try {
+            Envelope envelope = (Envelope) getContent();
+            envelope.build( parameters );
+            return envelope;
+        } catch ( Exception toBeWrapped ) {
+            throw Utility.newRWException( toBeWrapped );
+        }
     }
 
 }

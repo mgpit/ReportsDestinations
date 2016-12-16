@@ -76,8 +76,15 @@ public final class ModifierRawDeclaration extends TypedString {
         return ModifierRawDeclaration.of( this.value() );
     }
 
-    public ModifierRawDeclaration concat( String str ) {
-        return (this.isNotNull()) ? ModifierRawDeclaration.of( this.value().concat( str ) ) : NULL_VALUE;
+    public ModifierRawDeclaration concat( ModifierRawDeclaration other ) {
+        if (other == null) {
+            throw new IllegalArgumentException( "Other musn't be null" );
+        }
+        if ( this.isNotNull() ) {
+            return ModifierRawDeclaration.of( this.value().concat( other.value() ) );
+        } else {
+            return other.copy();
+        }
     }
 
     public ModifierRawDeclaration trim() {

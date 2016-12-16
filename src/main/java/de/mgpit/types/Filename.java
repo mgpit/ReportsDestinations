@@ -40,6 +40,10 @@ public final class Filename extends TypedString {
         return new Filename( fullname );
     }
 
+    public static Filename of( String name, String extension ) {
+        return new Filename( name, extension );
+    }
+
     public static Filename of( File file ) {
         return of( file.getPath() );
     }
@@ -126,16 +130,19 @@ public final class Filename extends TypedString {
         return Filename.of( this.value() );
     }
 
-    public Filename concat( String str ) {
-        return (this.isNotNull()) ? Filename.of( this.value()
-                                                     .concat( str ) )
-                : NULL_VALUE;
+    public Filename concat( Filename other ) {
+        if (other == null) {
+            throw new IllegalArgumentException( "Other musn't be null" );
+        }
+        if ( this.isNotNull() ) {
+            return Filename.of( this.value().concat( other.value() ), this.extension.concat( other.extension ) );
+        } else {
+            return other.copy();
+        }
     }
 
     public Filename trim() {
-        return (this.isNotNull()) ? Filename.of( this.value()
-                                                     .trim() )
-                : NULL_VALUE;
+        return (this.isNotNull()) ? new Filename( this.name.trim(), this.extension.trim() ) : NULL_VALUE;
     }
 
 }

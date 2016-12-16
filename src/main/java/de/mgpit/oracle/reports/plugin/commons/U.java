@@ -454,7 +454,7 @@ public final class U {
      * @return {@code true} if the String str is null or emptpy, {@code false} else
      */
     public static boolean isEmpty( final Filename fn ) {
-        return (fn == null) || isEmpty( fn.toString() );
+        return (fn == null) || fn.isEmpty();
     }
 
     /**

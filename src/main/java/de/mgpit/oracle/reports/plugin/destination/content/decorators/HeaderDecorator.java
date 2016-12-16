@@ -31,6 +31,7 @@ import de.mgpit.oracle.reports.plugin.destination.content.types.Header;
 import de.mgpit.oracle.reports.plugin.destination.content.types.InputModifier;
 import de.mgpit.oracle.reports.plugin.destination.content.types.OutputModifier;
 import oracle.reports.RWException;
+import oracle.reports.utility.Utility;
 
 /**
  * A Decorator for applying {@link Header}s to a Stream.
@@ -40,8 +41,7 @@ import oracle.reports.RWException;
  */
 public abstract class HeaderDecorator extends ContentDecorator {
 
-    public HeaderDecorator() {
-    }
+    public HeaderDecorator() {}
 
     /**
      * Applies a {@code Header} to an {@code InputStream}.
@@ -62,10 +62,14 @@ public abstract class HeaderDecorator extends ContentDecorator {
      * 
      * @return a Header
      */
-    protected Header getHeader( Properties parameters ) {
-        Header header = (Header) getContent();
-        header.build( parameters );
-        return header;
+    protected Header getHeader( Properties parameters ) throws RWException {
+        try {
+            Header header = (Header) getContent();
+            header.build( parameters );
+            return header;
+        } catch ( Exception toBeWrapped ) {
+            throw Utility.newRWException( toBeWrapped );
+        }
     }
 
 }

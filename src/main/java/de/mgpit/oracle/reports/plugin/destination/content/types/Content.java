@@ -66,7 +66,17 @@ public interface Content {
      */
     public void writeToOut( OutputStream out ) throws IOException;
 
-    public void build( Properties parameters );
+    /**
+     * Builds this Content.
+     * <p>
+     * The {@code Content} may have variable data. Parameters for populating this data can be passed as {@code Properties}.
+     * 
+     * @param parameters
+     *            Properties for populating.
+     * @throws Exception
+     *             on errors during the build.
+     */
+    public void build( Properties parameters ) throws Exception;
 
     /**
      * Gets this {@code Content}'s mime type.
