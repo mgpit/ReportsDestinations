@@ -57,7 +57,7 @@ public interface Content {
     public void dataFinished();
 
     /**
-     * Write this to the given output stream.
+     * Write this {@code Content} to the output stream given.
      * 
      * @param out
      *            the output stream
@@ -67,7 +67,7 @@ public interface Content {
     public void writeToOut( OutputStream out ) throws IOException;
 
     /**
-     * Builds this Content.
+     * Builds this {@code Content}.
      * <p>
      * The {@code Content} may have variable data. Parameters for populating this data can be passed as {@code Properties}.
      * 
