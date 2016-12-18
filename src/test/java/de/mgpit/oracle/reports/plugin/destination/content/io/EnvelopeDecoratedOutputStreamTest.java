@@ -12,32 +12,40 @@ import de.mgpit.oracle.reports.plugin.destination.content.io.EnvelopeDecoratedOu
 import junit.framework.TestCase;
 
 public class EnvelopeDecoratedOutputStreamTest extends TestCase {
+    public static final String NL = System.getProperty( "line.separator","\n" );
     
-    private static final String expected1 = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + 
-            "<cdmdoc>\n" + 
-            "    <data>\n" + 
-            "Lorem Ipsum Dolor Si amet\n" + 
-            "    </data>\n" + 
-            "</cdmdoc>";
+    private static final String expected1 =
+            //@formatter: off
+            "<?xml version = '1.0' encoding = 'UTF-8'?>"+NL 
+          + "<cdmdoc>"+NL 
+          + "   <data>Lorem Ipsum Dolor Si amet</data>"+NL 
+          + "</cdmdoc>"
+            ;
+            //@formatter: on
     
-    private static final String expected2 = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + 
-            "<cdmdoc>\n" + 
-            "    <data>\n" + 
-            "TG9yZW0gSXBzdW0gRG9sb3IgU2kgYW1ldA==\r\n" + // !!! Base64 encoding applies platform line separator
-            "\n" + 
-            "    </data>\n" + 
-            "</cdmdoc>";
+
+    private static final String expected2 =
+            //@formatter: off
+            "<?xml version = '1.0' encoding = 'UTF-8'?>"+NL 
+          + "<cdmdoc>"+NL 
+          + "   <data>TG9yZW0gSXBzdW0gRG9sb3IgU2kgYW1ldA=="+NL 
+          + "</data>"+NL 
+          + "</cdmdoc>"
+            ;
+            //@formatter: on
             
 
     public void testPlainPayload() {
         ByteArrayInputStream payload = new ByteArrayInputStream( "Lorem Ipsum Dolor Si amet".getBytes() );
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        EnvelopeDecoratedOutputStream cdmPlainPayloadStream = new EnvelopeDecoratedOutputStream( out, TestHelper.getCdm1() );
-
+        
         boolean exceptionOccured = false;
         try {
+            EnvelopeDecoratedOutputStream cdmPlainPayloadStream = new EnvelopeDecoratedOutputStream( out, TestHelper.getCdm1() );
+
             IOUtility.copyFromToAndThenClose( payload, cdmPlainPayloadStream );
             String actual1 = new String( out.toByteArray() );
+            System.err.println( actual1 );
             assertEquals( expected1, actual1 );
         } catch ( Exception any ) {
             exceptionOccured = true;
@@ -51,10 +59,10 @@ public class EnvelopeDecoratedOutputStreamTest extends TestCase {
         ByteArrayInputStream payload = new ByteArrayInputStream( "Lorem Ipsum Dolor Si amet".getBytes() );
         Base64InputStream transformedPayload = new Base64InputStream( payload, Magic.ENCODE_WITH_BASE64 );
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        EnvelopeDecoratedOutputStream cdmPlainPayloadStream = new EnvelopeDecoratedOutputStream( out, TestHelper.getCdm1() );
 
         boolean exceptionOccured = false;
         try {
+            EnvelopeDecoratedOutputStream cdmPlainPayloadStream = new EnvelopeDecoratedOutputStream( out, TestHelper.getCdm1() );
             IOUtility.copyFromToAndThenClose( transformedPayload, cdmPlainPayloadStream );
             String actual2 = new String( out.toByteArray() );
             assertEquals( expected2, actual2 );
