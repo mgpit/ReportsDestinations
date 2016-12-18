@@ -17,7 +17,7 @@
 /**
  * @license APACHE-2.0
  */
-package de.mgpit.oracle.reports.plugin.destination.content.fwk;
+package de.mgpit.oracle.reports.plugin.destination.content.eai.fwk;
 
 
 import java.io.ByteArrayInputStream;

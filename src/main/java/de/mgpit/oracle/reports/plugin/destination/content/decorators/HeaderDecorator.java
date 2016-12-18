@@ -34,7 +34,7 @@ import oracle.reports.RWException;
 import oracle.reports.utility.Utility;
 
 /**
- * A Decorator for applying {@link Header}s to a Stream.
+ * A Decorator for applying a {@link Header} before the content of a Stream.
  * 
  * @author mgp
  *

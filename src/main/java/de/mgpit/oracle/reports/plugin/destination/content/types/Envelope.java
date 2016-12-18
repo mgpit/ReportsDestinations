@@ -31,13 +31,19 @@ import java.io.InputStream;
 public interface Envelope extends Content {
     /**
      * Gets the data to be put before the payload.
+     * <p>
+     * TODO: Should one use the technical term <quote>Front Flap</quote> and hence
+     * the method name getFrontFlap();
      * 
      * @return {@InputStream} providing the data to be but before the payload.
      */
     public InputStream getBeforePayload();
     /**
      * Gets the data to be put after the payload.
-     * 
+     * <p>
+     * TODO: Should one use the technical term <quote>Back Flap</quote> and hence
+     * the method name getBackFlap();
+     *  
      * @return {@InputStream} providing the data to be but after the payload.
      */
     public InputStream getAfterPayload();

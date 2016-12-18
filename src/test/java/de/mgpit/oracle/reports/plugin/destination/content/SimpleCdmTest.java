@@ -22,7 +22,7 @@ package de.mgpit.oracle.reports.plugin.destination.content;
 
 import java.util.Properties;
 
-import de.mgpit.oracle.reports.plugin.destination.content.cdm.SimpleCdm;
+import de.mgpit.oracle.reports.plugin.destination.content.eai.cdm.SimpleCdm;
 import junit.framework.TestCase;
 
 public class SimpleCdmTest extends TestCase {

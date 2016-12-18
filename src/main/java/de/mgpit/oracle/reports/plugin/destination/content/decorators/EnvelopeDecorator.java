@@ -33,7 +33,7 @@ import oracle.reports.RWException;
 import oracle.reports.utility.Utility;
 
 /**
- * A Decorator for applying {@link Envelope}s to a Stream.
+ * A Decorator for applying an {@link Envelope} around the content of a Stream.
  * 
  * @author mgp
  *

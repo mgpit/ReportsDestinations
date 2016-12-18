@@ -17,21 +17,14 @@
 /**
  * @license APACHE-2.0
  */
-package de.mgpit.oracle.reports.plugin.destination.content.cdm;
+package de.mgpit.oracle.reports.plugin.destination.content.eai.cdm;
 
 
-import java.io.StringWriter;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Properties;
 
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Result;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-
+import de.mgpit.o.Unifier;
 import de.mgpit.xml.XML;
 import de.mgpit.xml.XML.XMLFragment;
 
@@ -52,7 +45,7 @@ public class SimpleCdm extends AbstractCdm {
         XML cdm = XML.newDocument();
         cdm.add( "cdmdoc" )
            .attribute( "created", now )
-           .attribute( "unifier", getUnifier() )
+           .attribute( "unifier", Unifier.next() )
            .nest();
 
         XMLFragment address = XML.newFragment( cdm );

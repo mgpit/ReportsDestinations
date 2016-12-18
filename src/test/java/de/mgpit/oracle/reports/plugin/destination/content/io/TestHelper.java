@@ -3,7 +3,7 @@ package de.mgpit.oracle.reports.plugin.destination.content.io;
 
 import java.util.Properties;
 
-import de.mgpit.oracle.reports.plugin.destination.content.cdm.AbstractCdm;
+import de.mgpit.oracle.reports.plugin.destination.content.eai.cdm.AbstractCdm;
 import de.mgpit.oracle.reports.plugin.destination.content.types.Envelope;
 import de.mgpit.xml.XML;
 

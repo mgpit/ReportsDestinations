@@ -17,7 +17,7 @@
 /**
  * @license APACHE-2.0
  */
-package de.mgpit.oracle.reports.plugin.destination.content.cdm;
+package de.mgpit.oracle.reports.plugin.destination.content.eai.cdm;
 
 
 import java.io.ByteArrayInputStream;
@@ -59,26 +59,8 @@ import de.mgpit.oracle.reports.plugin.destination.content.types.Envelope;
  */
 public abstract class AbstractCdm implements Envelope {
 
-    private static final SimpleDateFormat UNIFIER_PREFIX_FORMAT = new SimpleDateFormat( "yyyyMMddhhmmssSSS" );
-    private static final DecimalFormat UNIFIER_SUFFIX_FORMAT = new DecimalFormat( "000" );
-    private static int UNIFIER_COUNTER = 0;
-
     private ByteArrayInputStream envelopesDataBeforePayload;
     private ByteArrayInputStream envelopesDataAfterPayload;
-
-    /**
-     * 
-     * @return a new Unifier
-     */
-    public static synchronized String getUnifier() {
-        final Date now = Calendar.getInstance().getTime();
-        final String unifierPrefix = UNIFIER_PREFIX_FORMAT.format( now );
-        final String unifierSuffix = UNIFIER_SUFFIX_FORMAT.format( (double) UNIFIER_COUNTER );
-
-        UNIFIER_COUNTER = (UNIFIER_COUNTER < 999) ? UNIFIER_COUNTER + 1 : 0;
-
-        return unifierPrefix.concat( unifierSuffix );
-    }
 
     private String text;
 
