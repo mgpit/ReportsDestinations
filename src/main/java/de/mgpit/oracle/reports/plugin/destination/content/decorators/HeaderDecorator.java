@@ -26,10 +26,7 @@ import java.util.Properties;
 
 import de.mgpit.oracle.reports.plugin.destination.content.io.HeaderDecoratedInputStream;
 import de.mgpit.oracle.reports.plugin.destination.content.io.HeaderDecoratedOutputStream;
-import de.mgpit.oracle.reports.plugin.destination.content.types.Content;
 import de.mgpit.oracle.reports.plugin.destination.content.types.Header;
-import de.mgpit.oracle.reports.plugin.destination.content.types.InputModifier;
-import de.mgpit.oracle.reports.plugin.destination.content.types.OutputModifier;
 import oracle.reports.RWException;
 import oracle.reports.utility.Utility;
 

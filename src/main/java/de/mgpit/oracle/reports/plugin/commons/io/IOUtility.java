@@ -32,7 +32,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.security.AccessController;
 
-import de.mgpit.oracle.reports.plugin.commons.U;
 import de.mgpit.oracle.reports.plugin.commons.Units;
 import de.mgpit.types.Directoryname;
 import de.mgpit.types.Filename;

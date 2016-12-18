@@ -5,7 +5,6 @@ import java.beans.PropertyDescriptor;
 import java.io.File;
 
 import de.mgpit.oracle.reports.plugin.commons.U;
-import de.mgpit.oracle.reports.plugin.destination.content.decorators.EnvelopeDecorator;
 import de.mgpit.oracle.reports.plugin.destination.mq.MQDestination;
 import junit.framework.TestCase;
 

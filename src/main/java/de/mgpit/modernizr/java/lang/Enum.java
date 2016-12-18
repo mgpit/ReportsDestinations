@@ -1,5 +1,10 @@
 package de.mgpit.modernizr.java.lang;
 
+import java.io.IOException;
+import java.io.InvalidObjectException;
+import java.io.ObjectInputStream;
+import java.io.ObjectStreamException;
+
 /*
  * Copyright (c) 2003, 2009, Oracle and/or its affiliates. All rights reserved.
  * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
@@ -19,11 +24,6 @@ package de.mgpit.modernizr.java.lang;
 import java.io.Serializable;
 
 import oracle.olapi.UnsupportedOperationException;
-
-import java.io.IOException;
-import java.io.InvalidObjectException;
-import java.io.ObjectInputStream;
-import java.io.ObjectStreamException;
 
 /**
  * Bring java.lang.Enum to Java 1.4

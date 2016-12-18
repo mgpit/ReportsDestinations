@@ -20,8 +20,6 @@
 package de.mgpit.types;
 
 
-import org.apache.log4j.Logger;
-
 import de.mgpit.oracle.reports.plugin.commons.U;
 
 /**

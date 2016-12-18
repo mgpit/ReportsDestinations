@@ -29,7 +29,6 @@ import javax.activation.MimeType;
 import de.mgpit.oracle.reports.plugin.destination.content.types.Content;
 import de.mgpit.oracle.reports.plugin.destination.content.types.InputModifier;
 import de.mgpit.oracle.reports.plugin.destination.content.types.OutputModifier;
-import de.mgpit.oracle.reports.plugin.destination.content.types.WithModel;
 import oracle.reports.RWException;
 
 /**

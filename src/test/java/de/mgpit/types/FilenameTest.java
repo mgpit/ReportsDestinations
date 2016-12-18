@@ -1,7 +1,6 @@
 package de.mgpit.types;
 
 
-import de.mgpit.oracle.reports.plugin.commons.U;
 import junit.framework.TestCase;
 
 public class FilenameTest extends TestCase {

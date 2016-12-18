@@ -24,7 +24,6 @@ import java.io.File;
 
 import org.apache.log4j.Logger;
 
-import de.mgpit.oracle.reports.plugin.commons.U;
 import de.mgpit.oracle.reports.plugin.commons.io.IOUtility;
 
 /**

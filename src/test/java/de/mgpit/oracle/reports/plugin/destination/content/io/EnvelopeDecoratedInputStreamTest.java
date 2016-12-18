@@ -7,7 +7,6 @@ import org.apache.commons.codec.binary.Base64InputStream;
 
 import de.mgpit.oracle.reports.plugin.commons.Magic;
 import de.mgpit.oracle.reports.plugin.commons.io.IOUtility;
-import de.mgpit.oracle.reports.plugin.destination.content.io.EnvelopeDecoratedInputStream;
 import junit.framework.TestCase;
 
 public class EnvelopeDecoratedInputStreamTest extends TestCase {

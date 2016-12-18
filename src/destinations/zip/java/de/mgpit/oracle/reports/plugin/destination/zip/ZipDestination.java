@@ -40,7 +40,6 @@ import de.mgpit.types.Entryname;
 import de.mgpit.types.Filename;
 import de.mgpit.types.StringCodedBoolean;
 import oracle.reports.RWException;
-import oracle.reports.utility.Utility;
 
 /**
  * 

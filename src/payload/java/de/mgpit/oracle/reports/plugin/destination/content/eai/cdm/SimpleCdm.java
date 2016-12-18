@@ -24,7 +24,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Properties;
 
-import de.mgpit.o.Unifier;
+import de.mgpit.oracle.reports.plugin.destination.content.eai.Unifier;
 import de.mgpit.xml.XML;
 import de.mgpit.xml.XML.XMLFragment;
 

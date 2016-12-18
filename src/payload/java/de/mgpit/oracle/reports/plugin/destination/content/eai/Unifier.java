@@ -17,7 +17,7 @@
 /**
  * @license APACHE-2.0
  */
-package de.mgpit.o;
+package de.mgpit.oracle.reports.plugin.destination.content.eai;
 
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;

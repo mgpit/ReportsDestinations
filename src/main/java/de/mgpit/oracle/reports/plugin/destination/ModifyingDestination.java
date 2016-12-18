@@ -28,7 +28,6 @@ import de.mgpit.types.ContentAlias;
 import de.mgpit.types.ModifierAlias;
 import de.mgpit.types.ModifierRawDeclaration;
 import oracle.reports.RWException;
-import oracle.reports.utility.Utility;
 
 /**
  * A Destination which is able to modify the report's content on distribution.

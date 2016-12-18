@@ -20,8 +20,6 @@
 package de.mgpit.oracle.reports.plugin.destination.content.types;
 
 
-import java.io.IOException;
-import java.io.OutputStream;
 import java.util.Properties;
 
 import javax.activation.MimeType;

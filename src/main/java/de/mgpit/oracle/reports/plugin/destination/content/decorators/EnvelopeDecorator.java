@@ -27,8 +27,6 @@ import java.util.Properties;
 import de.mgpit.oracle.reports.plugin.destination.content.io.EnvelopeDecoratedInputStream;
 import de.mgpit.oracle.reports.plugin.destination.content.io.EnvelopeDecoratedOutputStream;
 import de.mgpit.oracle.reports.plugin.destination.content.types.Envelope;
-import de.mgpit.oracle.reports.plugin.destination.content.types.InputModifier;
-import de.mgpit.oracle.reports.plugin.destination.content.types.OutputModifier;
 import oracle.reports.RWException;
 import oracle.reports.utility.Utility;
 

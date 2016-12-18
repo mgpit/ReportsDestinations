@@ -3,7 +3,6 @@ package de.mgpit.oracle.reports.plugin.destination.content.eai.fwk;
 
 import java.util.Properties;
 
-import de.mgpit.oracle.reports.plugin.destination.content.eai.fwk.SimpleFrameworkHeader;
 import junit.framework.TestCase;
 
 public class SimpleFrameworkHeaderTest extends TestCase {
