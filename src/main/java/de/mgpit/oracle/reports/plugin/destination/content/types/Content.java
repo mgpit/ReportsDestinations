@@ -39,35 +39,7 @@ public interface Content {
     public static final String PROPERTY_NAME_PREFIX = "content.";
 
     /**
-     * Reads the contents next byte
-     * 
-     * @return byte read or {@link de.mgpit.oracle.reports.plugin.commons.Magic Magic#END_OF_STREAM}
-     */
-    public int read();
-
-    /**
-     * 
-     * @return {@code true} if the payload should be provided, now,{@code false} else
-     */
-    public boolean wantsData();
-
-    /**
-     * Tells the {@code Content} that the data is finished.
-     */
-    public void dataFinished();
-
-    /**
-     * Write this {@code Content} to the output stream given.
-     * 
-     * @param out
-     *            the output stream
-     * @throws IOException
-     *             if any error occurs
-     */
-    public void writeToOut( OutputStream out ) throws IOException;
-
-    /**
-     * Builds this {@code Content}.
+     * Builds this Content.
      * <p>
      * The {@code Content} may have variable data. Parameters for populating this data can be passed as {@code Properties}.
      * 

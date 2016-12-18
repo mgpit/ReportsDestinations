@@ -214,15 +214,14 @@ public class IOUtility {
             copyFromTo( source, destination );
         } finally {
             try {
-                destination.close();
-            } catch ( Exception ignore ) {
-            }
-            try {
                 source.close();
             } catch ( Exception ignore ) {
             }
+            try {
+                destination.close();
+            } catch ( Exception ignore ) {
+            }
         }
-
     }
 
     /**

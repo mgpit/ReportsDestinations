@@ -22,21 +22,23 @@ package de.mgpit.oracle.reports.plugin.destination.content.io;
 
 import java.io.FilterOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 
-import de.mgpit.oracle.reports.plugin.commons.Magic;
 import de.mgpit.oracle.reports.plugin.commons.U;
+import de.mgpit.oracle.reports.plugin.commons.io.IOUtility;
 import de.mgpit.oracle.reports.plugin.destination.content.types.Header;
 
 /**
  * An {@code OutputStream} decorated with a {@code Header}.
- *  
+ * 
  * @author mgp
  *
  */
 public class HeaderDecoratedOutputStream extends FilterOutputStream {
 
     private final Header header;
+    private boolean headerWritten = false;
 
     public HeaderDecoratedOutputStream( final OutputStream toWrap, Header header ) {
         super( toWrap );
@@ -46,22 +48,18 @@ public class HeaderDecoratedOutputStream extends FilterOutputStream {
     }
 
     public void write( int b ) throws IOException {
-        if ( !header.wantsData() ) {
-            header.writeToOut( out );
+        if ( !headerWritten ) {
+            InputStream headerData = header.get();
+            IOUtility.copyFromTo( headerData, out );
+            headerWritten = true;
+            try {
+                headerData.close();
+            } catch ( IOException ignore ) {}
         }
-
-        if ( header.wantsData() ) {
-            out.write( b );
-        } else {
-            throw new IOException( "Cannot write after a Header which is not in state \"data wanted\"!" );
-        }
+        out.write( b );
     }
 
     public void flush() throws IOException {
-        if ( !header.wantsData() ) {
-            throw new IOException( "Cannot flush a Header which is not in state \"data wanted\"!" );
-        }
-        header.dataFinished();
         out.flush();
     }
 

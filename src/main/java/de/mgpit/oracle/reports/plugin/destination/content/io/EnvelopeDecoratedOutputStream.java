@@ -22,11 +22,13 @@ package de.mgpit.oracle.reports.plugin.destination.content.io;
 
 import java.io.FilterOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 
 import org.apache.log4j.Logger;
 
 import de.mgpit.oracle.reports.plugin.commons.U;
+import de.mgpit.oracle.reports.plugin.commons.io.IOUtility;
 import de.mgpit.oracle.reports.plugin.destination.content.types.Envelope;
 
 /**
@@ -37,9 +39,9 @@ import de.mgpit.oracle.reports.plugin.destination.content.types.Envelope;
  */
 public class EnvelopeDecoratedOutputStream extends FilterOutputStream {
     private static final Logger LOG = Logger.getRootLogger();
-    private boolean notFlushedYet = true;
-
     private final Envelope envelope;
+    private boolean envelopeOpened = false;
+    private boolean envelopeClosed = false;
 
     public EnvelopeDecoratedOutputStream( final OutputStream toWrap, final Envelope envelope ) {
         super( toWrap );
@@ -49,25 +51,27 @@ public class EnvelopeDecoratedOutputStream extends FilterOutputStream {
     }
 
     public void write( int b ) throws IOException {
-        if ( !envelope.wantsData() ) {
-            envelope.writeToOut( out );
+        if ( !envelopeOpened ) {
+            InputStream envelopeBeforeData = envelope.getBeforePayload();
+            IOUtility.copyFromTo( envelopeBeforeData, out );
+            envelopeOpened = true;
+            try {
+                envelopeBeforeData.close();
+            } catch ( IOException ignore ) {}
         }
-
-        if ( envelope.wantsData() ) {
-            out.write( b );
-        }
+        out.write( b );
     }
-
+    
     public void flush() throws IOException {
-        if ( this.notFlushedYet ) {
-            if ( !envelope.wantsData() ) {
-                throw new IOException( "Cannot flush an Envelope which is not in state \"data wanted\"!" );
-            }
-            envelope.dataFinished();
-            envelope.writeToOut( out );
-            out.flush();
-            notFlushedYet = false;
+        if ( !envelopeClosed ) {
+            InputStream envelopeAfterData = envelope.getAfterPayload();
+            IOUtility.copyFromTo( envelopeAfterData, out );
+            envelopeClosed = true;
+            try {
+                envelopeAfterData.close();
+            } catch ( IOException ignore ) {}
         }
+        out.flush();
     }
 
     /*

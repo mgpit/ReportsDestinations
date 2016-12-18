@@ -20,12 +20,10 @@
 package de.mgpit.oracle.reports.plugin.destination.content.io;
 
 
-import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
 import de.mgpit.oracle.reports.plugin.commons.Magic;
-import de.mgpit.oracle.reports.plugin.commons.U;
 import de.mgpit.oracle.reports.plugin.destination.content.types.Envelope;
 
 /**
@@ -34,35 +32,114 @@ import de.mgpit.oracle.reports.plugin.destination.content.types.Envelope;
  * @author mgp
  *
  */
-public class EnvelopeDecoratedInputStream extends FilterInputStream {
-
-    /**
-     * Envelope for wrapping.
-     */
-    private final Envelope envelope;
+public class EnvelopeDecoratedInputStream extends ContentDecoratedInputStream {
 
     public EnvelopeDecoratedInputStream( InputStream toBeDecorated, Envelope envelope ) {
-        super( toBeDecorated );
-        U.assertNotNull( toBeDecorated, "Cannot wrap a null InputStream!" );
-        U.assertNotNull( envelope, "Cannot wrap with a null Envelope!" );
-        this.envelope = envelope;
+        super( toBeDecorated, envelope );
     }
 
     public int read() throws IOException {
-        final int aByte;
-        if ( envelope.wantsData() ) {
-            aByte = in.read();
+        switch ( currentState ) {
+        case ContentDecoratedInputStream.CONTENT_NEW:
+            openEnvelopeBefore();
+            nextState();
+            return read();
+        case ENVELOPE_OPENED: {
+            final int aByte = decorationData.read();
             if ( aByte == Magic.END_OF_STREAM ) {
-                envelope.dataFinished();
-                return this.read();
+                closeData();
+                nextState();
+                return read();
+            } else {
+                return aByte;
             }
-        } else {
-            aByte = envelope.read();
         }
-        return aByte;
+        case ENVELOPE_PAYLOAD: {
+            final int aByte = in.read();
+            if ( aByte == Magic.END_OF_STREAM ) {
+                openEnvelopeAfter();
+                nextState();
+                return read();
+            } else {
+                return aByte;
+            }
+        }
+        case ENVELOPE_CLOSING: {
+            final int aByte = decorationData.read();
+            if ( aByte == Magic.END_OF_STREAM ) {
+                closeData();
+                nextState();
+            }
+            return aByte;
+        }
+        case ENVELOPE_CLOSED: {
+            return Magic.END_OF_STREAM;
+        }
+        default:
+            return Magic.END_OF_STREAM;
+        }
     }
 
-    public synchronized int available() throws IOException {
-        return envelope.wantsData() ? in.available() : 0;
+    protected Envelope getEnvelope() {
+        return (Envelope) getDecorator();
+    }
+
+    private void openEnvelopeBefore() {
+        setDataForDecoration( getEnvelope().getBeforePayload() );
+    }
+
+    private void openEnvelopeAfter() {
+        setDataForDecoration( getEnvelope().getAfterPayload() );
+    }
+
+    protected boolean inPayload() {
+        return currentState == ENVELOPE_PAYLOAD;
+    }
+
+    protected void nextState() {
+        switch ( currentState ) {
+        case ContentDecoratedInputStream.CONTENT_NEW:
+            currentState = ENVELOPE_OPENED;
+            break;
+        case ENVELOPE_OPENED:
+            currentState = ENVELOPE_PAYLOAD;
+            break;
+        case ENVELOPE_PAYLOAD:
+            currentState = ENVELOPE_CLOSING;
+            break;
+        case ENVELOPE_CLOSING:
+            currentState = ENVELOPE_CLOSED;
+            break;
+        }
+    }
+
+    static final int ENVELOPE_OPENED = 10;
+    static final int ENVELOPE_PAYLOAD = 20;
+    static final int ENVELOPE_CLOSING = 30;
+    static final int ENVELOPE_CLOSED = 40;
+
+    private static String name( int state ) {
+        final String stateName;
+        switch ( state ) {
+        case ContentDecoratedInputStream.CONTENT_NEW:
+            stateName = "New Envelope";
+            break;
+        case ENVELOPE_OPENED:
+            stateName = "Envelope Opened";
+            break;
+        case ENVELOPE_CLOSING:
+            stateName = "Envelope Payload";
+            break;
+        case ENVELOPE_PAYLOAD:
+            stateName = "Envelope Closing";
+            break;
+        case ENVELOPE_CLOSED:
+            stateName = "Envelope Closed";
+            break;
+        default:
+            stateName = "Unknown";
+            break;
+        }
+        return stateName;
     }
 }

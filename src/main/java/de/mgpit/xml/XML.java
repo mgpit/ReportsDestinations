@@ -308,6 +308,7 @@ public class XML {
             if ( this.isFragment() ) {
                 transformer.setOutputProperty( OutputKeys.OMIT_XML_DECLARATION, "yes" );
             }
+            transformer.setOutputProperty( OutputKeys.METHOD, "xml" );
             transformer.setOutputProperty( OutputKeys.INDENT, "yes" );
 
             if ( charsetDefined() ) {

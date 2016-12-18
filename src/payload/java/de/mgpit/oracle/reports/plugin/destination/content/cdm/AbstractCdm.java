@@ -22,6 +22,7 @@ package de.mgpit.oracle.reports.plugin.destination.content.cdm;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.StringWriter;
 import java.text.DecimalFormat;
@@ -62,23 +63,15 @@ public abstract class AbstractCdm implements Envelope {
     private static final DecimalFormat UNIFIER_SUFFIX_FORMAT = new DecimalFormat( "000" );
     private static int UNIFIER_COUNTER = 0;
 
-    private static final int UNDEFINED = 0;
-    private static final int BEFORE_DATA = 1;
-    private static final int IN_DATA = 2;
-    private static final int AFTER_DATA = 3;
-    private static final HashMap STATE_NAMES;
-
-    private int currentState = UNDEFINED;
-    private ByteArrayInputStream contentToPutBeforeData;
-    private ByteArrayInputStream contentToPutAfterData;
+    private ByteArrayInputStream envelopesDataBeforePayload;
+    private ByteArrayInputStream envelopesDataAfterPayload;
 
     /**
      * 
      * @return a new Unifier
      */
     public static synchronized String getUnifier() {
-        final Date now = Calendar.getInstance()
-                                 .getTime();
+        final Date now = Calendar.getInstance().getTime();
         final String unifierPrefix = UNIFIER_PREFIX_FORMAT.format( now );
         final String unifierSuffix = UNIFIER_SUFFIX_FORMAT.format( (double) UNIFIER_COUNTER );
 
@@ -88,6 +81,10 @@ public abstract class AbstractCdm implements Envelope {
     }
 
     private String text;
+
+    public String getText() {
+        return this.text;
+    }
 
     /**
      * Builds this CDM.
@@ -116,100 +113,31 @@ public abstract class AbstractCdm implements Envelope {
 
         final String beforeContent = text.substring( 0, cuttingPosition );
         final String afterContent = text.substring( cuttingPosition );
-        this.contentToPutBeforeData = new ByteArrayInputStream( beforeContent.getBytes() );
-        this.contentToPutAfterData = new ByteArrayInputStream( afterContent.getBytes() );
-
-        currentState = BEFORE_DATA;
+        envelopesDataBeforePayload = new ByteArrayInputStream( beforeContent.getBytes() );
+        envelopesDataAfterPayload = new ByteArrayInputStream( afterContent.getBytes() );
     }
 
     /**
-     * Gets the content of this CDM.
+     * Gets the data to be put before the payload.
      * 
-     * @return
+     * @return {@InputStream} providing the data to be but before the payload.
      */
-    public String getText() {
-        return this.text;
+    public InputStream getBeforePayload() {
+        return envelopesDataBeforePayload;
+    }
+
+    /**
+     * Gets the data to be put after the payload.
+     * 
+     * @return {@InputStream} providing the data to be but after the payload.
+     */
+    public InputStream getAfterPayload() {
+        return envelopesDataAfterPayload;
     }
 
     protected abstract String getEnvelopeAsStringPopulatedWith( Properties parameters ) throws Exception;
 
     protected abstract String getSplitAtToken();
-
-    public boolean wantsData() {
-        boolean wanted = false;
-        synchronized (this) {
-            switch ( currentState ) {
-            case IN_DATA:
-                wanted = true;
-                break;
-            default:
-                wanted = false;
-            }
-            return wanted;
-        }
-    }
-
-    public int read() {
-        int aByte = Magic.END_OF_STREAM;
-        synchronized (this) {
-            switch ( currentState ) {
-            case UNDEFINED:
-                throw new IllegalStateException( "Envelope has not been built!" );
-            case BEFORE_DATA:
-                aByte = readEnvelopeBeforeData();
-                if ( aByte == Magic.END_OF_STREAM ) {
-                    currentState = IN_DATA;
-                    aByte = this.read();
-                }
-                break;
-            case IN_DATA:
-                /* Envelope pauses for the payload to be read */
-                aByte = Magic.END_OF_STREAM;
-                break;
-            case AFTER_DATA:
-                aByte = readEnvelopeAfterData();
-                break;
-            default:
-                aByte = Magic.END_OF_STREAM;
-            }
-        }
-        return aByte;
-    }
-
-    private int readEnvelopeAfterData() {
-        return this.contentToPutAfterData.read();
-    };
-
-    private int readEnvelopeBeforeData() {
-        return this.contentToPutBeforeData.read();
-    }
-
-    public void dataFinished() {
-        if ( currentState != IN_DATA ) {
-            throw new IllegalStateException( "Envelope currently does NOT consume data!" );
-        }
-        currentState = AFTER_DATA;
-    }
-
-    public void writeToOut( OutputStream out ) throws IOException {
-        switch ( currentState ) {
-        case UNDEFINED:
-            throw new IllegalStateException( "Envelope has not been built!" );
-        case BEFORE_DATA:
-            for ( int nextByte = readEnvelopeBeforeData(); nextByte != Magic.END_OF_STREAM; nextByte = readEnvelopeBeforeData() ) {
-                out.write( nextByte );
-            }
-            currentState = IN_DATA;
-            break;
-        case IN_DATA:
-            throw new IllegalStateException( "Envelope currently wants to consume data!" );
-        case AFTER_DATA:
-            for ( int nextByte = readEnvelopeAfterData(); nextByte != Magic.END_OF_STREAM; nextByte = readEnvelopeAfterData() ) {
-                out.write( nextByte );
-            }
-            break;
-        }
-    }
 
     private MimeType mimetype;
 
@@ -228,10 +156,6 @@ public abstract class AbstractCdm implements Envelope {
         return "xml";
     }
 
-    public static String statename( int stateCode ) {
-        return U.coalesce( (String) STATE_NAMES.get( new Integer( stateCode ) ), "???Unknown???" );
-    }
-
     public static class CdmCorruptException extends Exception {
         private static final long serialVersionUID = 1L;
 
@@ -244,11 +168,4 @@ public abstract class AbstractCdm implements Envelope {
         }
     }
 
-    static {
-        STATE_NAMES = new HashMap( 11 );
-        STATE_NAMES.put( new Integer( UNDEFINED ), "Undefined" );
-        STATE_NAMES.put( new Integer( IN_DATA ), "Data/Payload wanted" );
-        STATE_NAMES.put( new Integer( BEFORE_DATA ), "Before Data section" );
-        STATE_NAMES.put( new Integer( AFTER_DATA ), "After Data section" );
-    }
 }

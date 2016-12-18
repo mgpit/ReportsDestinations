@@ -20,49 +20,106 @@
 package de.mgpit.oracle.reports.plugin.destination.content.io;
 
 
-import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
 import de.mgpit.oracle.reports.plugin.commons.Magic;
-import de.mgpit.oracle.reports.plugin.commons.U;
 import de.mgpit.oracle.reports.plugin.destination.content.types.Header;
 
 /**
  * An {@code InputStream} decorated with a {@code Header}.
- *  
+ * 
  * @author mgp
  *
  */
-public class HeaderDecoratedInputStream extends FilterInputStream {
-
-    /**
-     * Envelope for wrapping.
-     */
-    private final Header header;
+public class HeaderDecoratedInputStream extends ContentDecoratedInputStream {
 
     public HeaderDecoratedInputStream( InputStream toBeDecorated, Header header ) {
-        super( toBeDecorated );
-        U.assertNotNull( toBeDecorated, "Cannot prepend a null InputStream!" );
-        U.assertNotNull( header, "Cannot instantiate without properties!" );
-        this.header = header;
+        super( toBeDecorated, header );
     }
 
     public int read() throws IOException {
-        final int aByte;
-        if ( header.wantsData() ) {
-            aByte = in.read();
+        switch ( currentState ) {
+        case ContentDecoratedInputStream.CONTENT_NEW:
+            openHeader();
+            nextState();
+            return read();
+        case HEADER_OPENED: {
+            final int aByte = decorationData.read();
             if ( aByte == Magic.END_OF_STREAM ) {
-                header.dataFinished();
-                return this.read();
+                closeData();
+                nextState();
+                return read();
+            } else {
+                return aByte;
             }
-        } else {
-            aByte = header.read();
         }
-        return aByte;
+        case HEADER_PAYLOAD: {
+            final int aByte = in.read();
+            if ( aByte == Magic.END_OF_STREAM ) {
+                nextState();
+                return read();
+            } else {
+                return aByte;
+            }
+        }
+        case HEADER_CLOSED: {
+            return Magic.END_OF_STREAM;
+        }
+        default:
+            return Magic.END_OF_STREAM;
+        }
     }
 
-    public synchronized int available() throws IOException {
-        return header.wantsData() ? in.available() : 0;
+    protected Header getHeader() {
+        return (Header) getDecorator();
+    }
+
+    private void openHeader() {
+        setDataForDecoration( getHeader().get() );
+    }
+
+    protected boolean inPayload() {
+        return currentState == HEADER_PAYLOAD;
+    }
+
+    protected void nextState() {
+        switch ( currentState ) {
+        case ContentDecoratedInputStream.CONTENT_NEW:
+            currentState = HEADER_OPENED;
+            break;
+        case HEADER_OPENED:
+            currentState = HEADER_PAYLOAD;
+            break;
+        case HEADER_PAYLOAD:
+            currentState = HEADER_CLOSED;
+            break;
+        }
+    }
+
+    private static final int HEADER_OPENED = 10;
+    private static final int HEADER_PAYLOAD = 20;
+    private static final int HEADER_CLOSED = 40;
+
+    private static String name( int state ) {
+        final String stateName;
+        switch ( state ) {
+        case ContentDecoratedInputStream.CONTENT_NEW:
+            stateName = "New Header";
+            break;
+        case HEADER_OPENED:
+            stateName = "Header Opened";
+            break;
+        case HEADER_PAYLOAD:
+            stateName = "Header Payload";
+            break;
+        case HEADER_CLOSED:
+            stateName = "Header Closed";
+            break;
+        default:
+            stateName = "Unknown";
+            break;
+        }
+        return stateName;
     }
 }

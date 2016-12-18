@@ -37,7 +37,7 @@ public class EnvelopeDecoratedInputStreamTest extends TestCase {
         boolean exceptionOccured = false;
         try {
             ByteArrayInputStream payload = new ByteArrayInputStream( "Lorem Ipsum Dolor Si amet".getBytes() );
-            EnvelopeDecoratedInputStream cdmPlainPayloadStream = new EnvelopeDecoratedInputStream( payload, TestHelper.getCdm1() );
+            ContentDecoratedInputStream cdmPlainPayloadStream = new EnvelopeDecoratedInputStream( payload, TestHelper.getCdm1() );
 
             String actual1 = IOUtility.inputAsUTF8String( cdmPlainPayloadStream );
             assertEquals( expected1, actual1 );
@@ -54,7 +54,7 @@ public class EnvelopeDecoratedInputStreamTest extends TestCase {
         try {
             ByteArrayInputStream payload = new ByteArrayInputStream( "Lorem Ipsum Dolor Si amet".getBytes() );
             Base64InputStream transformedPayload = new Base64InputStream( payload, Magic.ENCODE_WITH_BASE64 );
-            EnvelopeDecoratedInputStream cdmBase64PayloadStream = new EnvelopeDecoratedInputStream( transformedPayload,
+            ContentDecoratedInputStream cdmBase64PayloadStream = new EnvelopeDecoratedInputStream( transformedPayload,
                     TestHelper.getCdm1() );
 
             String actual2 = IOUtility.inputAsUTF8String( cdmBase64PayloadStream );

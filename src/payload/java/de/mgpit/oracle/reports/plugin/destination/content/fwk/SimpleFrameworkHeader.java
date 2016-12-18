@@ -19,120 +19,64 @@
  */
 package de.mgpit.oracle.reports.plugin.destination.content.fwk;
 
-
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.Calendar;
+import java.io.StringWriter;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Properties;
 
-import javax.activation.MimeType;
-import javax.activation.MimeTypeParseException;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Result;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 
-import de.mgpit.oracle.reports.plugin.commons.Magic;
-import de.mgpit.oracle.reports.plugin.destination.content.types.Header;
-import de.mgpit.xml.XML;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Text;
 
 /**
  * @author mgp
  *
  */
-public class SimpleFrameworkHeader implements Header {
+public class SimpleFrameworkHeader extends AbstractHeader {
 
-    private ByteArrayInputStream header;
-    private int pauseAtPosition = 0;
-    private int totalBytes = 0;
-    private int bytesBuffered = 0;
-    private boolean paused = false;
-    private boolean built = false;
-
-    /*
-     * (non-Javadoc)
-     * 
+    /* (non-Javadoc)
      * @see de.mgpit.oracle.reports.plugin.destination.content.fwk.AbstractHeader#getHeaderAsStringPropulatedWith(java.util.Properties)
      */
     protected String getHeaderAsStringPropulatedWith( Properties parameters ) throws Exception {
-        final Date now = Calendar.getInstance().getTime();
-        // @formatter:off
-        XML frameworkHeader = XML.newDocument() 
-                .add( "framework" ).attribute( "created", now ).nest()
-                    .add( "meta" ).nest()
-                        .add( "component" ).withData( "Oracle Reports Destination" )
-                        .add( "step" ).withData( "1" ).unnest()
-                    .add( "data" ).attribute( "size", "" ).unnest()
-            ;       
+        final SimpleDateFormat dateFormat = new SimpleDateFormat( "yyyy.MM.dd HH:mm:ss" );
+        final String now = dateFormat.format( new Date() );
+
+        final DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
+        final DocumentBuilder headerBuilder;
+        final Document currentDocument;
         
-        //@formatter:on
+        headerBuilder = builderFactory.newDocumentBuilder();
+        currentDocument = headerBuilder.newDocument();
 
-        return frameworkHeader.toString();
-    }
+        Element framework = currentDocument.createElement( "framework" );
+        framework.setAttribute( "created", now );
+        currentDocument.appendChild( framework );
 
-    public int read() {
-        throw new UnsupportedOperationException( "Cannot use a Framework Header on Input" );
-    }
-
-    public boolean wantsData() {
-        return this.paused;
-    }
-
-    public void dataFinished() {
-        if ( !paused ) {
-            throw new IllegalStateException( "Framework Header currently does NOT consume data!" );
-        }
-    }
-
-    public void writeToOut( OutputStream out ) throws IOException {
-        if ( !built ) {
-            throw new IllegalStateException( "Framework Header has not been built!" );
-        }
+        Element data = currentDocument.createElement( "data" );
+        framework.appendChild( data );
+        data.setAttribute( "size", "unknown" );
         
-        for ( int written = 0; written < pauseAtPosition; written++ ) {
-            int next = header.read();
-            if ( next == Magic.END_OF_STREAM ) {
-                throw new IllegalStateException( "Reading beyond Framework Header" );
-            }
-            out.write( next );
-        }
-        paused = true;
-    }
+        TransformerFactory transformerFactory = TransformerFactory.newInstance();
+        Transformer transformer = transformerFactory.newTransformer();
 
-    public void build( Properties parameters ) throws Exception {
-        final String prefixOfDataOpeningTag = "<data";
-       
-        final String prefixOfSizeAttribute = "size=\"";
-        final int sizeAttributesCharacterLength = prefixOfSizeAttribute.length();
-        
-        final String text = getHeaderAsStringPropulatedWith( parameters );
-        
-        final int dataTagPosition = text.lastIndexOf( prefixOfDataOpeningTag );
-        final int sizeAttributePosition = text.indexOf( prefixOfSizeAttribute, dataTagPosition );
-        final byte[] bytesUpToPausePosition = text.substring( 0, sizeAttributePosition+sizeAttributesCharacterLength ).getBytes();
-        
-        byte[] textBytes = text.getBytes();
-        
-        header = new ByteArrayInputStream( textBytes );
-        totalBytes = textBytes.length;
-        pauseAtPosition = bytesUpToPausePosition.length;
-        
-        built = true;
-    }
+        transformer.setOutputProperty( OutputKeys.INDENT, "yes" );
 
-    private MimeType mimetype;
+        DOMSource xmlSource = new DOMSource( currentDocument );
+        StringWriter outputTargetTarget = new StringWriter();
+        Result outputTarget = new StreamResult( outputTargetTarget );
 
-    public MimeType mimetype() {
-        if ( mimetype == null ) {
-            try {
-                mimetype = new MimeType( "application/xml" );
-            } catch ( MimeTypeParseException unparsable ) {
-                mimetype = new MimeType();
-            }
-        }
-        return this.mimetype;
-    }
+        transformer.transform( xmlSource, outputTarget );
 
-    public String fileExtension() {
-        return "xml";
+        return outputTargetTarget.toString();
     }
 
 }

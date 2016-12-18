@@ -19,8 +19,9 @@
  */
 package de.mgpit.oracle.reports.plugin.destination.content.types;
 
-import java.io.IOException;
-import java.io.OutputStream;
+
+import java.io.InputStream;
+
 /**
  * Envelope.
  * 
@@ -28,5 +29,16 @@ import java.io.OutputStream;
  *
  */
 public interface Envelope extends Content {
-
+    /**
+     * Gets the data to be put before the payload.
+     * 
+     * @return {@InputStream} providing the data to be but before the payload.
+     */
+    public InputStream getBeforePayload();
+    /**
+     * Gets the data to be put after the payload.
+     * 
+     * @return {@InputStream} providing the data to be but after the payload.
+     */
+    public InputStream getAfterPayload();
 }

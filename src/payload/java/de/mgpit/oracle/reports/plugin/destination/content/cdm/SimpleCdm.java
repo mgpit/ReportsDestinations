@@ -83,7 +83,6 @@ public class SimpleCdm extends AbstractCdm {
            .withData( "Dolor sit amet" )
            .unnest()
            .add( "data" )
-           .attribute( "encoding", "base64" )
            .withData( "" );
         return cdm.toString();
 
