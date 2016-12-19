@@ -48,12 +48,7 @@ public class BufferingHeaderOutputStream extends OutputStream {
     private final WriteBuffer writeBuffer;
 
     private final Properties parameters;
-    /**
-     * Holds flag if this output stream already has been flushed.
-     * <p>
-     * This is to avoid double flushing.
-     */
-    private boolean flushed;
+    private boolean finished;
 
     public BufferingHeaderOutputStream( OutputStream toWrap, Header header, Properties parameters ) {
         super();
@@ -63,7 +58,7 @@ public class BufferingHeaderOutputStream extends OutputStream {
         this.header = header;
         this.parameters = parameters;
         this.writeBuffer = new WriteBuffer();
-        this.flushed = false;
+        this.finished = false;
     }
 
     public void write( int b ) throws IOException {
@@ -79,12 +74,16 @@ public class BufferingHeaderOutputStream extends OutputStream {
      * @see java.io.OutputStream#flush()
      */
     public void flush() throws IOException {
-        if ( !flushed ) {
+        out.flush();
+    }
+    
+    private void finishWrite() throws IOException {
+        if ( !finished ) {
             writeHeader();
             writeBuffer.flushTo( out );
             out.flush();
-            flushed = true;
-        }
+            finished = true;
+        }        
     }
 
     // TODO: Delegate this to the Header??? e.g. Header::writeToOut(OutputStream)?
@@ -114,6 +113,7 @@ public class BufferingHeaderOutputStream extends OutputStream {
     public void close() throws IOException {
         try {
             flush();
+            finishWrite();
         } catch ( IOException ignored ) {}
         out.close();
     }

@@ -53,32 +53,45 @@ public class WebsphereMQ extends MQ {
     public OutputStream newMessage() throws Exception {
         return new OutputStream() {
             private final MQMessage mqMessage;
+            private boolean finished;
 
             {
                 mqMessage = new MQMessage();
                 mqMessage.correlationId = MQC.MQCI_NONE;
                 mqMessage.priority = 1;
+                finished = false;
             }
 
             public void write( int b ) throws IOException {
+                /*
+                 * TODO: Maybe the delegation has to be replaced with writeChar
+                 * and the put Message options have to be set to String ...
+                 */
                 mqMessage.write( b );
             }
 
             public void flush() throws IOException {
-                MQPutMessageOptions putMessageOptions = new MQPutMessageOptions(); // Default: MQC.MQPMO_NO_SYNCPOINT, d.h. kein explizites Commit notwendig
-                try {
-                    WebsphereMQ.this.destinationQueue.put( mqMessage, putMessageOptions ); // 3. Durch MQPutMessageOptions zuverlässig Commit vermeiden
-                } catch ( MQException mqex ) {
-                    final String message = "MQException on flushing Message" + ". Reason code: " + mqex.reasonCode
-                            + " Completion code: " + mqex.completionCode;
-                    Logger.getRootLogger().error( message, mqex );
-                    throw new IOException( message );
-                }
-                super.flush();
+                // Don't flush ...
             }
-
+            
+            private void finishWrite() throws IOException {
+                if ( !finished ) {
+                    MQPutMessageOptions putMessageOptions = new MQPutMessageOptions(); // Default: MQC.MQPMO_NO_SYNCPOINT, d.h. kein explizites Commit notwendig
+                    try {
+                        WebsphereMQ.this.destinationQueue.put( mqMessage, putMessageOptions ); // 3. Durch MQPutMessageOptions zuverlässig Commit vermeiden
+                    } catch ( MQException mqex ) {
+                        final String message = "MQException on flushing Message" + ". Reason code: " + mqex.reasonCode
+                                + " Completion code: " + mqex.completionCode;
+                        Logger.getRootLogger().error( message, mqex );
+                        throw new IOException( message );
+                    }
+                    super.flush();
+                    finished = true;
+                }
+            }
+            
             public void close() throws IOException {
-                this.flush();
+                finishWrite();
                 super.close();
             }
         };
