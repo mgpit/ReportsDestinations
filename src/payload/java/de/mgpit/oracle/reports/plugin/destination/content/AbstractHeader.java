@@ -17,7 +17,7 @@
 /**
  * @license APACHE-2.0
  */
-package de.mgpit.oracle.reports.plugin.destination.content.eai.fwk;
+package de.mgpit.oracle.reports.plugin.destination.content;
 
 
 import java.io.ByteArrayInputStream;
@@ -27,6 +27,7 @@ import java.util.Properties;
 import javax.activation.MimeType;
 import javax.activation.MimeTypeParseException;
 
+import de.mgpit.oracle.reports.plugin.destination.content.types.Content;
 import de.mgpit.oracle.reports.plugin.destination.content.types.Header;
 
 /**
@@ -38,16 +39,22 @@ import de.mgpit.oracle.reports.plugin.destination.content.types.Header;
 public abstract class AbstractHeader implements Header {
 
     private ByteArrayInputStream headersData;
+    private long byteLength = Content.UNDEFINED_LENGTH;
 
     public void build( Properties parameters ) {
         try {
 
             final String content = getHeaderAsStringPropulatedWith( parameters );
-            this.headersData = new ByteArrayInputStream( content.getBytes() );
-
+            final byte[] contentBytes = content.getBytes();
+            byteLength = contentBytes.length;
+            headersData = new ByteArrayInputStream( contentBytes );
         } catch ( Exception any ) {
             throw new RuntimeException( "Runtime error", any );
         }
+    }
+    
+    public long lengthInBytes() {
+        return this.byteLength;
     }
 
     /**

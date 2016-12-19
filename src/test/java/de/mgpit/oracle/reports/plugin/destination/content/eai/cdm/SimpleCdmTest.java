@@ -17,7 +17,7 @@
 /**
  * @license APACHE-2.0
  */
-package de.mgpit.oracle.reports.plugin.destination.content;
+package de.mgpit.oracle.reports.plugin.destination.content.eai.cdm;
 
 
 import java.util.Properties;

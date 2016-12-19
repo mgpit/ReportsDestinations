@@ -29,7 +29,7 @@ public class FileMockedMQ extends MQ {
                 try {
                     File targetDirectory = new File( U.coalesce( Utility.getTempDir(), IOUtility.getSystemTempDir() ) );
                     String prefix = filenameFromConfiguration();
-                    String suffix = "part";
+                    String suffix = ".part"; // API wants dot!
                     file = File.createTempFile( prefix, suffix, targetDirectory );
                     Logger.getRootLogger()
                         .info( "Connected to: " + file.getAbsolutePath() );
@@ -53,7 +53,7 @@ public class FileMockedMQ extends MQ {
             public void close() throws IOException {
                 flush();
                 fileOut.close();
-                final Filename finalFilename = Filename.of( file.getPath() ).withNewExtension( "mgf" );
+                final Filename finalFilename = Filename.of( file.getPath() ).withNewExtension( "mqf" );
                 file.renameTo( IOUtility.fileFromName( finalFilename ) );
             }
 

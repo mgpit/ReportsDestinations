@@ -19,6 +19,7 @@
  */
 package de.mgpit.oracle.reports.plugin.destination.content.eai;
 
+
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -29,12 +30,16 @@ import java.util.Date;
  * <p>
  * The Unifier is a pseudo unique id for identifying EAI messages.
  * A Unifier is composed (and limited by the framework) of 20 bytes an follows the format
- * <pre> {@code yyyyMMddhhmmssSSSnnn} </pre> 
+ * 
+ * <pre>
+ *  {@code yyyyMMddhhmmssSSSnnn}
+ * </pre>
+ * 
  * where
  * <ul>
  * <li>{@code yyyyMMddhhmmssSSS} is a {@link SimpleDateFormat} and</li>
  * <li>{@code nnn} a left padded integer in the range between {@code 000 .. 999}</li>
- * </ul> 
+ * </ul>
  * Hence, to have <em>unique</em> unifiers one cannot draw more than 1000 unifiers per millisecond.
  * 
  * @author mgp
@@ -44,20 +49,33 @@ public class Unifier {
     private static final SimpleDateFormat UNIFIER_PREFIX_FORMAT = new SimpleDateFormat( "yyyyMMddhhmmssSSS" );
     private static final DecimalFormat UNIFIER_SUFFIX_FORMAT = new DecimalFormat( "000" );
     private static int UNIFIER_COUNTER = 0;
-    
+    private static String last = null;
+
+    private static Unifier lock = new Unifier();
+
     /**
      * Gets a new Unifier.
      * 
      * @return a new Unifier
      */
-    public static synchronized String next() {
-        final Date now = Calendar.getInstance().getTime();
-        final String unifierPrefix = UNIFIER_PREFIX_FORMAT.format( now );
-        final String unifierSuffix = UNIFIER_SUFFIX_FORMAT.format( (double) UNIFIER_COUNTER );
+    public static String next() {
+        synchronized (lock) {
+            final Date now = Calendar.getInstance().getTime();
+            final String unifierPrefix = UNIFIER_PREFIX_FORMAT.format( now );
+            final String unifierSuffix = UNIFIER_SUFFIX_FORMAT.format( (double) UNIFIER_COUNTER );
 
-        UNIFIER_COUNTER = (UNIFIER_COUNTER < 999) ? UNIFIER_COUNTER + 1 : 0;
+            UNIFIER_COUNTER = (UNIFIER_COUNTER < 999) ? UNIFIER_COUNTER + 1 : 0;
 
-        return unifierPrefix.concat( unifierSuffix );
+            last = unifierPrefix.concat( unifierSuffix );
+            return last;
+        }
     }
+
+    public static String last() {
+        synchronized(lock) {
+            return last;
+        }
+    }
+
     private Unifier() {}
 }

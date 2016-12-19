@@ -41,6 +41,8 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.Text;
 
+import de.mgpit.oracle.reports.plugin.commons.U;
+
 /**
  * A <strong>very simple</strong> fluent API for creating an XML DOM.
  * <p>
@@ -50,6 +52,8 @@ import org.w3c.dom.Text;
  *
  */
 public class XML {
+    
+    public static final String NL = U.coalesce( System.getProperty( "line.separator" ), "\n" );
 
     private static final SimpleDateFormat XML_DATE = new SimpleDateFormat( "yyyy-MM-dd" );
     private static final SimpleDateFormat XML_DATE_TIME = new SimpleDateFormat( "yyyy-MM-dd'T'hh:mm:ss" );

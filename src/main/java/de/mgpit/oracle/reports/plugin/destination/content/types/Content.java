@@ -35,7 +35,17 @@ import javax.activation.MimeType;
  */
 public interface Content {
     public static final String PROPERTY_NAME_PREFIX = "content.";
+    public static final long UNDEFINED_LENGTH = -1;
 
+    /**
+     * Gets this {@code Content}'s content length in number of bytes.
+     * <p>
+     * This does <strong>not</strong> contain the number of bytes of an eventually payload, though!
+     * 
+     * @return number of bytes or {{@link #UNDEFINED_LENGTH} if this content hasn't been built, yet.
+     */
+    public long lengthInBytes();
+    
     /**
      * Builds this Content.
      * <p>

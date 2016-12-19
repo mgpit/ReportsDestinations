@@ -222,7 +222,7 @@ public class IOUtility {
             }
         }
     }
-
+    
     /**
      * Converts the input stream to a byte array.
      * 

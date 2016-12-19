@@ -24,6 +24,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Properties;
 
+import de.mgpit.oracle.reports.plugin.destination.content.AbstractEnvelope;
 import de.mgpit.oracle.reports.plugin.destination.content.eai.Unifier;
 import de.mgpit.xml.XML;
 import de.mgpit.xml.XML.XMLFragment;
@@ -34,7 +35,7 @@ import de.mgpit.xml.XML.XMLFragment;
  * @author mgp
  *
  */
-public class SimpleCdm extends AbstractCdm {
+public class SimpleCdm extends AbstractEnvelope {
 
     private static final String DATA_CLOSING_TAG = "</data>";
 

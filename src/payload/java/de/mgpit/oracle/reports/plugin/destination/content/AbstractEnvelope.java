@@ -17,7 +17,7 @@
 /**
  * @license APACHE-2.0
  */
-package de.mgpit.oracle.reports.plugin.destination.content.eai.cdm;
+package de.mgpit.oracle.reports.plugin.destination.content;
 
 
 import java.io.ByteArrayInputStream;
@@ -29,6 +29,7 @@ import javax.activation.MimeTypeParseException;
 
 import de.mgpit.oracle.reports.plugin.commons.Magic;
 import de.mgpit.oracle.reports.plugin.commons.U;
+import de.mgpit.oracle.reports.plugin.destination.content.types.Content;
 import de.mgpit.oracle.reports.plugin.destination.content.types.Envelope;
 
 /**
@@ -37,12 +38,13 @@ import de.mgpit.oracle.reports.plugin.destination.content.types.Envelope;
  * @author mgp
  *
  */
-public abstract class AbstractCdm implements Envelope {
+public abstract class AbstractEnvelope implements Envelope {
 
     private ByteArrayInputStream envelopesDataBeforePayload;
     private ByteArrayInputStream envelopesDataAfterPayload;
 
     private String text;
+    private long byteLength = Content.UNDEFINED_LENGTH;
 
     public String getText() {
         return this.text;
@@ -64,19 +66,24 @@ public abstract class AbstractCdm implements Envelope {
         final String splitToken = getSplitAtToken();
         final int lastIndexOfSplitToken = text.lastIndexOf( splitToken );
         if ( lastIndexOfSplitToken == Magic.SUBSTRING_NOT_FOUND ) {
-            throw new CdmCorruptException( U.classname( this ) + " is corrupt. " + splitToken + " not found!" );
+            throw new EnvelopeCorruptException( U.classname( this ) + " is corrupt. " + splitToken + " not found!" );
         }
         final int firstIndexOfSplitToken = text.indexOf( splitToken );
         if ( firstIndexOfSplitToken != lastIndexOfSplitToken ) {
-            throw new CdmCorruptException( U.classname( this ) + " is corrupt. " + splitToken + " contained two times at least!" );
+            throw new EnvelopeCorruptException( U.classname( this ) + " is corrupt. " + splitToken + " contained two or more times!" );
         }
 
         final int cuttingPosition = lastIndexOfSplitToken;
 
         final String beforeContent = text.substring( 0, cuttingPosition );
         final String afterContent = text.substring( cuttingPosition );
+        byteLength = text.getBytes().length;
         envelopesDataBeforePayload = new ByteArrayInputStream( beforeContent.getBytes() );
         envelopesDataAfterPayload = new ByteArrayInputStream( afterContent.getBytes() );
+    }
+    
+    public long lengthInBytes() {
+        return this.byteLength;
     }
 
     /**
@@ -118,14 +125,14 @@ public abstract class AbstractCdm implements Envelope {
         return "xml";
     }
 
-    public static class CdmCorruptException extends Exception {
+    public static class EnvelopeCorruptException extends Exception {
         private static final long serialVersionUID = 1L;
 
-        public CdmCorruptException( String message ) {
+        public EnvelopeCorruptException( String message ) {
             super( message );
         }
 
-        public CdmCorruptException( String message, Throwable cause ) {
+        public EnvelopeCorruptException( String message, Throwable cause ) {
             super( message, cause );
         }
     }
