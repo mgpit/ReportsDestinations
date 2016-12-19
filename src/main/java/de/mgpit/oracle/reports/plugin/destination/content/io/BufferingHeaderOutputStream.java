@@ -66,24 +66,35 @@ public class BufferingHeaderOutputStream extends OutputStream {
     }
 
     /**
-     * Flushes this output stream.
+     * Flushes this Output Stream.
      * <p>
-     * Will flush the {@code Header} to the wrapped {@code Outputstream} and
-     * then flush the wrapped {@code Outputstream} itself.
+     * Does nothing. Any data buffered must be retained until this Stream is closed.
      * 
      * @see java.io.OutputStream#flush()
      */
     public void flush() throws IOException {
-        out.flush();
+        // Don't flush ...
     }
-    
+
+    /**
+     * Flushes the data buffered in this Output Stream.
+     * <p>
+     * This will write
+     * <ul>
+     * <li>the header</li>
+     * <li>the payload - which is buffered</li>
+     * </ul>
+     * to the output stream wrapped by this stream and then flush() that Output Stream.
+     * 
+     * @throws IOException
+     */
     private void finishWrite() throws IOException {
         if ( !finished ) {
             writeHeader();
             writeBuffer.flushTo( out );
             out.flush();
             finished = true;
-        }        
+        }
     }
 
     // TODO: Delegate this to the Header??? e.g. Header::writeToOut(OutputStream)?
@@ -119,7 +130,7 @@ public class BufferingHeaderOutputStream extends OutputStream {
     }
 
     private class WriteBuffer {
-        private static final int IN_MEMORY_BUFFER_SIZE = Units.ONE_MEGABYTE*4;
+        private static final int IN_MEMORY_BUFFER_SIZE = Units.ONE_MEGABYTE * 4;
         private OutputStream buffer;
         private int bytesWritten;
         private boolean bufferingToFile;

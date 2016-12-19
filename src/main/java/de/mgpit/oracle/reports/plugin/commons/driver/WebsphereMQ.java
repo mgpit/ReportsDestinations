@@ -1,3 +1,22 @@
+/*
+ * Copyright 2016 Marco Pauls www.mgp-it.de
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
+/**
+ * @license APACHE-2.0
+ */
 package de.mgpit.oracle.reports.plugin.commons.driver;
 
 
@@ -13,6 +32,12 @@ import com.ibm.mq.MQPutMessageOptions;
 import com.ibm.mq.MQQueue;
 import com.ibm.mq.MQQueueManager;
 
+/**
+ * Implements a Websphere MQ<sup>&reg;</sup> driver for {@link de.mgpit.oracle.reports.plugin.destination.mq.MQDestination MQDestination}
+ * 
+ * @author mgp
+ *
+ */
 public class WebsphereMQ extends MQ {
 
     public WebsphereMQ( Configuration configuration ) {
@@ -66,14 +91,29 @@ public class WebsphereMQ extends MQ {
                 /*
                  * TODO: Maybe the delegation has to be replaced with writeChar
                  * and the put Message options have to be set to String ...
+                 * Or we must build a String and then writeString(String) it to the MQ Message.
                  */
                 mqMessage.write( b );
             }
 
+            /**
+             * Flushes this Output Stream.
+             * <p>
+             * Does nothing. Any data buffered must be retained until this Stream is closed.
+             * 
+             * @see java.io.OutputStream#flush()
+             */
             public void flush() throws IOException {
                 // Don't flush ...
             }
-            
+
+            /**
+             * Flushes the data buffered in this Output Stream.
+             * <p>
+             * This will put the data buffered to the Websphere MQ<sup>&reg;</sup> queue.
+             * 
+             * @throws IOException
+             */
             private void finishWrite() throws IOException {
                 if ( !finished ) {
                     MQPutMessageOptions putMessageOptions = new MQPutMessageOptions(); // Default: MQC.MQPMO_NO_SYNCPOINT, d.h. kein explizites Commit notwendig
@@ -89,7 +129,7 @@ public class WebsphereMQ extends MQ {
                     finished = true;
                 }
             }
-            
+
             public void close() throws IOException {
                 finishWrite();
                 super.close();
