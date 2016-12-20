@@ -22,6 +22,9 @@ package de.mgpit.oracle.reports.plugin.destination.content;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.nio.charset.Charset;
+import java.nio.charset.IllegalCharsetNameException;
+import java.nio.charset.UnsupportedCharsetException;
 import java.util.Properties;
 
 import javax.activation.MimeType;
@@ -36,7 +39,7 @@ import de.mgpit.oracle.reports.plugin.destination.content.types.Header;
  * @author mgp
  *
  */
-public abstract class AbstractHeader implements Header {
+public abstract class AbstractXmlHeader implements Header {
 
     private ByteArrayInputStream headersData;
     private long byteLength = Content.UNDEFINED_LENGTH;
@@ -45,14 +48,14 @@ public abstract class AbstractHeader implements Header {
         try {
 
             final String content = getHeaderAsStringPropulatedWith( parameters );
-            final byte[] contentBytes = content.getBytes();
+            final byte[] contentBytes = content.getBytes( encoding().name() );
             byteLength = contentBytes.length;
             headersData = new ByteArrayInputStream( contentBytes );
         } catch ( Exception any ) {
             throw new RuntimeException( "Runtime error", any );
         }
     }
-    
+
     public long lengthInBytes() {
         return this.byteLength;
     }
@@ -67,6 +70,21 @@ public abstract class AbstractHeader implements Header {
     }
 
     protected abstract String getHeaderAsStringPropulatedWith( Properties parameters ) throws Exception;
+
+    private Charset encoding;
+
+    public Charset encoding() {
+        if ( encoding == null ) {
+            try {
+                encoding = Charset.forName( "UTF-8" );
+            } catch ( IllegalCharsetNameException illegal ) {
+                // NOOP
+            } catch ( UnsupportedCharsetException unsupperted ) {
+                // NOOP
+            }
+        }
+        return encoding;
+    }
 
     private MimeType mimetype;
 

@@ -20,6 +20,7 @@
 package de.mgpit.oracle.reports.plugin.destination.content.types;
 
 
+import java.nio.charset.Charset;
 import java.util.Properties;
 
 import javax.activation.MimeType;
@@ -45,7 +46,7 @@ public interface Content {
      * @return number of bytes or {{@link #UNDEFINED_LENGTH} if this content hasn't been built, yet.
      */
     public long lengthInBytes();
-    
+
     /**
      * Builds this Content.
      * <p>
@@ -57,6 +58,16 @@ public interface Content {
      *             on errors during the build.
      */
     public void build( Properties parameters ) throws Exception;
+
+    /**
+     * Gets this {@code Content}'s encoding.
+     * <p>
+     * The encoding should be set appropriately and must be used for converting between {@link java.lang.Character charaters}
+     * and {@link java.lang.Byte bytes} when writing to or reading from a stream.
+     * 
+     * @return this {@code Content}'s encoding.
+     */
+    public Charset encoding();
 
     /**
      * Gets this {@code Content}'s mime type.

@@ -24,7 +24,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Properties;
 
-import de.mgpit.oracle.reports.plugin.destination.content.AbstractEnvelope;
+import de.mgpit.oracle.reports.plugin.destination.content.AbstractXmlEnvelope;
 import de.mgpit.oracle.reports.plugin.destination.content.eai.Unifier;
 import de.mgpit.xml.XML;
 import de.mgpit.xml.XML.XMLFragment;
@@ -35,7 +35,7 @@ import de.mgpit.xml.XML.XMLFragment;
  * @author mgp
  *
  */
-public class SimpleCdm extends AbstractEnvelope {
+public class SimpleCdm extends AbstractXmlEnvelope {
 
     private static final String DATA_CLOSING_TAG = "</data>";
 
@@ -43,7 +43,7 @@ public class SimpleCdm extends AbstractEnvelope {
         final SimpleDateFormat dateFormat = new SimpleDateFormat( "yyyy.MM.dd HH:mm:ss" );
         final String now = dateFormat.format( new Date() );
 
-        XML cdm = XML.newDocument();
+        XML cdm = XML.newDocument( encoding().name() );
         cdm.add( "cdmdoc" )
            .attribute( "created", now )
            .attribute( "unifier", Unifier.next() )

@@ -22,6 +22,9 @@ package de.mgpit.oracle.reports.plugin.destination.content;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.nio.charset.Charset;
+import java.nio.charset.IllegalCharsetNameException;
+import java.nio.charset.UnsupportedCharsetException;
 import java.util.Properties;
 
 import javax.activation.MimeType;
@@ -38,7 +41,7 @@ import de.mgpit.oracle.reports.plugin.destination.content.types.Envelope;
  * @author mgp
  *
  */
-public abstract class AbstractEnvelope implements Envelope {
+public abstract class AbstractXmlEnvelope implements Envelope {
 
     private ByteArrayInputStream envelopesDataBeforePayload;
     private ByteArrayInputStream envelopesDataAfterPayload;
@@ -78,8 +81,9 @@ public abstract class AbstractEnvelope implements Envelope {
         final String beforeContent = text.substring( 0, cuttingPosition );
         final String afterContent = text.substring( cuttingPosition );
         byteLength = text.getBytes().length;
-        envelopesDataBeforePayload = new ByteArrayInputStream( beforeContent.getBytes() );
-        envelopesDataAfterPayload = new ByteArrayInputStream( afterContent.getBytes() );
+        String encodingName = encoding().name();
+        envelopesDataBeforePayload = new ByteArrayInputStream( beforeContent.getBytes( encodingName ) );
+        envelopesDataAfterPayload = new ByteArrayInputStream( afterContent.getBytes( encodingName ) );
     }
     
     public long lengthInBytes() {
@@ -107,6 +111,22 @@ public abstract class AbstractEnvelope implements Envelope {
     protected abstract String getEnvelopeAsStringPopulatedWith( Properties parameters ) throws Exception;
 
     protected abstract String getSplitAtToken();
+    
+    
+    private Charset encoding;
+
+    public Charset encoding() {
+        if ( encoding == null ) {
+            try {
+                encoding = Charset.forName( "UTF-8" );
+            } catch ( IllegalCharsetNameException illegal ) {
+                // NOOP
+            } catch ( UnsupportedCharsetException unsupperted ) {
+                // NOOP
+            }
+        }
+        return encoding;
+    }
 
     private MimeType mimetype;
 
