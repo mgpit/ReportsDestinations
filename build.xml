@@ -303,32 +303,57 @@
 
     <!-- #################################################################################################### -->
 
-    <property name="reg.file" location="${dir.project.res}/d2kreports.reg"/>
+    <property name="reg.file.compact" location="${dir.project.res}/d2kreports.compactclasspath.reg"/>
+    <property name="reg.file.long" location="${dir.project.res}/d2kreports.longclasspath.reg"/>
     <propertyreplace name="oracle.home.dirname" value="${oracle.home}" token="\" replace="\\" />
     <property name="oracle.reports.jlib.dirname" value="${oracle.home.dirname}\\reports\\jlib" />
     <property name="oracle.home" location="O:/DevSuite10gR2" />
     <property name="oracle.home.jlib" location="${oracle.home}/jlib" />
     <property name="oracle.home.lib" location="${oracle.home}/lib" />
-    
-    <target name="Make Registry File 4 Compact Deploy" description="Make a Registry File">
-        <delete failonerror="false" file="${reg.file}"/>
-        <echo file="${reg.file}">Windows Registry Editor Version 5.00
+
+    <target name="Make Registry File 4 Diversified Deploy" description="Make a Registry File">
+        <delete failonerror="false" file="${reg.file.long}"/>
+        <echo file="${reg.file.long}">Windows Registry Editor Version 5.00
 
 [HKEY_LOCAL_MACHINE\SOFTWARE\ORACLE\KEY_DevSuite10gR2Home]
 "REPORTS_CLASSPATH"="</echo>
-        <echo file="${reg.file}" append="true">${oracle.reports.jlib.dirname}\\log4j-1.2.4.jar;</echo>
-        <echo file="${reg.file}" append="true">${oracle.reports.jlib.dirname}\\commons-codec-1.5.jar;</echo>
-        <echo file="${reg.file}" append="true">${oracle.reports.jlib.dirname}\\${deploy.jar.MgpCompact};</echo>
-        <echo file="${reg.file}" append="true">${oracle.reports.jlib.dirname}\\${deploy.jar.Payloads}</echo>
-        <echo file="${reg.file}" append="true">${oracle.reports.jlib.dirname}\\mqdestination_0.3.0.jar;</echo>
-        <echo file="${reg.file}" append="true">${oracle.reports.jlib.dirname}\\zipdestination_0.9.0.jar;</echo>
-        <echo file="${reg.file}" append="true">${oracle.reports.jlib.dirname}\\rwbuilder.jar;</echo>
-        <echo file="${reg.file}" append="true">${oracle.reports.jlib.dirname}\\rwrun.jar;</echo>
-        <echo file="${reg.file}" append="true">${oracle.home.dirname}\\jlib\\zrclient.jar;</echo>
-        <echo file="${reg.file}" append="true">${oracle.home.dirname}\\j2ee\\home\\oc4j.jar;</echo>
-        <echo file="${reg.file}" append="true">${oracle.home.dirname}\\j2ee\\home\\lib\\ojsp.jar;</echo>
-        <echo file="${reg.file}" append="true">${oracle.reports.jlib.dirname}\\xrpdsolap.jar;</echo>
-        <echo file="${reg.file}" append="true">"</echo>
+        <echo file="${reg.file.long}" append="true">${oracle.reports.jlib.dirname}\\log4j-1.2.4.jar;</echo>
+        <echo file="${reg.file.long}" append="true">${oracle.reports.jlib.dirname}\\commons-codec-1.5.jar;</echo>
+        <echo file="${reg.file.long}" append="true">${oracle.reports.jlib.dirname}\\${deploy.jar.MgpCommons};</echo>
+        <echo file="${reg.file.long}" append="true">${oracle.reports.jlib.dirname}\\${deploy.jar.MQdestination};</echo>
+        <echo file="${reg.file.long}" append="true">${oracle.reports.jlib.dirname}\\${deploy.jar.ZIPdestination};</echo>
+        <echo file="${reg.file.long}" append="true">${oracle.reports.jlib.dirname}\\${deploy.jar.Payloads}</echo>
+        <echo file="${reg.file.long}" append="true">${oracle.reports.jlib.dirname}\\mqdestination_0.3.0.jar;</echo>
+        <echo file="${reg.file.long}" append="true">${oracle.reports.jlib.dirname}\\zipdestination_0.9.0.jar;</echo>
+        <echo file="${reg.file.long}" append="true">${oracle.reports.jlib.dirname}\\rwbuilder.jar;</echo>
+        <echo file="${reg.file.long}" append="true">${oracle.reports.jlib.dirname}\\rwrun.jar;</echo>
+        <echo file="${reg.file.long}" append="true">${oracle.home.dirname}\\jlib\\zrclient.jar;</echo>
+        <echo file="${reg.file.long}" append="true">${oracle.home.dirname}\\j2ee\\home\\oc4j.jar;</echo>
+        <echo file="${reg.file.long}" append="true">${oracle.home.dirname}\\j2ee\\home\\lib\\ojsp.jar;</echo>
+        <echo file="${reg.file.long}" append="true">${oracle.reports.jlib.dirname}\\xrpdsolap.jar;</echo>
+        <echo file="${reg.file.long}" append="true">"</echo>
+    </target>
+    
+    
+    <target name="Make Registry File 4 Compact Deploy" description="Make a Registry File">
+        <delete failonerror="false" file="${reg.file.compact}"/>
+        <echo file="${reg.file.compact}">Windows Registry Editor Version 5.00
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\ORACLE\KEY_DevSuite10gR2Home]
+"REPORTS_CLASSPATH"="</echo>
+        <echo file="${reg.file.compact}" append="true">${oracle.reports.jlib.dirname}\\log4j-1.2.4.jar;</echo>
+        <echo file="${reg.file.compact}" append="true">${oracle.reports.jlib.dirname}\\commons-codec-1.5.jar;</echo>
+        <echo file="${reg.file.compact}" append="true">${oracle.reports.jlib.dirname}\\${deploy.jar.MgpCompact};</echo>
+        <echo file="${reg.file.compact}" append="true">${oracle.reports.jlib.dirname}\\${deploy.jar.Payloads}</echo>
+        <echo file="${reg.file.compact}" append="true">${oracle.reports.jlib.dirname}\\mqdestination_0.3.0.jar;</echo>
+        <echo file="${reg.file.compact}" append="true">${oracle.reports.jlib.dirname}\\zipdestination_0.9.0.jar;</echo>
+        <echo file="${reg.file.compact}" append="true">${oracle.reports.jlib.dirname}\\rwbuilder.jar;</echo>
+        <echo file="${reg.file.compact}" append="true">${oracle.reports.jlib.dirname}\\rwrun.jar;</echo>
+        <echo file="${reg.file.compact}" append="true">${oracle.home.dirname}\\jlib\\zrclient.jar;</echo>
+        <echo file="${reg.file.compact}" append="true">${oracle.home.dirname}\\j2ee\\home\\oc4j.jar;</echo>
+        <echo file="${reg.file.compact}" append="true">${oracle.home.dirname}\\j2ee\\home\\lib\\ojsp.jar;</echo>
+        <echo file="${reg.file.compact}" append="true">${oracle.reports.jlib.dirname}\\xrpdsolap.jar;</echo>
+        <echo file="${reg.file.compact}" append="true">"</echo>
     </target>
     
     <target name="1 Compact Deploy All and Everything" depends="9 Deploy Mgp Compact,4 Deploy Payloads" description="Create and Deploy 'Everything'">
