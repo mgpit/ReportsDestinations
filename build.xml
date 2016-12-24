@@ -93,15 +93,63 @@
 
     <!-- ================================================================================ -->
 
+    <property name="dir.src.main" location="src/main/java" />
+    <property name="dir.src.mqdest" location="src/destinations/mq/java" />
+    <property name="dir.src.zipdest" location="src/destinations/zip/java" />
+
+    <!--
+            ======================================================================
+                            9  -  C O M  P A C T    D E P L O Y M E N T
+            ======================================================================
+    -->
+
+    <path id="compact.class.path">
+        <path refid="project.class.path" />
+        <path refid="wmq.class.path" />
+        <pathelement path="${lib.mgp.reports.commons}" />
+    </path>
+
+    <target name="compile4Compact">
+        <cleanupSingleBuildDir />
+        <echo message="About to compile MgpDestinations compact package ..." />
+        <echo level="info" message="Using classpath ${toString:compact.class.path}" />
+        <javac includeantruntime="false" defaultexcludes="true" srcdir="${dir.src.main}" destdir="${dir.build}" source="1.4" target="1.4" debug="yes">
+            <compilerarg value="-Xbootclasspath/p:${toString:java14.bootstrap.class.path}" />
+            <classpath refid="compact.class.path" />
+        </javac>
+        <javac includeantruntime="false" defaultexcludes="true" srcdir="${dir.src.zipdest}" destdir="${dir.build}" source="1.4" target="1.4" debug="yes">
+            <compilerarg value="-Xbootclasspath/p:${toString:java14.bootstrap.class.path}" />
+            <classpath refid="compact.class.path" />
+        </javac>
+        <javac includeantruntime="false" defaultexcludes="true" srcdir="${dir.src.mqdest}" destdir="${dir.build}" source="1.4" target="1.4" debug="yes">
+            <compilerarg value="-Xbootclasspath/p:${toString:java14.bootstrap.class.path}" />
+            <classpath refid="compact.class.path" />
+        </javac>
+    </target>
+
+    <property name="deploy.jar.MgpCompact" value="mgpdestinations_1.0.0.jar" />
+    <target name="package&amp;DeployMgpCompact" depends="compile4Compact">
+        <description>Creates the ${deploy.jar.MgpCommons} archive and deploys it to the Oracle Reports
+        Server library directory ${dir.reports.jlib}</description>
+        <jar destfile="${deploy.jar.MgpCompact}" basedir="${dir.build}" update="false" />
+    </target>
+    
+    <property name="lib.mgp.reports.compact" location="${dir.reports.jlib}/${deploy.jar.MgpCompact}" />
+    <target name="9 Deploy Mgp Compact" depends="splashit,package&amp;DeployMgpCompact" description="Deploy Compact JAR of MgpDestinations">
+        <copy verbose="true" file="${deploy.jar.MgpCompact}" todir="${dir.reports.jlib}" />
+        <delete file="${deploy.jar.MgpCompact}" failonerror="false" />
+        <echo message="Mgp Destinations Compact Distribution: Deployment finished" />
+        <echotimestamp />
+    </target>
+
     <!--
         ======================================================================
-                        9  -  C O M M O N S
+                        8  -  C O M M O N S
         ======================================================================
     -->
 
-    <property name="dir.src.main" location="src/main/java" />
     <target name="compileCommons">
-        <cleanupSingleBuildDir/>
+        <cleanupSingleBuildDir />
         <description>Compiles the Java classes in ${dir.src.main}</description>
         <javac includeantruntime="false" defaultexcludes="true" srcdir="${dir.src.main}" destdir="${dir.build}" source="1.4" target="1.4" debug="yes">
             <compilerarg value="-Xbootclasspath/p:${toString:java14.bootstrap.class.path}" />
@@ -111,18 +159,20 @@
         </javac>
     </target>
 
-    <property name="deploy.jar.MgpCommons" value="mgpcommons_0.9.0.jar" />
+    <property name="deploy.jar.MgpCommons" value="mgpcommons_1.0.0.jar" />
     <target name="package&amp;DeployCommons" depends="compileCommons">
         <description>Creates the ${deploy.jar.MgpCommons} archive and deploys it to the Oracle Reports
         Server library directory ${dir.reports.jlib}</description>
         <jar destfile="${deploy.jar.MgpCommons}" basedir="${dir.build}" update="false" />
+    </target>
+
+    <property name="lib.mgp.reports.commons" location="${dir.reports.jlib}/${deploy.jar.MgpCommons}" />
+    <target name="8 Deploy Commons" description="Deploy Commons" depends="splashit,package&amp;DeployCommons">
         <copy verbose="true" file="${deploy.jar.MgpCommons}" todir="${dir.reports.jlib}" />
         <delete file="${deploy.jar.MgpCommons}" failonerror="false" />
+        <echotimestamp />
     </target>
-    
-    <property name="lib.mgp.reports.commons" location="${dir.reports.jlib}/${deploy.jar.MgpCommons}" />
-    <target name="9 Deploy Commons" description="Deploy Commons" depends="splashit,package&amp;DeployCommons" />
-    
+
     <!--
         ======================================================================
                         4  -  P A Y L O A D S
@@ -132,11 +182,12 @@
     <path id="Payloads.class.path">
         <path refid="project.class.path" />
         <pathelement path="${lib.mgp.reports.commons}" />
+        <pathelement path="${lib.mgp.reports.compact}" />
     </path>
-    
+
     <property name="dir.src.payload" location="src/payload/java" />
     <target name="compilePayloads">
-        <cleanupSingleBuildDir/>
+        <cleanupSingleBuildDir />
         <description>Compiles teh Java classed in ${dir.src.payload}</description>
         <javac includeantruntime="false" defaultexcludes="true" srcdir="${dir.src.payload}" destdir="${dir.build}" source="1.4" target="1.4" debug="yes">
             <exclude name="**/cdm/schema/**" />
@@ -158,7 +209,7 @@
         <echotimestamp />
     </target>
 
-    
+
     <!--
         ======================================================================
                         3  -  M Q  D E S T I N A T I O N
@@ -170,9 +221,8 @@
         <pathelement path="${lib.mgp.reports.commons}" />
     </path>
 
-    <property name="dir.src.mqdest" location="src/destinations/mq/java" />
     <target name="compileMQdest">
-        <cleanupSingleBuildDir/>
+        <cleanupSingleBuildDir />
         <echo message="About to compile MQ Destination ..." />
         <echo level="info" message="Using classpath ${toString:MQdest.class.path}" />
         <javac includeantruntime="false" defaultexcludes="true" srcdir="${dir.src.mqdest}" destdir="${dir.build}" source="1.4" target="1.4" debug="yes">
@@ -181,10 +231,9 @@
         </javac>
     </target>
 
-    <property name="deploy.jar.MQdestination" value="mqdestination_0.3.0.jar" />
+    <property name="deploy.jar.MQdestination" value="mqdestination_1.0.0.jar" />
     <target name="packageMQdest" depends="compileMQdest">
         <echo message="About to make JAR archive ..." />
-        <copy file="${dir.res}/log4j.MQDestination.properties" todir="${dir.build}" overwrite="true" />
         <jar destfile="${deploy.jar.MQdestination}" basedir="${dir.build}" update="false" />
     </target>
 
@@ -195,7 +244,7 @@
         <echotimestamp />
     </target>
 
-    
+
     <!--
         ======================================================================
                         2  -  Z I P  D E S T I N A T I O N
@@ -207,9 +256,8 @@
         <pathelement path="${lib.mgp.reports.commons}" />
     </path>
 
-    <property name="dir.src.zipdest" location="src/destinations/zip/java" />
     <target name="compileZIPdest">
-        <cleanupSingleBuildDir/>
+        <cleanupSingleBuildDir />
         <echo message="About to compile ZIP Destination ..." />
         <echo level="info" message="Using classpath ${toString:ZIPdest.class.path}" />
         <javac includeantruntime="false" defaultexcludes="true" srcdir="${dir.src.zipdest}" destdir="${dir.build}" source="1.4" target="1.4" debug="yes">
@@ -218,10 +266,10 @@
         </javac>
     </target>
 
-    <property name="deploy.jar.ZIPdestination" value="zipdestination_0.9.0.jar" />
+
+    <property name="deploy.jar.ZIPdestination" value="zipdestination_1.0.0.jar" />
     <target name="packageZIPdest" depends="compileZIPdest">
         <echo message="About to make JAR archive ..." />
-        <copy file="${dir.res}/log4j.ZipDestination.properties" todir="${dir.build}" overwrite="true" />
         <jar destfile="${deploy.jar.ZIPdestination}" basedir="${dir.build}" update="false" />
     </target>
 
@@ -232,13 +280,13 @@
         <echotimestamp />
     </target>
 
-    
+
     <!--
         ======================================================================
                         1  -  D E P L O Y   A L L   D E S T I N A T I O N S
         ======================================================================
     -->
-    
+
     <!--
     <target name="copycdmresources">
         <propertyreplace name="dir.build.schema" value="${dir.build}${file.separator}${jaxb.cdmdoc.packagename}" token="." replace="${file.separator}" />
@@ -246,15 +294,50 @@
         <copy verbose="true" file="${jaxb.cdmdoc.dir.schema}/jaxb.properties" todir="${dir.build.schema}" />
     </target>
     -->
-    
 
-    <target name="1 Deploy All and Everything" depends="9 Deploy Commons,4 Deploy Payloads,2 Deploy Zip Destination,3 Deploy MQ Destination" description="Create and Deploy 'Everything'">
+
+    <target name="1 Deploy All and Everything" depends="8 Deploy Commons,4 Deploy Payloads,2 Deploy Zip Destination,3 Deploy MQ Destination" description="Create and Deploy 'Everything'">
+        <echo message="Deployment finished" />
+        <echotimestamp />
+    </target>
+
+    <!-- #################################################################################################### -->
+
+    <property name="reg.file" location="${dir.project.res}/d2kreports.reg"/>
+    <propertyreplace name="oracle.home.dirname" value="${oracle.home}" token="\" replace="\\" />
+    <property name="oracle.reports.jlib.dirname" value="${oracle.home.dirname}\\reports\\jlib" />
+    <property name="oracle.home" location="O:/DevSuite10gR2" />
+    <property name="oracle.home.jlib" location="${oracle.home}/jlib" />
+    <property name="oracle.home.lib" location="${oracle.home}/lib" />
+    
+    <target name="Make Registry File 4 Compact Deploy" description="Make a Registry File">
+        <delete failonerror="false" file="${reg.file}"/>
+        <echo file="${reg.file}">Windows Registry Editor Version 5.00
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\ORACLE\KEY_DevSuite10gR2Home]
+"REPORTS_CLASSPATH"="</echo>
+        <echo file="${reg.file}" append="true">${oracle.reports.jlib.dirname}\\log4j-1.2.4.jar;</echo>
+        <echo file="${reg.file}" append="true">${oracle.reports.jlib.dirname}\\commons-codec-1.5.jar;</echo>
+        <echo file="${reg.file}" append="true">${oracle.reports.jlib.dirname}\\${deploy.jar.MgpCompact};</echo>
+        <echo file="${reg.file}" append="true">${oracle.reports.jlib.dirname}\\${deploy.jar.Payloads}</echo>
+        <echo file="${reg.file}" append="true">${oracle.reports.jlib.dirname}\\mqdestination_0.3.0.jar;</echo>
+        <echo file="${reg.file}" append="true">${oracle.reports.jlib.dirname}\\zipdestination_0.9.0.jar;</echo>
+        <echo file="${reg.file}" append="true">${oracle.reports.jlib.dirname}\\rwbuilder.jar;</echo>
+        <echo file="${reg.file}" append="true">${oracle.reports.jlib.dirname}\\rwrun.jar;</echo>
+        <echo file="${reg.file}" append="true">${oracle.home.dirname}\\jlib\\zrclient.jar;</echo>
+        <echo file="${reg.file}" append="true">${oracle.home.dirname}\\j2ee\\home\\oc4j.jar;</echo>
+        <echo file="${reg.file}" append="true">${oracle.home.dirname}\\j2ee\\home\\lib\\ojsp.jar;</echo>
+        <echo file="${reg.file}" append="true">${oracle.reports.jlib.dirname}\\xrpdsolap.jar;</echo>
+        <echo file="${reg.file}" append="true">"</echo>
+    </target>
+    
+    <target name="1 Compact Deploy All and Everything" depends="9 Deploy Mgp Compact,4 Deploy Payloads" description="Create and Deploy 'Everything'">
         <echo message="Deployment finished" />
         <echotimestamp />
     </target>
 
     <!-- ================================================================================ -->
-    
+
 
     <!--
         ======================================================================
@@ -262,7 +345,7 @@
         ======================================================================
     -->
 
-    
+
     <fileset dir="${dir.src.main}" id="sourcefiles#common">
         <include name="**/*.java" />
     </fileset>
@@ -326,10 +409,12 @@
                     <scriptfilter language="javascript">
                         <![CDATA[
                         var theToken=self.getToken();
-                        var startOf = theToken.indexOf( '<pre><code class="language-java">' );
+                        var startOf = theToken.indexOf( '<pre>
+                        <code class="language-java">' );
                         if ( startOf > -1 ) {
                             /* lame search for class name - no syntax awareness ... */
-                            startOf = startOf + '<pre><code class="language-java">'.length + 1;
+                            startOf = startOf + '<pre>
+                                <code class="language-java">'.length + 1;
                             var last = startOf;
                             /* Skip imports ... */
                             startOf = theToken.indexOf( 'import', last );
@@ -354,12 +439,12 @@
                         self.setToken( theToken );
                         ]]>
                     </scriptfilter>
-                </tokenfilter>
-            </filterchain>
-        </copy>
-    </target>
+                            </tokenfilter>
+                        </filterchain>
+                    </copy>
+                </target>
 
-<!--
+                <!--
     <property name="orajaxb" location="${oracle.home}\bin\orajaxb.bat" />
     <property name="lib.ora.xmlparser2" location="${oracle.home.lib}/xmlparserv2.jar" />
     <property name="lib.ora.xsu12" location="${oracle.home.lib}/xsu12.jar" />
@@ -418,4 +503,4 @@
         </exec>
     </target>
 -->
-</project>
+            </project>
