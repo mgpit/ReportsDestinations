@@ -384,6 +384,8 @@ public final class MQDestination extends ModifyingDestination {
             return mq;
         } catch ( URISyntaxException syntax ) {
             LOG.error( "Invalid Connection URI! Cannot create MQ Connection!", syntax );
+        } catch ( NoSuchMethodException noSuchMethod ) {
+            LOG.error( "MQ Implementation does not declare MQ(Connection) one arg constructor! Cannot create MQ Connection!", noSuchMethod );
         } catch ( Exception other ) {
             LOG.error( "Cannot create MQ Connection!", other );
         }
