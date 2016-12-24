@@ -151,7 +151,7 @@ public final class MQDestination extends ModifyingDestination {
     protected void stop() throws RWException {
         try {
             super.stop();
-            this.mq.disconnect();
+            mq.disconnect();
         } catch ( Exception any ) {
             getLogger().error( "Error during finishing distribution!", any );
             throw asRWException( any );
@@ -187,7 +187,8 @@ public final class MQDestination extends ModifyingDestination {
 
             if ( continueToSend ) {
                 getLogger().info( "Starting distribution to MQ" );
-                this.mq = (MQ) U.coalesce( MQRegistrar.getDeclaredMQfrom( allProperties ), MQRegistrar.DEFAULT_MQ );
+                final MQ individualMq = MQRegistrar.getDeclaredMQfrom( allProperties );
+                this.mq = (MQ) U.coalesce( individualMq, MQRegistrar.DEFAULT_MQ );
                 continueToSend = this.mq != null;
                 if ( !continueToSend ) {
                     getLogger().warn( "Cannot continue to send! No MQ destination provided nor default MQ destination speficied!" );
@@ -202,6 +203,13 @@ public final class MQDestination extends ModifyingDestination {
             getLogger().error( "Error during preparation of distribution!", forLogging );
             throw forLogging;
         } catch ( Throwable fatalOther ) {
+            if ( mq != null ) {
+                try {
+                    mq.disconnect();
+                } catch ( Exception ignoredButLogged ) {
+                    getLogger().warn( "Error on emergency close", ignoredButLogged );
+                }
+            }
             getLogger().fatal( "Fatal error on starting Distribution!", fatalOther );
             throw asRWException( new Exception( "Fatal error on starting Distribution!", fatalOther ) );
         }
@@ -224,20 +232,19 @@ public final class MQDestination extends ModifyingDestination {
                 target.close();
             }
         } catch ( Throwable anyOther ) {
-
             getLogger().fatal( "Fatal Error during sending main file " + U.w( cacheFileFilename ) + "!", anyOther );
             throw asRWException( new Exception( anyOther ) );
         } finally {
             try {
                 if ( source != null ) source.close();
-            } catch ( Exception ignore ) {
+            } catch ( Exception ignoredButLogged ) {
+                getLogger().warn( "Error on emergency close of Input Source", ignoredButLogged );
             }
-            ;
             try {
                 if ( target != null ) target.close();
-            } catch ( Exception ignore ) {
+            } catch ( Exception ignoredButLogged ) {
+                getLogger().warn( "Error on emergency close of Output Target", ignoredButLogged );
             }
-            ;
         }
     }
 

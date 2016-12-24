@@ -1,22 +1,20 @@
-/*
- * Copyright 2016 Marco Pauls www.mgp-it.de
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
+/* Copyright 2016 Marco Pauls www.mgp-it.de
+*
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+* use this file except in compliance with the License. You may obtain a copy of
+* the License at
+*
+ * http://www.apache.org/licenses/LICENSE-2.0
+*
+ * Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+* WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+* License for the specific language governing permissions and limitations under
+* the License. */
 
 /**
- * @license APACHE-2.0
- */
+* @license APACHE-2.0
+*/
 package de.mgpit.oracle.reports.plugin.commons.driver;
 
 
@@ -26,19 +24,25 @@ import java.io.OutputStream;
 import org.apache.log4j.Logger;
 
 import com.ibm.mq.MQC;
+import com.ibm.mq.MQEnvironment;
 import com.ibm.mq.MQException;
 import com.ibm.mq.MQMessage;
 import com.ibm.mq.MQPutMessageOptions;
 import com.ibm.mq.MQQueue;
 import com.ibm.mq.MQQueueManager;
 
+import de.mgpit.oracle.reports.plugin.commons.U;
+
 /**
- * Implements a Websphere MQ<sup>&reg;</sup> driver for {@link de.mgpit.oracle.reports.plugin.destination.mq.MQDestination MQDestination}
- * 
+ * Implements a Websphere MQ<sup>&reg;</sup> driver for
+ * {@link de.mgpit.oracle.reports.plugin.destination.mq.MQDestination
+ * MQDestination}
+ *
  * @author mgp
  *
  */
 public class WebsphereMQ extends MQ {
+    private static final Logger LOG = Logger.getRootLogger();
 
     public WebsphereMQ( Configuration configuration ) {
         super( configuration );
@@ -49,18 +53,56 @@ public class WebsphereMQ extends MQ {
 
     public void connect() throws Exception {
         try {
-            int openOptions = MQC.MQOO_FAIL_IF_QUIESCING | MQC.MQOO_OUTPUT;
+            LOG.info( "Connecting with " + configuration.toString() );
+            
+            /*
+             * From the {@code MQQueueManager(String) Javadoc:
+             * <quote>
+             * Creates a connection to the named queue manager.
+             * The host name, channel name and port to use during the connection request are specified
+             * in the MQEnvironmentclass.
+             * This must be done before calling this constructor.
+             * </quote>
+             */
 
-            String queueManagerName = configuration.getQueueManagerName();
-            String queueName = configuration.getQueueName();
+            // Hence ...
+            setMQEnvironment();
+            // ... could have used the MQQueueManager(String,Hashtable) constructor alternatively ...
 
+            final String queueManagerName = configuration.getQueueManagerName();
+            final String queueName = configuration.getQueueName();
+
+            final int openOptions = MQC.MQOO_FAIL_IF_QUIESCING | MQC.MQOO_OUTPUT;
             queueManager = new MQQueueManager( queueManagerName );
             destinationQueue = queueManager.accessQueue( queueName, openOptions, null, null, null );
 
         } catch ( MQException mqex ) {
-            Logger.getRootLogger().fatal( "MQException on opening queue " + configuration.toString() + ". Reason code: "
-                    + mqex.reasonCode + " Completion code: " + mqex.completionCode, mqex );
+            LOG.fatal( "MQException on opening queue " + configuration.toString() + ". Reason code: " + mqex.reasonCode
+                    + " Completion code: " + mqex.completionCode, mqex );
             throw mqex;
+        }
+    }
+
+    /**
+     * Applies the {@link MQ.Configuration Configuration} to the {@link MQEnvironment}.
+     */
+    protected void setMQEnvironment() {
+        final String hostname = configuration.getHostName();
+        final int port = configuration.getPort();
+        final String channel = configuration.getChannelName();
+        final String userId = configuration.getUserId();
+
+        if ( !U.isEmpty( hostname ) ) {
+            MQEnvironment.hostname = hostname;
+        }
+        if ( !U.isEmpty( channel ) ) {
+            MQEnvironment.channel = channel;
+        }
+        if ( port > 0 ) {
+            MQEnvironment.port = port;
+        }
+        if ( !U.isEmpty( userId ) ) {
+            MQEnvironment.userID = userId;
         }
     }
 
@@ -69,8 +111,8 @@ public class WebsphereMQ extends MQ {
             destinationQueue.close();
             queueManager.close();
         } catch ( MQException mqex ) {
-            Logger.getRootLogger().error( "MQException on closing queue " + configuration.toString() + ". Reason code: "
-                    + mqex.reasonCode + " Completion code: " + mqex.completionCode, mqex );
+            LOG.error( "MQException on closing queue " + configuration.toString() + ". Reason code: " + mqex.reasonCode
+                    + " Completion code: " + mqex.completionCode, mqex );
             throw mqex;
         }
     }
@@ -90,8 +132,9 @@ public class WebsphereMQ extends MQ {
             public void write( int b ) throws IOException {
                 /*
                  * TODO: Maybe the delegation has to be replaced with writeChar
-                 * and the put Message options have to be set to String ...
-                 * Or we must build a String and then writeString(String) it to the MQ Message.
+                 * and the put Message options have to be set to String ... Or
+                 * we must build a String and then writeString(String) it to the
+                 * MQ Message.
                  */
                 mqMessage.write( b );
             }
@@ -99,8 +142,9 @@ public class WebsphereMQ extends MQ {
             /**
              * Flushes this Output Stream.
              * <p>
-             * Does nothing. Any data buffered must be retained until this Stream is closed.
-             * 
+             * Does nothing. Any data buffered must be retained until this
+             * Stream is closed.
+             *
              * @see java.io.OutputStream#flush()
              */
             public void flush() throws IOException {
@@ -110,8 +154,9 @@ public class WebsphereMQ extends MQ {
             /**
              * Flushes the data buffered in this Output Stream.
              * <p>
-             * This will put the data buffered to the Websphere MQ<sup>&reg;</sup> queue.
-             * 
+             * This will put the data buffered to the Websphere
+             * MQ<sup>&reg;</sup> queue.
+             *
              * @throws IOException
              */
             private void finishWrite() throws IOException {
@@ -122,7 +167,7 @@ public class WebsphereMQ extends MQ {
                     } catch ( MQException mqex ) {
                         final String message = "MQException on flushing Message" + ". Reason code: " + mqex.reasonCode
                                 + " Completion code: " + mqex.completionCode;
-                        Logger.getRootLogger().error( message, mqex );
+                        LOG.error( message, mqex );
                         throw new IOException( message );
                     }
                     super.flush();

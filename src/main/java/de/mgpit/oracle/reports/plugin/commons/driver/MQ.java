@@ -91,7 +91,7 @@ public abstract class MQ {
         private static final String NO_USER = null;
         public static final int MQ_DEFAULT_PORT = 1414;
 
-        private final String hostName, queueManagerName, channelName, queueName;
+        private final String hostName, queueManagerName, channelName, queueName, userId;
         private final int port;
 
         public final String getHostName() {
@@ -113,6 +113,10 @@ public abstract class MQ {
         public final int getPort() {
             return this.port;
         }
+        
+        public final String getUserId() {
+            return this.userId;
+        }
 
         /**
          * Creates a new Configuration instance
@@ -130,11 +134,33 @@ public abstract class MQ {
          */
         public Configuration( final String hostName, final int port, final String queueManagerName, final String channelName,
                 final String queueName ) {
+            this( hostName, port, queueManagerName, channelName, queueName, null );
+        }
+
+        /**
+         * Creates a new Configuration instance
+         * 
+         * @param hostName
+         *            host name where the queue manager is running
+         * @param port
+         *            TCP port where the queue manager is listening. Any value <= 0 will be replaced by default @code MQ_DEFAULT_PORT}
+         * @param queueManagerName
+         *            name of the queue manager
+         * @param channelName
+         *            channel for the connection
+         * @param queueName
+         *            name of the queue
+         * @param userId
+         *            (optional) userId
+         */
+        public Configuration( final String hostName, final int port, final String queueManagerName, final String channelName,
+                final String queueName, final String userId ) {
             this.hostName = hostName;
             this.port = (port <= 0) ? MQ_DEFAULT_PORT : port;
             this.queueManagerName = queueManagerName;
             this.channelName = channelName;
             this.queueName = queueName;
+            this.userId = userId;
         }
 
         /**
@@ -263,9 +289,16 @@ public abstract class MQ {
 
         public String toString() {
             final StringBuffer sb = new StringBuffer( 127 );
-            sb.append( "MQ Configuration Host: " ).append( U.w( this.hostName ) ).append( " Port: " ).append( U.w( this.port ) )
-                    .append( " Queue Manager: " ).append( U.w( this.queueManagerName ) ).append( " Channel: " )
-                    .append( U.w( this.channelName ) ).append( " Queue: " ).append( U.w( this.queueName ) );
+            sb.append( "MQ Configuration Host: " )
+              .append( U.w( this.hostName ) )
+              .append( " Port: " )
+              .append( U.w( this.port ) )
+              .append( " Queue Manager: " )
+              .append( U.w( this.queueManagerName ) )
+              .append( " Channel: " )
+              .append( U.w( this.channelName ) )
+              .append( " Queue: " )
+              .append( U.w( this.queueName ) );
             return sb.toString();
         }
 
