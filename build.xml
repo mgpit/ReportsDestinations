@@ -415,60 +415,61 @@
                 <tokenfilter>
                     <!-- remember: filetokenizer liest die ganze Datei -->
                     <filetokenizer />
-                    <scriptfilter language="javascript">
-                        <![CDATA[
-                        var theToken=self.getToken();
-                        /* Watch out! & must be replaced FIRST !!! 
-                           Order matters ... */
-                        theToken = theToken.replace('&', '&amp;' );
-                        theToken = theToken.replace('<', '&lt;' );
-                        theToken = theToken.replace('>', '&gt;' );
-                        self.setToken(theToken);
-                        ]]>
-                    </scriptfilter>
+<!-- formatter:off -->                    
+<scriptfilter language="javascript">
+    <![CDATA[
+    var theToken=self.getToken();
+    /* Watch out! & must be replaced FIRST !!! Order matters ... */
+    theToken = theToken.replace('&', '&amp;' );
+    theToken = theToken.replace('<', '&lt;' );
+    theToken = theToken.replace('>', '&gt;' );
+    self.setToken(theToken);
+    ]]>
+</scriptfilter>
+<!-- formatter:on -->                    
                 </tokenfilter>
                 <concatfilter prepend="res/doc-header.html.fragment" />
                 <concatfilter append="res/doc-trailer.html.fragment" />
                 <tokenfilter>
                     <filetokenizer />
-                    <scriptfilter language="javascript">
-                        <![CDATA[
-                        var theToken=self.getToken();
-                        var startOf = theToken.indexOf( '<pre>
-                        <code class="language-java">' );
-                        if ( startOf > -1 ) {
-                            /* lame search for class name - no syntax awareness ... */
-                            startOf = startOf + '<pre>
-                                <code class="language-java">'.length + 1;
-                            var last = startOf;
-                            /* Skip imports ... */
-                            startOf = theToken.indexOf( 'import', last );
-                            while( startOf > -1 ) {
-                                last = startOf + 'import'.length+1;
-                                startOf = theToken.indexOf( 'import', last );
-                            }
-                            starOf = last;
-                            startOf = theToken.indexOf( 'public', startOf );
-                            startOf = startOf + 'public'.length+1;
-                            startOf = theToken.indexOf( 'class', startOf );
-                            if ( startOf > -1 ) {
-                                startOf = startOf + 'class'.length + 1;
-                                var endOf = theToken.indexOf( " ", startOf );
-                                if ( endOf > startOf ) {
-                                    var replacement = theToken.substring( startOf, endOf );
-                                    replacement = replacement.trim();
-                                    theToken = theToken.replace( '$$REPLACE$$', replacement );
-                                }
-                            }
-                        }
-                        self.setToken( theToken );
-                        ]]>
-                    </scriptfilter>
+<!-- formatter:off -->                    
+<scriptfilter language="javascript">
+    <![CDATA[
+    var theToken=self.getToken();
+    var startOf = theToken.indexOf( '<pre><code class="language-java">' );
+    if ( startOf > -1 ) {
+        /* lame search for class name - no syntax awareness ... */
+        startOf = startOf + '<pre><code class="language-java">'.length + 1;
+        var last = startOf;
+        /* Skip imports ... */
+        startOf = theToken.indexOf( 'import', last );
+        while( startOf > -1 ) {
+            last = startOf + 'import'.length+1;
+            startOf = theToken.indexOf( 'import', last );
+        }
+        starOf = last;
+        startOf = theToken.indexOf( 'public', startOf );
+        startOf = startOf + 'public'.length+1;
+        startOf = theToken.indexOf( 'class', startOf );
+        if ( startOf > -1 ) {
+            startOf = startOf + 'class'.length + 1;
+            var endOf = theToken.indexOf( " ", startOf );
+            if ( endOf > startOf ) {
+                var replacement = theToken.substring( startOf, endOf );
+                replacement = replacement.trim();
+                theToken = theToken.replace( '$$REPLACE$$', replacement );
+            }
+        }
+    }
+    self.setToken( theToken );
+    ]]>
+</scriptfilter>
+                    <!-- formatter:on -->                    
                             </tokenfilter>
                         </filterchain>
                     </copy>
                 </target>
-
+    
                 <!--
     <property name="orajaxb" location="${oracle.home}\bin\orajaxb.bat" />
     <property name="lib.ora.xmlparser2" location="${oracle.home.lib}/xmlparserv2.jar" />
