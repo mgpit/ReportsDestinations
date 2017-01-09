@@ -45,17 +45,26 @@ public abstract class MQ {
         return configuration == null ? "Invalid MQ" : "MQ on " + configuration.toString();
     }
 
-    /*
-     * (non-Javadoc)
+    /**
+     * Connects to a queue manager an opens a connection to a queue.
+     * <p>
+     * Connection information like queue manager and queue are read from this {@link Configuration}.
      * 
-     * @see de.mgpit.oracle.reports.plugin.commons.driver.MQ#connect()
+     * @throws Exception
      */
     public abstract void connect() throws Exception;
 
-    /*
-     * (non-Javadoc)
+    /**
+     * Disconnects from MQ.
+     * <p>
+     * <strong>Implementing classes</strong> should ensure that
+     * <ul>
+     * <li>the current queue is closed</li>
+     * <li>and the current connection to the queue manager is closed</li>
+     * </ul>
+     *
      * 
-     * @see de.mgpit.oracle.reports.plugin.commons.driver.MQ#disconnect()
+     * @throws Exception
      */
     public abstract void disconnect() throws Exception;
 
@@ -113,7 +122,7 @@ public abstract class MQ {
         public final int getPort() {
             return this.port;
         }
-        
+
         public final String getUserId() {
             return this.userId;
         }

@@ -310,6 +310,16 @@
     <property name="oracle.home" location="O:/DevSuite10gR2" />
     <property name="oracle.home.jlib" location="${oracle.home}/jlib" />
     <property name="oracle.home.lib" location="${oracle.home}/lib" />
+    
+    <property name="regedit" location="C:\Windows\regedit.exe"/>
+    <target name="Load 2 Registry">
+        <echo level="info" message="Loading ${regfile.name} into the Windows Registry ..." />
+        <exec executable="${regedit}" dir="${dir.project.res}" vmlauncher="false">
+            <arg value="/s" />
+            <arg value="${regfile.name}" />
+        </exec>
+        <echo level="info" message="... Done!" />
+    </target>
 
     <target name="Make Registry File 4 Diversified Deploy" description="Make a Registry File">
         <delete failonerror="false" file="${reg.file.long}"/>
@@ -332,6 +342,9 @@
         <echo file="${reg.file.long}" append="true">${oracle.home.dirname}\\j2ee\\home\\lib\\ojsp.jar;</echo>
         <echo file="${reg.file.long}" append="true">${oracle.reports.jlib.dirname}\\xrpdsolap.jar;</echo>
         <echo file="${reg.file.long}" append="true">"</echo>
+        <antcall target="Load 2 Registry">
+            <param name="regfile.name" value="${reg.file.long}"/>
+        </antcall>
     </target>
     
     
@@ -354,6 +367,9 @@
         <echo file="${reg.file.compact}" append="true">${oracle.home.dirname}\\j2ee\\home\\lib\\ojsp.jar;</echo>
         <echo file="${reg.file.compact}" append="true">${oracle.reports.jlib.dirname}\\xrpdsolap.jar;</echo>
         <echo file="${reg.file.compact}" append="true">"</echo>
+        <antcall target="Load 2 Registry">
+            <param name="regfile.name" value="${reg.file.compact}"/>
+        </antcall>
     </target>
     
     <target name="1 Compact Deploy All and Everything" depends="9 Deploy Mgp Compact,4 Deploy Payloads" description="Create and Deploy 'Everything'">

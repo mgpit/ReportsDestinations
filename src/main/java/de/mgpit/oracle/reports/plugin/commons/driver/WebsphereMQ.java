@@ -54,7 +54,7 @@ public class WebsphereMQ extends MQ {
     public void connect() throws Exception {
         try {
             LOG.info( "Connecting with " + configuration.toString() );
-            
+
             /*
              * From the {@code MQQueueManager(String) Javadoc:
              * <quote>
@@ -106,14 +106,27 @@ public class WebsphereMQ extends MQ {
         }
     }
 
+    /*
+     * (non-Javadoc)
+     * @see de.mgpit.oracle.reports.plugin.commons.driver.MQ#disconnect()
+     */
     public void disconnect() throws Exception {
         try {
-            destinationQueue.close();
-            queueManager.close();
+            if ( destinationQueue != null ) {
+                destinationQueue.close();
+            }
         } catch ( MQException mqex ) {
             LOG.error( "MQException on closing queue " + configuration.toString() + ". Reason code: " + mqex.reasonCode
                     + " Completion code: " + mqex.completionCode, mqex );
-            throw mqex;
+        }
+
+        try {
+            if ( queueManager != null ) {
+                queueManager.close();
+            }
+        } catch ( MQException mqex ) {
+            LOG.error( "MQException on closing queue " + configuration.toString() + ". Reason code: " + mqex.reasonCode
+                    + " Completion code: " + mqex.completionCode, mqex );
         }
     }
 
