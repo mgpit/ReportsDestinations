@@ -111,6 +111,7 @@ public class WebsphereMQ extends MQ {
      * @see de.mgpit.oracle.reports.plugin.commons.driver.MQ#disconnect()
      */
     public void disconnect() throws Exception {
+        MQException lastMQExceptionOccured = null;
         try {
             if ( destinationQueue != null ) {
                 destinationQueue.close();
@@ -118,6 +119,7 @@ public class WebsphereMQ extends MQ {
         } catch ( MQException mqex ) {
             LOG.error( "MQException on closing queue " + configuration.toString() + ". Reason code: " + mqex.reasonCode
                     + " Completion code: " + mqex.completionCode, mqex );
+            lastMQExceptionOccured = mqex;
         }
 
         try {
@@ -127,6 +129,10 @@ public class WebsphereMQ extends MQ {
         } catch ( MQException mqex ) {
             LOG.error( "MQException on closing queue " + configuration.toString() + ". Reason code: " + mqex.reasonCode
                     + " Completion code: " + mqex.completionCode, mqex );
+            lastMQExceptionOccured = mqex;
+        }
+        if ( lastMQExceptionOccured != null ) {
+            throw lastMQExceptionOccured;
         }
     }
 
