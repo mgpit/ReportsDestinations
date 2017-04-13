@@ -106,34 +106,59 @@ public class WebsphereMQ extends MQ {
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * @see de.mgpit.oracle.reports.plugin.commons.driver.MQ#disconnect()
-     */
     public void disconnect() throws Exception {
+        /*
+         * Implemented the following three steps
+         * Step 1 closing the Queue
+         * Step 2 disconnecting from the Queue Manager
+         * Step 3 closing the Queue Manager
+         * disconnect() closes the connection and close() frees/closes any internal objects.
+         * 
+         */
+        LOG.info( "Disconnecting from " + configuration.toString() );
         MQException lastMQExceptionOccured = null;
-        try {
+        try { // Step 1
             if ( destinationQueue != null ) {
+                LOG.info( "Closing Queue " + destinationQueue.name ); // TODO: MQ6 style, with MQ7 getName();
                 destinationQueue.close();
+            } else {
+                LOG.warn( "No queue on " + configuration.toString() );
             }
         } catch ( MQException mqex ) {
             LOG.error( "MQException on closing queue " + configuration.toString() + ". Reason code: " + mqex.reasonCode
+                    + " Completion code: " + mqex.completionCode, mqex );
+            lastMQExceptionOccured = mqex;
+        }
+        try { // Step 2
+            if ( queueManager != null ) {
+                LOG.info( "Disconnection from QueueManager " + queueManager.name ); // TODO: MQ6 style, with MQ7 getName();
+                queueManager.disconnect();
+            } else {
+                LOG.warn( "No queue manager on " + configuration.toString() );
+            }
+        } catch ( MQException mqex ) {
+            LOG.error( "MQException on closing queue manager " + configuration.toString() + ". Reason code: " + mqex.reasonCode
+                    + " Completion code: " + mqex.completionCode, mqex );
+        }
+        try { // Step 3
+            if ( queueManager != null ) {
+                LOG.info( "Closing QueueManager " + queueManager.name ); // TODO: MQ6 style, with MQ7 getName();
+                queueManager.close();
+            } else {
+                LOG.warn( "No queue manager on " + configuration.toString() );
+            }
+        } catch ( MQException mqex ) {
+            LOG.error( "MQException on closing queue manager " + configuration.toString() + ". Reason code: " + mqex.reasonCode
                     + " Completion code: " + mqex.completionCode, mqex );
             lastMQExceptionOccured = mqex;
         }
 
-        try {
-            if ( queueManager != null ) {
-                queueManager.close();
-            }
-        } catch ( MQException mqex ) {
-            LOG.error( "MQException on closing queue " + configuration.toString() + ". Reason code: " + mqex.reasonCode
-                    + " Completion code: " + mqex.completionCode, mqex );
-            lastMQExceptionOccured = mqex;
-        }
         if ( lastMQExceptionOccured != null ) {
-            throw lastMQExceptionOccured;
+            throw new Exception( "Error on disconnecting from " + configuration.toString(), lastMQExceptionOccured );
         }
+
+        LOG.info( "--[  ]-- Disconnected from " + configuration.toString() );
+
     }
 
     public OutputStream newMessage() throws Exception {
